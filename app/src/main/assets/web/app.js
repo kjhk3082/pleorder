@@ -465,6 +465,14 @@ window.Pleorder = {
   persist: save,
   getState: () => JSON.parse(repo.serialize()),
   receiveNative(event) {
+    if (event.type === "external-state") {
+      repo = OrderRepository.restore(event.state);
+      paused = repo.simulation?.paused ?? true;
+      rate = repo.simulation?.rate || 10;
+      resumedOrderId = repo.activeOrder()?.id;
+      lastWall = Date.now();
+      render();
+    }
     if (event.type === "speech-ready") {
       listening = true;
       $("micButton").classList.add("listening");

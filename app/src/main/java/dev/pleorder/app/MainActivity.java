@@ -19,6 +19,9 @@ import ai.pleos.playground.location.fused.listener.FusedLocationListener;
 import ai.pleos.playground.location.fused.model.LocationData;
 
 public final class MainActivity extends Activity {
+    private static java.lang.ref.WeakReference<MainActivity> active=new java.lang.ref.WeakReference<>(null);
+    static boolean deliverGleo(Intent intent){MainActivity activity=active.get();if(activity==null||activity.isFinishing()||!activity.ready)return false;activity.receive(intent);return true;}
+    static void refreshExternalState(String state){MainActivity activity=active.get();if(activity!=null)try{activity.send(new JSONObject().put("type","external-state").put("state",state));}catch(Exception ignored){}}
     private static final String ORIGIN="https://appassets.androidplatform.net";
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final ArrayDeque<JSONObject> pending=new ArrayDeque<>();
@@ -29,8 +32,9 @@ public final class MainActivity extends Activity {
     private FusedLocationListener locationListener;
     private boolean ready;
     private Object car,uxManager,uxListener;
+    private String pendingNavigation;
     @Override public void onCreate(Bundle state){
-        super.onCreate(state);getWindow().setStatusBarColor(0xfff5f4f0);getWindow().setNavigationBarColor(0xfff5f4f0);
+        super.onCreate(state);active=new java.lang.ref.WeakReference<>(this);getWindow().setStatusBarColor(0xfff5f4f0);getWindow().setNavigationBarColor(0xfff5f4f0);
         speech=new SpeechController(getApplicationContext(),this::send);
         navigation=new NavigationController(getApplicationContext(),this::send);
         web=new WebView(this);web.setBackgroundColor(0xfff5f4f0);web.getSettings().setJavaScriptEnabled(true);web.getSettings().setDomStorageEnabled(true);web.getSettings().setAllowFileAccess(false);web.getSettings().setAllowContentAccess(false);web.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);web.getSettings().setUserAgentString(web.getSettings().getUserAgentString()+" Pleorder/0.1.0");
@@ -72,7 +76,7 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public void stopSpeech(){handler.post(()->speech.stop());}
         @JavascriptInterface public void speak(String text){handler.post(()->speech.speak(text));}
         @JavascriptInterface public void requestLocation(){handler.post(()->location());}
-        @JavascriptInterface public void navigate(String payload){if(payload!=null&&payload.length()<5000)handler.post(()->navigation.request(payload));}
+        @JavascriptInterface public void navigate(String payload){if(payload!=null&&payload.length()<5000)handler.post(()->requestNavigation(payload));}
         @JavascriptInterface public void replyAction(String payload){if(payload==null||payload.length()>12000)return;try{JSONObject p=new JSONObject(payload);reply(p.getString("functionName"),p.getString("status"),p.getString("message"),p.optString("data","[]"));}catch(Exception e){Log.w("PleorderGleo","INVALID_CALLBACK");}}
     }
     private void location(){try{if(fused==null){fused=new FusedLocation(getApplicationContext());if(!fused.isSupported()){emitMessage("speech-error","이 환경에서는 차량 위치를 제공하지 않아요.");fused.release();fused=null;return;}fused.initialize();locationListener=new FusedLocationListener(){
@@ -87,9 +91,10 @@ public final class MainActivity extends Activity {
         uxManager.getClass().getMethod("registerListener",listenerClass).invoke(uxManager,uxListener);restriction(uxManager.getClass().getMethod("getCurrentCarUxRestrictions").invoke(uxManager));
     }catch(Throwable e){Log.w("Pleorder","UX_RESTRICTION_MANAGER_UNAVAILABLE");}}
     private void restriction(Object value){try{boolean restricted=(boolean)value.getClass().getMethod("isRequiresDistractionOptimization").invoke(value);send(new JSONObject().put("type","restriction").put("restricted",restricted));}catch(Exception ignored){}}
-    @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] result){super.onRequestPermissionsResult(requestCode,permissions,result);if(requestCode==20){if(result.length>0&&result[0]==PackageManager.PERMISSION_GRANTED)speech.listen(null);else emitMessage("speech-error","마이크 권한이 필요해요. 화면에서 주문할 수도 있어요.");}}
+    private void requestNavigation(String payload){String[] permissions={"pleos.car.permission.NAVI_ROUTE","pleos.car.permission.NAVI_ROUTE_SEARCH"};boolean granted=true;for(String permission:permissions)granted&=checkSelfPermission(permission)==PackageManager.PERMISSION_GRANTED;if(granted)navigation.request(payload);else{pendingNavigation=payload;requestPermissions(permissions,30);}}
+    @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] result){super.onRequestPermissionsResult(requestCode,permissions,result);if(requestCode==20){if(result.length>0&&result[0]==PackageManager.PERMISSION_GRANTED)speech.listen(null);else emitMessage("speech-error","마이크 권한이 필요해요. 화면에서 주문할 수도 있어요.");}if(requestCode==30){boolean granted=result.length>0;for(int value:result)granted&=value==PackageManager.PERMISSION_GRANTED;String payload=pendingNavigation;pendingNavigation=null;if(granted&&payload!=null)navigation.request(payload);else try{send(new JSONObject().put("type","navigation").put("success",false).put("message","내비게이션 경로 권한이 필요해요."));}catch(Exception ignored){}}}
     @Override protected void onStop(){speech.stop();super.onStop();}
-    @Override protected void onDestroy(){speech.stop();navigation.release();if(fused!=null){try{fused.unregisterFusedLocationCallback(locationListener);fused.release();}catch(Throwable ignored){}}if(uxManager!=null)try{uxManager.getClass().getMethod("unregisterListener").invoke(uxManager);}catch(Throwable ignored){}if(car!=null)try{car.getClass().getMethod("disconnect").invoke(car);}catch(Throwable ignored){}handler.removeCallbacksAndMessages(null);web.removeJavascriptInterface("Native");web.destroy();super.onDestroy();}
+    @Override protected void onDestroy(){active.clear();speech.stop();navigation.release();if(fused!=null){try{fused.unregisterFusedLocationCallback(locationListener);fused.release();}catch(Throwable ignored){}}if(uxManager!=null)try{uxManager.getClass().getMethod("unregisterListener").invoke(uxManager);}catch(Throwable ignored){}if(car!=null)try{car.getClass().getMethod("disconnect").invoke(car);}catch(Throwable ignored){}handler.removeCallbacksAndMessages(null);web.removeJavascriptInterface("Native");web.destroy();super.onDestroy();}
 }
 
 

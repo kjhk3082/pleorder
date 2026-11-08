@@ -13,7 +13,7 @@
 - 모의 결제 수단, 잔액·한도 부족, 승인 거절, 결과 미확인, 중복 결제 방지, 취소·환불 대기·환불 완료
 - 매장 거절·취소, 조리 지연, 라이더 배정 지연·재배정, 수령인 부재, 픽업 지연, 누락 문의
 - 주문·결제 수단·금액·문제 상황을 설명하는 음성 안내와 실제 Pleos ON_DEVICE STT/TTS
-- Gleo의 세 가지 공식 Intent 및 Callback 계약, 앱 내 `assets/schema.json`
+- Gleo의 세 가지 공식 Broadcast/Callback 계약, 화면 없는 백그라운드 처리, 앱 내 `assets/schema.json`
 - 시나리오 28개와 가속 시간, 1×/10×/60×, 5분 진행, 앱 재시작 복원
 
 ## 실행
@@ -51,7 +51,7 @@ Pleos Emulator는 **주차 상태**에서 화면을 테스트하세요. 앱은 �
 | `app/src/main/assets/web/payments.js` | 모의 거래, 멱등성, 승인 결과 확인, 환불 |
 | `app/src/main/assets/web/map.js` | 지도, 도로 경로, 가상 차량·라이더 |
 | `app/src/main/assets/web/app.js` | 화면 상호작용과 Android 브리지 |
-| `app/src/main/java/dev/pleorder/app` | 실제 Pleos 음성·위치·내비게이션 어댑터 |
+| `app/src/main/java/dev/pleorder/app` | 실제 Pleos 음성·위치·내비게이션 어댑터 및 Gleo 백그라운드 수신 |
 | `app/src/main/assets/schema.json` | Gleo 기능 세 개 등록 계약 |
 | `tests` | 주문·결제·이벤트의 회귀 검사 |
 
@@ -63,7 +63,7 @@ STT/TTS는 `3.3.1` ON_DEVICE 모드를 사용합니다. 서버 키를 소스나 
 
 FusedLocation은 실제 차량 좌표를 표시할 수 있습니다. **차량 GPS 모드의 실제 귀가 ETA·교통 상황·역지오코딩은 아직 연결하지 않았습니다.** 이때 데모 거리를 실제 거리처럼 표시하지 않고, 도착 시점 예약·경유 거리 비교를 제한합니다. 기본 테스트 경로는 명시적으로 표시된 데모입니다.
 
-내비게이션은 사용자가 경유 요청을 확인한 후 NaviHelper를 호출합니다. 요청 전송과 경로 완료 Callback은 구분하며, 이 환경에서 실제 안내 완료는 검증 기록을 확인하세요.
+내비게이션은 사용자가 경유 요청을 확인한 후 NaviHelper를 호출합니다. 에뮬레이터에서 실제 안내 시작 Callback을 확인했습니다. Gleo 백그라운드 계약은 앱 프로세스를 종료한 상태에서도 준비·확정·중복 확정·조회가 작동하고 주문과 거래가 하나만 생성되는 것을 확인했습니다.
 
 ## 검증과 자료
 

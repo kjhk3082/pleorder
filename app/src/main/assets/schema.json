@@ -7,7 +7,7 @@
     {
       "type": "function",
       "function": {
-        "component": "activity",
+        "component": "service",
         "name": "PREPARE_FOOD_ORDER",
         "description": "Prepare a simulated food order for delivery or pickup. Never submits an order. Read back the draft ID, meal, quantity, fulfillment and total, then ask the user to confirm.",
         "parameters": {
@@ -39,7 +39,7 @@
     {
       "type": "function",
       "function": {
-        "component": "activity",
+        "component": "service",
         "name": "CONFIRM_FOOD_ORDER",
         "description": "Confirm the current simulated draft only after the user explicitly agrees to the read-back details. Copy the draftId from PREPARE_FOOD_ORDER. A changed or expired draft needs a fresh confirmation.",
         "parameters": {
@@ -61,10 +61,14 @@
     {
       "type": "function",
       "function": {
-        "component": "activity",
+        "component": "service",
         "name": "GET_FOOD_ORDER_STATUS",
         "description": "Get the current simulated food delivery or pickup status and remaining preparation or delivery information.",
-        "parameters": { "type": "object", "properties": {}, "required": [] }
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
       }
     }
   ]
