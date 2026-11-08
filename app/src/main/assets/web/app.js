@@ -513,6 +513,11 @@ function editSavedHome() {
     else {close();save();render();}
   }, {title:"집 주소 수정"});
 }
+function syncVoicePlaceFields() {
+  if (modalKind !== "place-picker") return;
+  const selected = PleorderPlaces.selected(), pending = repo.destinationSearch;
+  if (selected && pending?.places.some(p=>p.lat === selected.lat && p.lng === selected.lng)) $("placeDetail").value = pending.detail || "";
+}
 function startFieldVoice(id) {
   if (!uxPolicy.transcription) return toast("현재 차량 정책에 따라 음성 내용을 화면에 입력할 수 없어요. Gleo 음성 주문을 이용해 주세요.");
   const field = $(id);
@@ -521,9 +526,15 @@ function startFieldVoice(id) {
     field.focus();
     return toast("차량 앱에서 음성 입력을 사용할 수 있어요.");
   }
-  voiceTarget = { id, kind: modalKind };
-  field.placeholder = "듣고 있어요…";
-  Native.startListening();
+  voiceTarget = null;
+  if (id === "placeDetail") {
+    const place = PleorderPlaces.selected();
+    if (!place?.description) return toast("먼저 상세주소를 입력할 장소를 선택해 주세요.");
+    repo.destinationSearch = {places:[place], detail:place.detail || "", expiresAt:Date.now()+180000,homeFingerprint:JSON.stringify(repo.home)};
+    save();
+  }
+  toast(id === "placeQuery" ? "Gleo에게 ‘플레오더 배달받을 곳을 강남구청으로 찾아 줘’라고 말씀해 주세요." : "Gleo에게 ‘플레오더 상세주소는 101동 202호’라고 말씀해 주세요.");
+  Native.startGleo();
 }
 function applyUxControls() {
   const restrict = (selector, denied) => document.querySelectorAll(selector).forEach(el => {
@@ -566,20 +577,9 @@ function openSettings() {
   );
 }
 function setAddress(place) {
-  if (repo.payments.transactions.some((p) => p.status === "pending"))
-    return toast("결제 결과를 먼저 확인한 뒤 배송지를 변경해 주세요.");
-  if (repo.activeOrder())
-    return toast("진행 중인 주문의 배송지는 변경할 수 없어요.");
-  repo.home = { ...place };
-  repo.routeMetrics = null;
-  repo.preferences.addressDetail = place.detail || "";
   const hadDraft = !!repo.draft;
-  if (hadDraft) {
-    const previousDraft = repo.draft;
-    repo.draft = null;
-    const r = repo.prepare({ items: previousDraft.items });
-    if (!r.draft) toast(r.message);
-  }
+  const changed = repo.setDeliveryPlace(place);
+  if (changed.status !== "success") return toast(changed.message);
   scope = "home";
   repo.preferences.scope = scope;
   save();
@@ -927,20 +927,8 @@ document.addEventListener("click", (e) => {
       openPlacePicker();
       break;
     case "save-address-detail":
-      if (
-        repo.payments.transactions.some((p) => p.status === "pending") ||
-        repo.activeOrder()
-      ) {
-        toast(
-          "진행 중인 주문 또는 결제 확인을 마친 뒤 배송지를 변경해 주세요.",
-        );
-        break;
-      }
-      repo.preferences.addressDetail = $("addressDetail")
-        .value.trim()
-        .slice(0, 80);
-      if (repo.home) repo.home.detail = repo.preferences.addressDetail;
-      if (repo.draft) repo.prepare({ items: repo.draft.items });
+      { const changed = repo.setDeliveryDetail($("addressDetail").value);
+        if (changed.status !== "success") { toast(changed.message); break; } }
       save();
       render();
       if (repo.draft) openCheckout();
@@ -1041,7 +1029,7 @@ window.Pleorder = {
   },
   runCommand,
   suspend() { save(); },
-  receiveNative(e) {
+  async receiveNative(e) {
     if (e.type === "visibility") { if (!e.visible) save(); pageActive = e.visible; }
     if (e.type === "vehicle-destination") {
       if (repo.updateVehicleDestination(e.destination)) {
@@ -1056,12 +1044,15 @@ window.Pleorder = {
       render();
     }
     if (e.type === "external-state") {
+      const previousHome = JSON.stringify(repo.home);
       repo = OrderRepository.restore(e.state);
       paused = repo.simulation?.paused ?? true;
       rate = repo.simulation?.rate || 10;
       lastOrder = repo.activeOrder()?.id;
       lastWall = Date.now();
       render();
+      if (previousHome !== JSON.stringify(repo.home) && ["place-picker", "address"].includes(modalKind)) { close(); map.focusHome(); }
+      else syncVoicePlaceFields();
     }
     if (e.type === "speech-ready") {
       listening = true;
@@ -1119,15 +1110,17 @@ window.Pleorder = {
     if (e.type === "gleo-action") {
       let r;
       try {
-        r = repo.handleAction(e.name, e.params);
+        r = await PleorderVoice.dispatch(repo, e.name, e.params);
       } catch {
         r = { status: "fail", message: "요청을 처리하지 못했어요." };
       }
       startClock(r);
       save();
       render();
-      if (r.draft) openCheckout();
+      if (r.locationChanged) { scope = "home"; close(); map.focusHome(); }
+      else if (r.draft) openCheckout();
       else if (r.order) close();
+      else syncVoicePlaceFields();
       const payload = PleorderCore.gleoCallback(e.name, r);
       if (window.Native) Native.replyAction(JSON.stringify(payload));
     }

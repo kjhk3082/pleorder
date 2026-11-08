@@ -1,4 +1,4 @@
-param([string]$ArtifactDirectory='.cache/gleo-e2e',[switch]$Background,[ValidateSet('delivery','pickup','card-retry','reject')][string]$Case='delivery')
+﻿param([string]$ArtifactDirectory='.cache/gleo-e2e',[switch]$Background,[ValidateSet('delivery','pickup','card-retry','reject','addresses')][string]$Case='delivery')
 $ErrorActionPreference='Stop'
 $adb=Join-Path $env:USERPROFILE 'Android/Sdk/platform-tools/adb.exe'
 New-Item -ItemType Directory -Force $ArtifactDirectory | Out-Null
@@ -17,7 +17,7 @@ function Invoke-Device([string]$Expression){
     return ($output -join "`n" | ConvertFrom-Json)
 }
 function Read-TestState {
-    Invoke-Device '(()=>{const r=JSON.parse(Native.loadState());return {draft:r.draft?.id,total:r.draft?.total,orders:r.orders.length,transactions:r.payments.transactions.length,selectedCard:r.payments.selected,stage:r.orders[0]?.stage,payment:r.orders[0]?.payment?.status,orderTotal:r.orders[0]?.total,mode:r.orders[0]?.mode}})()'
+    Invoke-Device '(()=>{const r=JSON.parse(Native.loadState());return {draft:r.draft?.id,total:r.draft?.total,orders:r.orders.length,transactions:r.payments.transactions.length,selectedCard:r.payments.selected,stage:r.orders[0]?.stage,payment:r.orders[0]?.payment?.status,orderTotal:r.orders[0]?.total,mode:r.orders[0]?.mode,place:r.home?.name,detail:r.home?.detail,choices:r.destinationSearch?.places?.length}})()'
 }
 $originalState=Invoke-Device 'new Promise((resolve,reject)=>{const started=Date.now();const check=()=>{if(window.Pleorder)resolve(Native.loadState());else if(Date.now()-started>8000)reject(Error("Pleorder not ready"));else setTimeout(check,100)};check()})'
 $original=$originalState|ConvertFrom-Json
@@ -35,6 +35,7 @@ try {
     & python tools/emulator-audio-test.py .cache/voice/status.pcm --target gleo
     Start-Sleep -Seconds 7
     $steps=switch($Case){
+        'addresses' {@('destination','choose-destination','address-detail','correct-detail','destination2','reject-destination')}
         'pickup' {@('pickup','confirm','status')}
         'card-retry' {@('order','card-b','confirm','card-a','confirm','status')}
         'reject' {@('order','decline')}
@@ -51,6 +52,14 @@ try {
         Write-Output ($fixture+': '+($state|ConvertTo-Json -Compress))
         & node tools/device-eval.cjs --screenshot (Join-Path $ArtifactDirectory ($fixture+'.png'))
         & python -c "import subprocess,pathlib,sys;pathlib.Path(sys.argv[1]).write_bytes(subprocess.check_output([sys.argv[2],'-s','emulator-5554','exec-out','screencap','-p']))" (Join-Path $ArtifactDirectory ($fixture+'-system.png')) $adb
+        if($Case -eq 'addresses'){
+            if($fixture -in @('destination','destination2') -and $state.choices -lt 1){throw 'Gleo did not search for a destination'}
+            if($fixture -eq 'choose-destination' -and $state.place -ne '강남구청'){throw 'Gleo did not choose the real district office'}
+            if($fixture -eq 'address-detail' -and $state.detail -notmatch '101\s*동\s*202\s*호'){throw 'Gleo did not preserve unit digits'}
+            if($fixture -eq 'correct-detail' -and $state.detail -notmatch '102\s*동\s*1002\s*호'){throw 'Gleo did not correct unit digits'}
+            if($fixture -eq 'reject-destination' -and ($state.choices -or $state.place -ne '강남구청')){throw 'Rejected destination changed the address'}
+            if($state.orders -ne 0 -or $state.transactions -ne 0){throw 'Address input created an order/payment'}
+        }
         if($fixture -in @('order','pickup') -and -not $state.draft){throw 'Gleo did not create a draft'}
         if($fixture -in @('card-a','card-b') -and $state.orders -ne 0){throw 'A card change must not create an order'}
         if($fixture -eq 'decline' -and ($state.orders -ne 0 -or $state.draft)){throw 'Gleo did not discard the unpaid order'}

@@ -71,3 +71,10 @@ powershell.exe -NoProfile -File .\tools\New-SpeechFixtures.ps1
 - DO 별도 Activity와 태스크 재생성 후 **D단 정차·콜드 실행·27km/h에서 실제 시스템 화면 표시를 확인했다**. 일반 CarPackageManager는 false지만 Pleos HomeScreen은 새 태스크를 DO=true로 판정한다. 일반 API false를 차단의 직접 원인으로 단정했던 중간 판단을 정정한다. [진단 근거](korea-driving-policy.md).
 - 앱 마이크 버튼은 `showAssist()`로 Gleo를 연다. 실제 버튼 클릭→합성 음성 인식→Gleo 현황 콜백을 확인했다.
 - 원본 참조 P PNG를 웹/Android에 공통 적용하고 같은 크기의 비교 이미지를 확인했다. 원본과 픽셀 동일한 추출물은 아니다.
+
+## Gleo 주소 입력 후속 검증 · 2026-11-09
+
+- 목적지 검색·선택, 상세주소 입력·정정, 새 목적지 선택 취소를 실제 Gleo 음성 경로에서 확인했다. 앱이 가려진 D단 정차 상태에서도 처리된다.
+- 주소창 마이크를 UI 트리 기반 좌표로 클릭 → `showAssist` → Gleo 상세주소 액션 → 저장 성공을 확인했다. 입력은 Windows 한국어 합성 음성이다.
+- `npm test` 100/100, JavaScript 구문 검사 및 Android APK 빌드/설치 성공. 사용자 주소·주문·기어 복원.
+- [주소 검증](voice-addresses.md), [설치 경로](local-toolchain.md), [지도 선택지](map-options.md).

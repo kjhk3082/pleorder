@@ -8,7 +8,7 @@ foreach($item in @('settings.gradle','build.gradle','gradle.properties','app')){
  $source=Join-Path $sourceRoot $item
  foreach($file in Get-ChildItem -LiteralPath $source -Recurse -File){
   if($file.FullName -match '\\(build|\.gradle)\\'){continue}
-  $relative=[IO.Path]::GetRelativePath($sourceRoot,$file.FullName)
+  $relative=$file.FullName.Substring($sourceRoot.Length).TrimStart([char]'\',[char]'/')
   $destination=Join-Path $buildRoot $relative
   New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination)|Out-Null
   Copy-Item -LiteralPath $file.FullName -Destination $destination -Force
@@ -23,7 +23,7 @@ if($Install){
  $adb=Join-Path $env:ANDROID_HOME 'platform-tools\adb.exe'
  & $adb -s emulator-5554 install -r $apk
  if($LASTEXITCODE -ne 0){throw 'Install failed'}
- # Pleos caches each task's DO status. Recreate tasks after manifest updates.
+ # Recreate old tasks so Pleos re-evaluates the updated Activity metadata.
  & $adb -s emulator-5554 shell am force-stop --user current dev.pleorder.app
  & $adb -s emulator-5554 shell am start --user current -W -n dev.pleorder.app/.DrivingActivity
 }

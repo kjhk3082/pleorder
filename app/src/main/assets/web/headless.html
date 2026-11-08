@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'self' 'unsafe-inline'; connect-src 'self'"
+      content="default-src 'none'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://photon.komoot.io"
     />
   </head>
   <body>
@@ -12,9 +12,9 @@
     <script src="real-catalog.js"></script>
     <script src="payments.js"></script>
     <script src="catalog.js"></script>
-    <script src="core.js"></script>
+    <script src="core.js"></script><script src="location-search.js"></script><script src="voice-location.js"></script>
     <script>
-      function dispatch(name, params, state, id) {
+      async function dispatch(name, params, state, id) {
         const repo = state
           ? PleorderCore.OrderRepository.restore(state)
           : new PleorderCore.OrderRepository();
@@ -35,7 +35,7 @@
             ),
           );
         const previous = repo.orders.length;
-        const r = repo.handleAction(name, params);
+        const r = await PleorderVoice.dispatch(repo, name, params);
         repo.simulation = {
           paused:
             repo.orders.length > previous

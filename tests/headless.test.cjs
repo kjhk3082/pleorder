@@ -10,6 +10,7 @@ function engine() {
   let output;
   const context = {
     PleorderCore: Core,
+    PleorderVoice: require("../app/src/main/assets/web/voice-location.js"),
     Date: { now: () => 0 },
     Headless: {
       ready() {},
@@ -25,22 +26,22 @@ function engine() {
   vm.createContext(context);
   vm.runInContext(script, context);
   return {
-    call(name, params, state) {
-      context.dispatch(name, params, JSON.stringify(state), 42);
+    async call(name, params, state) {
+      await context.dispatch(name, params, JSON.stringify(state), 42);
       return output;
     },
   };
 }
-test("headless Gleo contract prepares then confirms without a UI", () => {
+test("headless Gleo contract prepares then confirms without a UI", async () => {
   const e = engine();
   const s = JSON.parse(new OrderRepository({ now: 0 }).serialize());
-  const draft = e.call(
+  const draft = await e.call(
     "PREPARE_FOOD_ORDER",
     { query: "비빔밥", fulfillment: "delivery" },
     s,
   );
   assert.equal(draft.response.status, "asking");
-  const order = e.call(
+  const order = await e.call(
     "CONFIRM_FOOD_ORDER",
     { draftId: draft.state.draft.id, confirmation: true },
     draft.state,
@@ -52,17 +53,17 @@ test("headless Gleo contract prepares then confirms without a UI", () => {
   assert.equal(order.state.orders.length, 1);
   assert.equal(order.state.simulation.paused, false);
 });
-test("headless Gleo duplicate confirmations create one charge", () => {
+test("headless Gleo duplicate confirmations create one charge", async () => {
   const e = engine();
   const r = new OrderRepository({ now: 0 });
   r.prepare({ mode: "pickup", items: [{ menuId: "bibimbap", quantity: 1 }] });
   const id = r.draft.id;
-  let out = e.call(
+  let out = await e.call(
     "CONFIRM_FOOD_ORDER",
     { draftId: id, confirmation: true },
     JSON.parse(r.serialize()),
   );
-  out = e.call(
+  out = await e.call(
     "CONFIRM_FOOD_ORDER",
     { draftId: id, confirmation: true },
     out.state,

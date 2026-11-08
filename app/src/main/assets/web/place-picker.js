@@ -12,23 +12,7 @@ window.PleorderPlaces = (() => {
       iconSize: [38, 46],
       iconAnchor: [19, 44],
     });
-  function normalize(feature) {
-    const p = feature.properties || {},
-      point = feature.geometry?.coordinates;
-    if (!point || !Number.isFinite(point[0]) || !Number.isFinite(point[1]))
-      return null;
-    const address = [p.state, p.city, p.district, p.street, p.housenumber]
-      .filter(Boolean)
-      .filter((v, i, a) => a.indexOf(v) === i)
-      .join(" ");
-    return {
-      name: p.name || p.street || "선택한 장소",
-      description: address || p.name || "",
-      lat: point[1],
-      lng: point[0],
-      source: "OpenStreetMap / Photon",
-    };
-  }
+  const normalize = PleorderLocation.normalize;
   async function get(path) {
     if (cache.has(path)) return cache.get(path);
     const response = await fetch(endpoint + path, {
@@ -126,9 +110,9 @@ window.PleorderPlaces = (() => {
         const results = document.getElementById("placeResults");
         results.textContent = "장소를 찾고 있어요…";
         try {
-          const places = await get(
-            `/api/?q=${encodeURIComponent(q)}&lat=${initial.lat}&lon=${initial.lng}&countrycode=KR&limit=6&lang=default`,
-          );
+          const {detail} = PleorderLocation.splitQuery(q);
+          const places = await PleorderLocation.search(q, initial);
+          if (detail) document.getElementById("placeDetail").value = detail.slice(0,80);
           if (token !== sequence || !picker) return;
           results.innerHTML = places.length
             ? places
@@ -183,6 +167,7 @@ window.PleorderPlaces = (() => {
     open,
     destroy,
     normalize,
+    selected: () => candidate && ({...candidate, name:document.getElementById("placeName").value.trim(), description:document.getElementById("placeAddress").value.trim(), detail:document.getElementById("placeDetail").value.trim()}),
     search: (query) => {
       const field = document.getElementById("placeQuery");
       if (field) {

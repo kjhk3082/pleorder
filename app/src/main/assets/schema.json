@@ -2,7 +2,7 @@
   "packageName": "dev.pleorder.app",
   "appDescription": "Pleorder prepares food delivery and pickup orders using public restaurant data. Orders and payments are simulated and require explicit confirmation.",
   "invokeWord": "플레오더",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "actionCalls": [
     {
       "type": "function",
@@ -19,7 +19,10 @@
             },
             "fulfillment": {
               "type": "string",
-              "enum": ["delivery", "pickup"],
+              "enum": [
+                "delivery",
+                "pickup"
+              ],
               "description": "delivery sends food to the selected delivery location; pickup collects it at the selected restaurant. No real order is sent."
             },
             "quantity": {
@@ -28,11 +31,17 @@
             },
             "timing": {
               "type": "string",
-              "enum": ["soon", "arrival"],
+              "enum": [
+                "soon",
+                "arrival"
+              ],
               "description": "soon prepares now; arrival schedules simulated delivery around the driver's home arrival."
             }
           },
-          "required": ["query", "fulfillment"]
+          "required": [
+            "query",
+            "fulfillment"
+          ]
         }
       }
     },
@@ -55,11 +64,17 @@
             },
             "paymentMethod": {
               "type": "string",
-              "enum": ["A", "B", "C"],
+              "enum": [
+                "A",
+                "B",
+                "C"
+              ],
               "description": "Registered test card label selected by the user, when changing the payment method."
             }
           },
-          "required": ["confirmation"]
+          "required": [
+            "confirmation"
+          ]
         }
       }
     },
@@ -73,6 +88,70 @@
           "type": "object",
           "properties": {},
           "required": []
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "component": "service",
+        "name": "SEARCH_DELIVERY_DESTINATION",
+        "description": "Search for a delivery destination in Pleorder. Returns numbered real places for the user to choose. Does not change vehicle navigation or save a destination until confirmed. Use when the user asks to set or change the food delivery address, hotel or destination.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Place name or street address spoken by the user. Exclude building units and room numbers; use SET_DELIVERY_ADDRESS_DETAIL for them."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "component": "service",
+        "name": "CONFIRM_DELIVERY_DESTINATION",
+        "description": "Confirm or reject a previously searched Pleorder delivery destination. Call only after the user selects a numbered result or explicitly confirms the single result. Never invent coordinates.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "selection": {
+              "type": "number",
+              "description": "The numbered result chosen by the user, starting at 1. May be omitted if there is only one result."
+            },
+            "confirmation": {
+              "type": "boolean",
+              "description": "True when the user chooses or confirms a result. False when the user rejects or cancels the location selection."
+            }
+          },
+          "required": [
+            "confirmation"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "component": "service",
+        "name": "SET_DELIVERY_ADDRESS_DETAIL",
+        "description": "Save or correct the building unit, room number, floor or lobby for the Pleorder delivery destination. Read the saved detail back. If destination selection is pending, attach it to the pending selection. Do not change vehicle navigation.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "detail": {
+              "type": "string",
+              "description": "Only the address detail spoken by the user. Preserve all building and room digits exactly. Maximum 80 characters. Use an empty string only when the user explicitly asks to clear the address detail."
+            }
+          },
+          "required": [
+            "detail"
+          ]
         }
       }
     }

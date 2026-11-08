@@ -75,8 +75,8 @@ test('unknown vehicle policy remains closed; Korean policy allows voice and pres
  assert.equal(s.policy.keyboard,true);assert.equal(s.policy.setup,false);
  s.setPolicy({requiresDo:true,activeRestrictions:4,maxStringLength:12});assert.equal(s.text('1234567890123456').length,12);
 });
-test('Gleo shipped schema uses supported property types without examples and exactly three services',()=>{
+test('Gleo shipped schema uses supported property types without examples and six services for orders and delivery addresses',()=>{
  const schema=JSON.parse(fs.readFileSync('app/src/main/assets/schema.json','utf8'));
- assert.equal(schema.actionCalls.length,3);
+ assert.equal(schema.actionCalls.length,6);
  for(const {function:f} of schema.actionCalls){assert.equal(f.component,'service');for(const p of Object.values(f.parameters.properties)){assert.ok(['string','number','boolean','array'].includes(p.type));assert.doesNotMatch(p.description,/such as|for example/i);}}
 });

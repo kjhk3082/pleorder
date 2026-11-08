@@ -13,7 +13,7 @@
 - 테스트 카드 등록·해제·기본 수단, 슬라이드/명시적 음성 승인, A/B/C 카드별 승인·한도 부족·결과 확인, 중복 결제 방지·환불
 - 매장 거절·취소, 조리 지연, 라이더 배정 지연·재배정, 수령인 부재, 픽업 지연, 누락 문의
 - 주문·결제 수단·금액·문제 상황을 설명하는 Gleo 음성 흐름, 별도 Pleos STT/TTS 어댑터
-- Gleo의 세 가지 공식 Broadcast/Callback 계약, 화면 없는 백그라운드 처리, 앱 내 `assets/schema.json`
+- 주문 3개·배송지 3개의 Gleo Broadcast/Callback 계약, 화면 없는 백그라운드 처리, 앱 내 `assets/schema.json`
 - 완료 시간·문 앞 샘플 사진, 지역·최근 주문 추천, 주소 관리, 앱 재시작 복원
 - 장소 검색·지도 핀 선택·상세주소 음성 입력, 차량 내비 목적지 조회와 숙소 주변 추천 제안
 - 유리 질감 화면, 라이트/다크 테마, 모션 줄이기, 주문 음성 알림 설정
@@ -57,7 +57,7 @@ Pleos Emulator에서 전체 탐색·설정은 **주차 상태**, 간결한 음�
 | `app/src/main/assets/web/map.js` | 지도, 도로 경로, 가상 차량·라이더 |
 | `app/src/main/assets/web/app.js` | 화면 상호작용과 Android 브리지 |
 | `app/src/main/java/dev/pleorder/app` | 실제 Pleos 음성·위치·내비게이션 어댑터 및 Gleo 백그라운드 수신 |
-| `app/src/main/assets/schema.json` | Gleo 기능 세 개 등록 계약 |
+| `app/src/main/assets/schema.json` | Gleo 주문·배송지 기능 여섯 개 등록 계약 |
 | `tests` | 주문·결제·이벤트의 회귀 검사 |
 
 ## Gleo 및 실제 SDK의 경계
@@ -79,3 +79,5 @@ FusedLocation은 실제 차량 좌표를 표시할 수 있습니다. 다른 좌�
 - [이미지·폰트·지도 출처](docs/design/asset-provenance.md)
 
 OSM 공개 타일·OSRM·Photon 데모 서버는 소규모 개발 확인에 사용합니다. 운영 트래픽은 별도 제공자 또는 자체 서버로 전환해야 합니다. 타일을 일괄 다운로드하지 않습니다. 매장 데이터는 ODbL 출처·원본 링크를 표시하며, 도시 내 모든 영업점의 최신 상태를 보장하지 않습니다.
+
+목적지·동호수 Gleo 입력: [검증 및 동작](docs/testing/voice-addresses.md). 개발 도구 위치: [로컬 환경](docs/testing/local-toolchain.md).

@@ -46,6 +46,6 @@
 
 `tools/New-SpeechFixtures.ps1`로 음성을 생성하고 `tools/Test-GleoVoice.ps1 -Background -Case card-retry`로 실행한다. 앱을 먼저 설치·실행해야 한다. `tools/emulator-audio-test.py`는 로컬 실행 중 에뮬레이터의 gRPC 인증을 메모리에서만 사용한다. 별도로 설치한 `grpcio`·`protobuf`가 필요하다. 테스트 산출물은 `.cache`에만 기록한다.
 
-독립 SpeechToText/TextToSpeech SDK의 ON_DEVICE 오류와 Gleo 성공은 같은 상태가 아니다. 이번 성공은 Gleo가 제공하는 음성·함수 호출 경로의 성공이다. 앱의 주소 입력 등 SDK 직접 호출은 별도 검증 대상이다.
+독립 SpeechToText/TextToSpeech SDK의 ON_DEVICE 오류와 Gleo 성공은 같은 상태가 아니다. 이번 성공은 Gleo가 제공하는 음성·함수 호출 경로의 성공이다. 주소 입력은 후속 수정에서 Gleo 경로로 전환하고 목적지·동호수 입력을 검증했다. [주소 후속 검증](voice-addresses.md)을 참고한다. 독립 SDK 자체의 모델 오류를 해결했다는 뜻은 아니다.
 
 주문 마이크 버튼은 독립 STT 대신 [Android showAssist](https://developer.android.com/reference/android/app/Activity#showAssist(android.os.Bundle))로 기본 어시스턴트 Gleo를 연다. 12:45:18 `ASSIST_REQUEST shown=true` → 12:45:21 현황 요청 음성 인식 → 12:45:23 `GET_FOOD_ORDER_STATUS` 성공을 확인했다. 단순 `ACTION_ASSIST` Activity 실행은 이 이미지에서 마이크를 자동으로 열지 않아 사용하지 않았다.

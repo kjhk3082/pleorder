@@ -61,11 +61,11 @@ public class MainActivity extends Activity {
         String action=GleoActions.normalize(intent.getAction());
         if(BuildConfig.DEBUG&&intent.hasExtra("qaSpeechFile")){String name=intent.getStringExtra("qaSpeechFile");if(java.util.Set.of("order.pcm","confirm.pcm","status.pcm","decline.pcm","card-a.pcm","card-b.pcm","cancel.pcm").contains(name)){handler.postDelayed(()->{try{speech.listen(java.nio.file.Files.readAllBytes(new java.io.File(getFilesDir(),name).toPath()));}catch(Exception e){Log.w("PleorderSpeech","PCM_MISSING");}},1800);}return;}
         if(BuildConfig.DEBUG&&intent.hasExtra("qaSpeak")){handler.postDelayed(()->speech.speak("플레오더입니다. 배달과 픽업을 음성으로 주문할 수 있어요."),1500);return;}
-        if(!java.util.Set.of("PREPARE_FOOD_ORDER","CONFIRM_FOOD_ORDER","GET_FOOD_ORDER_STATUS").contains(action==null?"":action))return;
+        if(!java.util.Set.of("PREPARE_FOOD_ORDER","CONFIRM_FOOD_ORDER","GET_FOOD_ORDER_STATUS","SEARCH_DELIVERY_DESTINATION","CONFIRM_DELIVERY_DESTINATION","SET_DELIVERY_ADDRESS_DETAIL").contains(action==null?"":action))return;
         try{
             String raw=intent.getStringExtra("ACTION_PARAM");if(raw!=null&&raw.length()>8192)throw new IllegalArgumentException("oversized");
             JSONObject params=new JSONObject();if(raw!=null){Object value=new org.json.JSONTokener(raw).nextValue();if(value instanceof String)value=new JSONObject((String)value);if(!(value instanceof JSONObject))throw new IllegalArgumentException("object required");JSONObject obj=(JSONObject)value;params=obj.optJSONObject("actionParameters");if(params==null)params=obj;}
-            else if(intent.getExtras()!=null)for(String key:new String[]{"query","fulfillment","quantity","timing","draftId","confirmation","paymentMethod"})if(intent.hasExtra(key))params.put(key,intent.getExtras().get(key));
+            else if(intent.getExtras()!=null)for(String key:new String[]{"query","fulfillment","quantity","timing","draftId","confirmation","paymentMethod","selection","detail"})if(intent.hasExtra(key))params.put(key,intent.getExtras().get(key));
             send(new JSONObject().put("type","gleo-action").put("name",action).put("params",params));
             Log.i("PleorderGleo","ACTION_RECEIVED "+action);
         }catch(Exception e){reply(action,"fail","Invalid action parameters.","[]");}

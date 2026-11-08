@@ -389,6 +389,61 @@
       };
       return true;
     }
+    addressChangeIssue() {
+      if (this.activeOrder() || this.payments.transactions.some(p => p.status === "pending"))
+        return result("fail", "진행 중인 주문 또는 결제 확인을 마친 뒤 배송지를 변경해 주세요. 기존 주문의 주소는 바뀌지 않았어요.");
+      return null;
+    }
+    setDeliveryPlace(place) {
+      const issue = this.addressChangeIssue(); if (issue) return issue;
+      if (!place || !Number.isFinite(place.lat) || !Number.isFinite(place.lng) || Math.abs(place.lat)>90 || Math.abs(place.lng)>180 || !place.name || !place.description)
+        return result("fail", "장소와 주소를 다시 확인해 주세요.");
+      const previous = this.draft;
+      this.home = {...place, detail: String(place.detail || "").trim().slice(0,80)};
+      this.preferences.addressDetail = this.home.detail;
+      this.preferences.scope = "home";
+      this.routeMetrics = null;
+      this.gleoQuote = null;
+      this.destinationSearch = null;
+      this.draft = null;
+      let rebuilt;
+      if (previous) rebuilt = this.prepare({items:previous.items,mode:previous.mode,timing:previous.timing,handoff:previous.handoff,request:previous.request});
+      const index = this.savedPlaces.findIndex(p=>p.id === this.home.id);
+      if(index >= 0) this.savedPlaces[index] = {...this.home};
+      else this.savedPlaces.push({...this.home});
+      return result("success", `배달받을 곳을 ${this.home.name}, ${this.home.description}${this.home.detail ? ", "+this.home.detail : ""}(으)로 설정했어요.${previous ? rebuilt?.draft ? " 결제 전 변경된 주소와 주문을 다시 확인해 주세요." : " 기존 장바구니는 새 배송지에서 주문할 수 없어 비웠어요. 가까운 매장을 다시 골라 주세요." : ""} 차량 내비 목적지는 변경하지 않았어요.`, {location:this.home,locationChanged:true});
+    }
+    setDeliveryDetail(detail) {
+      if (typeof detail !== "string" || detail.trim().length>80)
+        return result("asking", "동·호수나 수령할 층을 80자 이내로 알려 주세요.");
+      const issue = this.addressChangeIssue(); if (issue) return issue;
+      const pending = this.destinationSearch;
+      if(pending && (pending.expiresAt < Date.now() || pending.homeFingerprint !== JSON.stringify(this.home))) {
+        this.destinationSearch=null;
+        return result("asking", "선택 중이던 장소가 만료됐어요. 기존 배송지는 유지했어요. 장소를 다시 검색해 주세요.");
+      }
+      if(pending) {
+        pending.detail=detail.trim();
+        return result("asking", `${pending.detail ? "상세주소 "+pending.detail+"를 입력했어요." : "선택 중인 장소의 상세주소를 지웠어요."} 검색한 장소의 번호를 선택하면 함께 저장할게요.`);
+      }
+      if(!this.home) return result("asking", "먼저 배달받을 장소를 검색하고 선택해 주세요.");
+      const r=this.setDeliveryPlace({...this.home,detail:detail.trim()});
+      if(r.status === "success") r.message=`${this.home.name}의 상세주소를 ${this.home.detail ? this.home.detail+"(으)로 저장했어요." : "지웠어요."} ${this.draft ? "결제 전 새 주소를 다시 확인해 주세요." : ""}`;
+      return r;
+    }
+    confirmDeliveryDestination(params) {
+      if(params.confirmation === false) { this.destinationSearch=null; return result("success","장소 선택을 취소했어요. 기존 배송지를 유지할게요."); }
+      const pending=this.destinationSearch;
+      if(!pending || pending.expiresAt<Date.now() || pending.homeFingerprint!==JSON.stringify(this.home)) {
+        this.destinationSearch=null;
+        return result("asking","장소 검색 결과가 만료됐거나 배송지가 바뀌었어요. 장소 이름으로 다시 검색해 주세요.");
+      }
+      const number=params.selection === undefined && pending.places.length===1 ? 1 : params.selection;
+      if(params.confirmation !== true || !Number.isInteger(number) || number<1 || number>pending.places.length)
+        return result("asking",`검색한 장소 중 1번부터 ${pending.places.length}번까지 번호와 선택 여부를 알려 주세요.`);
+      const place=pending.places[number-1];
+      return this.setDeliveryPlace({...place,id:place.id||`voice-${place.lat.toFixed(5)}-${place.lng.toFixed(5)}`,detail:pending.detail || place.detail || ""});
+    }
     available(menu) {
       return (
         menu &&
@@ -984,28 +1039,7 @@
           { open: "place-search", query: destinationQuery[1] },
         );
       const addressDetail = t.match(/^상세\s*주소(?:는|를)?\s+(.+)$/);
-      if (addressDetail) {
-        if (
-          this.activeOrder() ||
-          this.payments.transactions.some((p) => p.status === "pending")
-        )
-          return result(
-            "asking",
-            "진행 중인 주문 또는 결제 확인을 먼저 마쳐 주세요.",
-          );
-        this.preferences.addressDetail = addressDetail[1].slice(0, 80);
-        if (this.home) this.home.detail = this.preferences.addressDetail;
-        if (this.draft) {
-          if (this.draft.address)
-            this.draft.address.detail = this.preferences.addressDetail;
-          this.draft.id = `draft-${this.clock}-${++this.counter}`;
-        }
-        return result(
-          "asking",
-          `상세주소를 ${this.preferences.addressDetail}로 입력했어요. 내용을 확인해 주세요.`,
-          { draft: this.draft },
-        );
-      }
+      if (addressDetail) return this.setDeliveryDetail(addressDetail[1]);
       if (
         /못\s*받|안\s*받|받을\s*수\s*없|완료.*(안|못)|결제.*(하지\s*마|안\s*할|아니)/.test(
           t,
@@ -1187,6 +1221,8 @@
     handleAction(name, params = {}) {
       if (!params || typeof params !== "object" || Array.isArray(params))
         return result("fail", "올바르지 않은 요청이에요.");
+      if (name === "CONFIRM_DELIVERY_DESTINATION") return this.confirmDeliveryDestination(params);
+      if (name === "SET_DELIVERY_ADDRESS_DETAIL") return this.setDeliveryDetail(params.detail);
       if (name === "GET_FOOD_ORDER_STATUS") return this.draft ? this.quoteForGleo() : this.status();
       if (name === "CONFIRM_FOOD_ORDER") {
         // Gleo may not retain opaque IDs between turns. Resolve only the quote
@@ -1258,10 +1294,13 @@
     }
   }
   function gleoCallback(name, r) {
+    const location = ["SEARCH_DELIVERY_DESTINATION","CONFIRM_DELIVERY_DESTINATION","SET_DELIVERY_ADDRESS_DETAIL"].includes(name);
     return {
       functionName: name,
       status: r.status,
-      message: r.status === "success"
+      message: location
+        ? "Report the delivery location result in data. Read place names and addresses, never coordinates. Ask for the numbered choice when needed. This changes only the app delivery location, not vehicle navigation."
+        : r.status === "success"
         ? "This action completed in a simulation. State that no real order or payment was made, and report the details in data."
         : r.status === "asking"
           ? "This simulated order requires the user's explicit confirmation or missing details. Read the amount and payment method in data."
@@ -1275,6 +1314,8 @@
         total: r.draft?.total ?? r.order?.total,
         payment: r.payment || r.order?.payment,
         stage: r.order?.stage,
+        candidates: r.candidates,
+        location: r.location && {name:r.location.name,address:r.location.description,detail:r.location.detail},
       }]),
       mode: "voice",
     };
