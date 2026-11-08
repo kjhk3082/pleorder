@@ -18,7 +18,7 @@ PleorderRealCatalog.ready.then(()=>{
     text('summaryTitle',d?(r.store(d.storeId)?.name||'선택한 매장'):o?r.status().message:(r.home?.placeName||r.home?.name||'배송지를 먼저 설정해 주세요'));
     text('summarySubtitle',d?d.items.map(i=>`${i.name} ${i.quantity}개`).join(', '):o?`${r.store(o.storeId)?.name} · ${o.mode==='pickup'?'픽업':'배달'}`:(r.home?.description||'Gleo에게 배달받을 곳을 말씀해 주세요.'));
     text('amountLabel',d?'총 결제금액':o?'결제금액':'저장된 카드');
-    text('amount',d?cash(d.total):o?cash(o.total):card?`카드 ${card.label}`:'없음');
+    text('amount',d?cash(d.total):o?cash(o.total):card?card.name:'없음');
     text('card',d?`${card?.name||'카드 등록 필요'} · ${card?.last4||''} / ${d.mode==='pickup'?'매장 픽업':d.address?.name||'선택한 배송지'}`:o?`${o.payment?.name||''} · ${o.payment?.last4||''}`:card?`${card.name} · ${card.last4}`:'');
     const remain=o?Math.max(0,Math.ceil(((o.mode==='delivery'?o.deliveryAt:o.readyAt)-r.clock)/60000)):0;
     text('approvalHint',d?'금액과 카드를 확인한 뒤 음성으로 승인해 주세요.':o?(o.stage==='completed'?'맛있게 드세요':o.stage==='cancelled'?'환불 상태는 “현황 듣기”로 확인해 주세요':`${o.mode==='delivery'?'배달 도착':'픽업 준비'}까지 약 ${remain}분`):'주문 내용 확인 후에만 결제합니다.');

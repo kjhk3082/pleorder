@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://photon.komoot.io"
+      content="default-src 'none'; script-src 'self' 'unsafe-inline' https://oapi.map.naver.com https://maps.apigw.ntruss.com; connect-src 'self' https://oapi.map.naver.com https://maps.apigw.ntruss.com https://map.pstatic.net https://nrbe.pstatic.net https://photon.komoot.io"
     />
   </head>
   <body>
@@ -12,7 +12,7 @@
     <script src="real-catalog.js"></script>
     <script src="payments.js"></script>
     <script src="catalog.js"></script>
-    <script src="core.js"></script><script src="location-search.js"></script><script src="voice-location.js"></script>
+    <script src="core.js"></script><script src="map-sdk.js"></script><script src="location-search.js"></script><script src="voice-location.js"></script>
     <script>
       async function dispatch(name, params, state, id) {
         const repo = state

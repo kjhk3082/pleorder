@@ -14,6 +14,29 @@ foreach($item in @('settings.gradle','build.gradle','gradle.properties','app')){
   Copy-Item -LiteralPath $file.FullName -Destination $destination -Force
  }
 }
+# Never copy an entire local credential object into assets. Only this public ID.
+$mapConfig=Join-Path $sourceRoot '.local\naver-maps.json'
+$localCertificate=Join-Path $sourceRoot '.local\preview-cert.pem'
+$debugRoot=Join-Path $buildRoot 'app\src\debug'
+if(!(Test-Path -LiteralPath $localCertificate) -and (Test-Path -LiteralPath (Join-Path $debugRoot 'res\xml\pleorder_debug_network.xml'))){
+ [IO.File]::WriteAllText((Join-Path $debugRoot 'AndroidManifest.xml'),'<manifest xmlns:android="http://schemas.android.com/apk/res/android" />')
+}
+if(Test-Path -LiteralPath $mapConfig){
+ $mapId=[string]((Get-Content -LiteralPath $mapConfig -Raw | ConvertFrom-Json).naverClientId)
+ if($mapId -notmatch '^[a-zA-Z0-9_-]{5,80}$'){throw 'Invalid public Naver Maps ID'}
+ $publicMap=@{naverClientId=$mapId}
+ if(Test-Path -LiteralPath $localCertificate){
+  $publicMap.routeEndpoint='https://10.0.2.2:4174/api/directions'
+  # Trust this local certificate only for the emulator's host, in debug builds.
+  $debugRoot=Join-Path $buildRoot 'app\src\debug'
+  New-Item -ItemType Directory -Force -Path (Join-Path $debugRoot 'res\raw'),(Join-Path $debugRoot 'res\xml') | Out-Null
+  Copy-Item -LiteralPath $localCertificate -Destination (Join-Path $debugRoot 'res\raw\pleorder_local_ca.pem') -Force
+  [IO.File]::WriteAllText((Join-Path $debugRoot 'AndroidManifest.xml'),'<manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:networkSecurityConfig="@xml/pleorder_debug_network" /></manifest>')
+  [IO.File]::WriteAllText((Join-Path $debugRoot 'res\xml\pleorder_debug_network.xml'),'<network-security-config><domain-config cleartextTrafficPermitted="false"><domain>10.0.2.2</domain><trust-anchors><certificates src="@raw/pleorder_local_ca" /></trust-anchors></domain-config></network-security-config>')
+ }
+ $publicConfig=$publicMap | ConvertTo-Json -Compress
+ [IO.File]::WriteAllText((Join-Path $buildRoot 'app\src\main\assets\web\map-config.json'),$publicConfig)
+}
 $gradle=Join-Path $env:USERPROFILE '.gradle\wrapper\dists\gradle-8.11.1-bin\bpt9gzteqjrbo1mjrsomdt32c\gradle-8.11.1\bin\gradle.bat'
 & $gradle -p $buildRoot :app:assembleDebug --no-daemon --console=plain
 if($LASTEXITCODE -ne 0){throw 'Pleorder build failed'}

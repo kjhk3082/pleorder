@@ -6,7 +6,7 @@
     <meta name="color-scheme" content="light" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self' https://router.project-osrm.org https://photon.komoot.io; object-src 'none'; base-uri 'none'; frame-src 'none'"
+      content="default-src 'self'; script-src 'self' https://oapi.map.naver.com https://maps.apigw.ntruss.com https://map.pstatic.net https://nrbe.pstatic.net https://nrbe.map.naver.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org https://*.pstatic.net https://static.naver.net; connect-src 'self' https://10.0.2.2:4174 https://oapi.map.naver.com https://maps.apigw.ntruss.com https://map.pstatic.net https://nrbe.pstatic.net https://router.project-osrm.org https://photon.komoot.io; object-src 'none'; base-uri 'none'; frame-src 'none'; upgrade-insecure-requests"
     />
     <link rel="icon" href="logo-mark.png" type="image/png" />
     <title>플레오더</title>
@@ -26,7 +26,7 @@
           </button>
         </nav>
         <div class="header-tools">
-          <span class="demo-label">DEMO</span
+          <button id="demoReset" type="button" class="demo-label" title="데모 초기화" aria-label="DEMO · 처음 상태로 초기화">DEMO</button
           ><button id="walletButton" class="wallet-button"></button>
           <button id="settingsButton" class="icon-button settings-button" aria-label="앱 설정"></button>
         </div>
@@ -68,6 +68,7 @@
               aria-label="배송지 주변 지도와 주문 이동 경로"
             ></div>
             <div id="trackingHud" class="tracking-hud"></div>
+            <div id="motionStatus" class="motion-status" hidden></div>
             <div class="map-buttons">
               <button id="currentLocationButton"></button
               ><button id="homeLocationButton"></button>
@@ -107,13 +108,15 @@
     <script src="real-catalog.js"></script>
     <script src="payments.js"></script>
     <script src="catalog.js"></script>
-    <script src="core.js"></script><script src="location-search.js"></script><script src="voice-location.js"></script>
+    <script src="core.js"></script><script src="map-sdk.js"></script><script src="location-search.js"></script><script src="voice-location.js"></script>
     <script src="checkout.js"></script>
     <script src="vendor/lucide-paths.js"></script>
     <script src="icons.js"></script>
     <script src="product-views.js"></script>
     <script src="ux-policy.js"></script>
     <script src="motion.js"></script>
+    <script src="map-provider.js"></script>
+    <script src="tracking.js"></script>
     <script src="map.js"></script>
     <script src="place-picker.js"></script>
     <script src="boot.js"></script>

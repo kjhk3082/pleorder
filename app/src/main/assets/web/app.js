@@ -38,7 +38,7 @@ const hints = [
   "치킨 먹고 싶어",
   "최근 주문한 메뉴로 담아 줘",
   "집 주변 국밥 추천해 줘",
-  "B 카드로 바꿔 줘",
+  "신한카드로 바꿔 줘",
   "문 앞에 놓아 줘",
   "배달기사님 언제 도착해?",
   "결제 승인",
@@ -226,7 +226,7 @@ function render() {
   PleorderMotion.selection($("primaryNav"));
   const card = repo.payments.method();
   $("walletButton").innerHTML =
-    uiIcon("card") + `<span>카드${card ? " · " + card.label : ""}</span>`;
+    cardArt(card) + `<span>${card ? safe(card.name) : "카드 등록"}</span>`;
   $("destinationButton").innerHTML =
     `${safe(repo.home?.name || "배송지 선택")} ${icon("chevron", 18)}`;
   $("destinationLabel").textContent =
@@ -316,7 +316,7 @@ function renderStore(store, recommended = false) {
       .map((id) => {
         const m = repo.menu(id),
           q = cart[id] || 0;
-        return `<article class="store-menu-item"><div class="store-food">${foodArt(m.art)}</div><div><h3>${safe(m.name)}</h3><p>${safe(m.desc)}</p><strong>${cash(m.price)}</strong></div><div class="quantity-control"><button data-quantity="-1" data-id="${id}" aria-label="${m.name} 수량 줄이기">${icon("minus", 18)}</button><output>${q}</output><button data-quantity="1" data-id="${id}" aria-label="${m.name} 수량 늘리기">${icon("plus", 18)}</button></div></article>`;
+        return `<article class="store-menu-item"><div class="store-food">${menuArt(m)}</div><div><h3>${safe(m.name)}</h3><p>${safe(m.desc)}</p><strong>${cash(m.price)}</strong></div><div class="quantity-control"><button data-quantity="-1" data-id="${id}" aria-label="${m.name} 수량 줄이기">${icon("minus", 18)}</button><output>${q}</output><button data-quantity="1" data-id="${id}" aria-label="${m.name} 수량 늘리기">${icon("plus", 18)}</button></div></article>`;
       })
       .join(
         "",
@@ -353,7 +353,7 @@ function openCheckout() {
   modal(
     "주문 · 결제",
     repo.store(d.storeId).name,
-    `<div class="checkout-layout"><div class="checkout-main"><section class="checkout-section"><div class="section-heading"><h3>${d.mode === "delivery" ? "배달받을 곳" : "픽업 매장"}</h3><button class="text-link" data-action="address">변경</button></div><strong class="address-title">${safe(d.mode === "delivery" ? repo.home?.name || "배송지 미설정" : repo.store(d.storeId).name)}</strong><p>${safe(d.mode === "delivery" ? repo.home?.description || "" : repo.store(d.storeId).category)} ${safe(repo.preferences.addressDetail || "")}</p>${d.mode === "delivery" ? `<div class="handoff-options"><button class="${d.handoff === "door" ? "selected" : ""}" data-handoff="door">문 앞에 놓아주세요</button><button class="${d.handoff === "hand" ? "selected" : ""}" data-handoff="hand">직접 받을게요</button></div><label class="field-label" for="deliveryRequest">배달 요청사항</label><input id="deliveryRequest" maxlength="120" class="field" value="${safe(d.request)}" placeholder="예: 벨 누르지 말아주세요">` : ""}</section><section class="checkout-section"><div class="section-heading"><h3>주문 메뉴</h3><button class="text-link" data-action="edit-cart">변경</button></div>${d.items.map((i) => `<div class="detail-row"><span>${safe(i.name)} <b>${i.quantity}개</b></span><strong>${cash(i.price * i.quantity)}</strong></div>`).join("")}</section><section class="checkout-section"><div class="section-heading"><h3>결제 수단</h3><button class="text-link" data-action="choose-card">${card ? "변경" : "등록"}</button></div>${card ? `<button class="selected-payment" data-action="choose-card"><span class="mini-bank-card ${card.color}">${card.label}</span><span><strong>${safe(card.nickname || card.name)} · ${card.last4}</strong><small>${card.provider === "incar" ? "인카페이먼트" : "배달앱 등록 카드"}</small></span>${icon("chevron", 18)}</button>` : '<button class="button outlined full-width" data-action="register-card">결제 카드 등록</button>'}</section></div><aside class="checkout-total"><h3>결제 금액</h3><div class="detail-row"><span>메뉴 금액</span><strong>${cash(d.subtotal)}</strong></div><div class="detail-row"><span>배달팁</span><strong>${cash(d.fee)}</strong></div><div class="detail-row total-row"><span>총 결제금액</span><strong>${cash(d.total)}</strong></div><p class="payment-context">${d.mode === "delivery" ? `${clockText(repo.estimateOrder(d).deliveryAt)} 전후 도착 예정` : `약 ${repo.estimateOrder(d).prepMinutes}분 후 픽업 가능`}</p><div class="checkout-authorize">${card ? `<div id="paymentSlide" class="payment-slide" role="slider" tabindex="0" aria-label="밀어서 ${cash(d.total)} 결제" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="slide-fill"></div><span class="slide-copy">밀어서 ${cash(d.total)} 결제</span><span class="slide-thumb">${icon("arrow", 25)}</span></div><span class="slide-help">음성으로는 “결제 승인”이라고 말해 주세요.</span>` : '<button class="button primary full-width" data-action="register-card">카드 등록하고 결제</button>'}</div><p class="micro-note">실제 청구 없는 데모 결제</p></aside></div>`,
+    `<div class="checkout-layout"><div class="checkout-main"><section class="checkout-section"><div class="section-heading"><h3>${d.mode === "delivery" ? "배달받을 곳" : "픽업 매장"}</h3><button class="text-link" data-action="address">변경</button></div><strong class="address-title">${safe(d.mode === "delivery" ? repo.home?.name || "배송지 미설정" : repo.store(d.storeId).name)}</strong><p>${safe(d.mode === "delivery" ? repo.home?.description || "" : repo.store(d.storeId).category)} ${safe(repo.preferences.addressDetail || "")}</p>${d.mode === "delivery" ? `<div class="handoff-options"><button class="${d.handoff === "door" ? "selected" : ""}" data-handoff="door">문 앞에 놓아주세요</button><button class="${d.handoff === "hand" ? "selected" : ""}" data-handoff="hand">직접 받을게요</button></div><label class="field-label" for="deliveryRequest">배달 요청사항</label><input id="deliveryRequest" maxlength="120" class="field" value="${safe(d.request)}" placeholder="예: 벨 누르지 말아주세요">` : ""}</section><section class="checkout-section"><div class="section-heading"><h3>주문 메뉴</h3><button class="text-link" data-action="edit-cart">변경</button></div>${d.items.map((i) => `<div class="detail-row"><span>${safe(i.name)} <b>${i.quantity}개</b></span><strong>${cash(i.price * i.quantity)}</strong></div>`).join("")}</section><section class="checkout-section"><div class="section-heading"><h3>결제 수단</h3><button class="text-link" data-action="choose-card">${card ? "변경" : "등록"}</button></div>${card ? `<button class="selected-payment" data-action="choose-card">${cardArt(card)}<span><strong>${safe(card.nickname || card.name)} · ${card.last4}</strong><small>${card.provider === "incar" ? "인카페이먼트" : "배달앱 등록 카드"}</small></span>${icon("chevron", 18)}</button>` : '<button class="button outlined full-width" data-action="register-card">결제 카드 등록</button>'}</section></div><aside class="checkout-total"><h3>결제 금액</h3><div class="detail-row"><span>메뉴 금액</span><strong>${cash(d.subtotal)}</strong></div><div class="detail-row"><span>배달팁</span><strong>${cash(d.fee)}</strong></div><div class="detail-row total-row"><span>총 결제금액</span><strong>${cash(d.total)}</strong></div><p class="payment-context">${d.mode === "delivery" ? `${clockText(repo.estimateOrder(d).deliveryAt)} 전후 도착 예정` : `약 ${repo.estimateOrder(d).prepMinutes}분 후 픽업 가능`}</p><div class="checkout-authorize">${card ? `<div id="paymentSlide" class="payment-slide" role="slider" tabindex="0" aria-label="밀어서 ${cash(d.total)} 결제" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="slide-fill"></div><span class="slide-copy">밀어서 ${cash(d.total)} 결제</span><span class="slide-thumb">${icon("arrow", 25)}</span></div><span class="slide-help">음성으로는 “결제 승인”이라고 말해 주세요.</span>` : '<button class="button primary full-width" data-action="register-card">카드 등록하고 결제</button>'}</div><p class="micro-note">실제 청구 없는 데모 결제</p></aside></div>`,
     "checkout",
   );
   if (card) attachSlide({ draftId: d.id, cardId: card.id, total: d.total });
@@ -448,7 +448,7 @@ function openRegistration() {
   modal(
     "카드 등록",
     "테스트 카드만 등록되며 실제 카드 정보는 입력하지 않습니다.",
-    `<form id="cardRegistration"><label class="field-label" for="cardTemplate">등록할 카드</label><select id="cardTemplate" class="field">${(cards.length ? cards : repo.payments.methods).map((c) => `<option value="${c.id}">${c.label} · ${c.name} (${c.last4})${c.registered ? " · 이미 등록됨" : ""}</option>`).join("")}</select><label class="field-label" for="cardNickname">카드 별명</label><input id="cardNickname" class="field" maxlength="24" placeholder="예: 생활비 카드"><div class="card-registration-preview">${uiIcon("card", 30)}<div><strong>안전한 테스트 카드 연결</strong><p>카드번호·CVC·비밀번호를 저장하지 않습니다.</p></div></div><label class="check-row"><input type="checkbox" id="cardConsent" required><span>데모 카드 등록임을 확인했습니다.</span></label><button class="button primary full-width" type="submit">등록하기</button></form>`,
+    `<form id="cardRegistration"><label class="field-label" for="cardTemplate">등록할 카드</label><select id="cardTemplate" class="field">${(cards.length ? cards : repo.payments.methods).map((c) => `<option value="${c.id}">${c.name} (${c.last4})${c.registered ? " · 이미 등록됨" : ""}</option>`).join("")}</select><label class="field-label" for="cardNickname">카드 별명</label><input id="cardNickname" class="field" maxlength="24" placeholder="예: 생활비 카드"><div class="card-registration-preview">${uiIcon("card", 30)}<div><strong>안전한 테스트 카드 연결</strong><p>카드번호·CVC·비밀번호를 저장하지 않습니다.</p></div></div><label class="check-row"><input type="checkbox" id="cardConsent" required><span>데모 카드 등록임을 확인했습니다.</span></label><button class="button primary full-width" type="submit">등록하기</button></form>`,
     "registration",
   );
 }
@@ -592,7 +592,7 @@ function openHistory() {
   modal(
     "주문 내역",
     "",
-    `${repo.orders.map((o) => `<button class="history-order" data-order="${o.id}"><span class="history-food">${foodArt(repo.menu(o.items[0].menuId).art)}</span><span><small>${clockText(o.createdAt)} · ${o.mode === "delivery" ? "배달" : "픽업"} · ${{ accepted: "확인 중", cooking: "조리 중", waiting_rider: "기사님 배정 중", delivering: "배달 중", ready: "픽업 준비", contact_needed: "수령 확인", completed: "완료", cancelled: "취소" }[o.stage]}</small><strong>${safe(repo.store(o.storeId).name)}</strong><p>${o.items.map((i) => `${safe(i.name)} ${i.quantity}개`).join(", ")}</p><b>${cash(o.total)}</b></span>${icon("chevron", 20)}</button>`).join("")}${repo.orders.length ? "" : '<p class="empty-label">아직 진행한 주문이 없어요.</p>'}<h3 class="history-heading">최근에 주문한 가게</h3>${repo.recentOrders.map((o) => `<button class="address-option" data-reorder="${o.menuId}"><span class="history-food small">${foodArt(repo.menu(o.menuId).art)}</span><span><strong>${safe(repo.store(o.storeId).name)}</strong><small>${safe(repo.menu(o.menuId).name)} ${o.quantity}개</small></span><b>다시 주문</b></button>`).join("")}`,
+    `${repo.orders.map((o) => `<button class="history-order" data-order="${o.id}"><span class="history-food">${menuArt(repo.menu(o.items[0].menuId))}</span><span><small>${clockText(o.createdAt)} · ${o.mode === "delivery" ? "배달" : "픽업"} · ${{ accepted: "확인 중", cooking: "조리 중", waiting_rider: "기사님 배정 중", delivering: "배달 중", ready: "픽업 준비", contact_needed: "수령 확인", completed: "완료", cancelled: "취소" }[o.stage]}</small><strong>${safe(repo.store(o.storeId).name)}</strong><p>${o.items.map((i) => `${safe(i.name)} ${i.quantity}개`).join(", ")}</p><b>${cash(o.total)}</b></span>${icon("chevron", 20)}</button>`).join("")}${repo.orders.length ? "" : '<p class="empty-label">아직 진행한 주문이 없어요.</p>'}<h3 class="history-heading">최근에 주문한 가게</h3>${repo.recentOrders.map((o) => `<button class="address-option" data-reorder="${o.menuId}"><span class="history-food small">${menuArt(repo.menu(o.menuId))}</span><span><strong>${safe(repo.store(o.storeId).name)}</strong><small>${safe(repo.menu(o.menuId).name)} ${o.quantity}개</small></span><b>다시 주문</b></button>`).join("")}`,
     "history",
   );
 }
@@ -680,6 +680,21 @@ function centerCurrentLocation() {
     Native.requestLocation();
   }
 }
+function resetDemo() {
+  close();
+  if(window.Native) Native.stopSpeech();
+  clearTimeout(render.searchTimer);
+  repo = repo.resetDemo();
+  paused=true;rate=10;lastWall=Date.now();lastOrder=null;
+  searchQuery='';storeListLimit=30;category='전체';scope='home';cart={};focusedMenu=null;
+  listening=false;awaitingLocationCenter=false;voiceTarget=null;navigationDraft=null;
+  hintIndex=0;lastVoiceAt=0;walletContext='manage';walletChannel='incar';storeTab='menu';menuLimit=12;showSampleMenus=false;
+  $('storeSearch').value='';$('micButton').classList.remove('listening');
+  $('voiceTitle').textContent='이렇게 말해 보세요';$('voiceStatus').textContent='“'+hints[0]+'”';
+  map.reset();save();render();map.focusHome();
+  toast('주문·결제 내역을 지우고 처음 상태로 돌아왔어요.');
+}
+$('demoReset').onclick=resetDemo;
 $("brand").innerHTML = brand();
 $("micButton").innerHTML = icon("mic", 28);
 $("speakButton").innerHTML = icon("volume", 22);
@@ -994,7 +1009,7 @@ function openNavigation() {
   modal(
     "매장을 경유해 목적지로 갈까요?",
     s.name,
-    `<div class="route-stops"><span>현 위치</span>${icon("arrow")}<strong>${safe(s.name)}</strong>${icon("arrow")}<span>${safe((repo.navigationDestination || repo.home)?.name || "목적지 미설정")}</span></div><div class="detail-row"><span>추가 이동</span><strong>${m.extraMeters != null ? `${(m.extraMeters / 1000).toFixed(1)}km · 약 ${m.extraMinutes}분` : "경로 확인 중"}</strong></div><p class="micro-note">도로 경로 기준 · 실시간 교통 미반영</p><button class="button primary full-width" data-action="confirm-navigation" ${!repo.home ? "disabled" : ""}>내비게이션에 전달</button>`,
+    `<div class="route-stops"><span>현 위치</span>${icon("arrow")}<strong>${safe(s.name)}</strong>${icon("arrow")}<span>${safe((repo.navigationDestination || repo.home)?.name || "목적지 미설정")}</span></div><div class="detail-row"><span>추가 이동</span><strong>${m.extraMeters != null ? `${(m.extraMeters / 1000).toFixed(1)}km · 약 ${m.extraMinutes}분` : "경로 확인 중"}</strong></div><p class="micro-note">${PleorderMapSdk.state.routeEndpoint ? "네이버 자동차 경로 · 조회 시점 교통 반영" : "도로 경로 기준 · 실시간 교통 미반영"}</p><button class="button primary full-width" data-action="confirm-navigation" ${!repo.home ? "disabled" : ""}>내비게이션에 전달</button>`,
     "navigation",
   );
 }
@@ -1109,10 +1124,15 @@ window.Pleorder = {
     }
     if (e.type === "gleo-action") {
       let r;
+      const actionRepo=repo;
       try {
-        r = await PleorderVoice.dispatch(repo, e.name, e.params);
+        r = await PleorderVoice.dispatch(actionRepo, e.name, e.params);
       } catch {
         r = { status: "fail", message: "요청을 처리하지 못했어요." };
+      }
+      if(actionRepo!==repo) {
+        if(window.Native)Native.replyAction(JSON.stringify(PleorderCore.gleoCallback(e.name,{status:'fail',message:'데모가 초기화되어 이전 요청을 취소했어요. 다시 말씀해 주세요.'})));
+        return;
       }
       startClock(r);
       save();

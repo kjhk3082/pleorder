@@ -35,6 +35,8 @@ window.PleorderRealCatalog = (() => {
         desc: "공식 홈페이지 권장소비자가격 · 매장별 상이",
         officialMenu: true,
         sourceUrl: item.sourceUrl,
+        image: item.image,
+        imageSource: item.imageSource,
       }));
     } else {
       const s = samples[store.category] || samples.음식점;
@@ -62,8 +64,9 @@ window.PleorderRealCatalog = (() => {
     fetch("brand-menus.json")
       .then((r) => r.json())
       .catch(() => ({})),
+    fetch("place-photos.json").then(r=>r.json()).catch(()=>({brands:[],places:[]})),
   ])
-    .then(([data, b]) => {
+    .then(([data, b, photos]) => {
       brands = b;
       PleorderData.realStores = data.rows.map(
         ([
@@ -106,6 +109,11 @@ window.PleorderRealCatalog = (() => {
               "/" +
               id.slice(1),
           };
+          const normalized=name.replace(/\s/g,"").toLowerCase();
+          const exact=photos.places?.find(p=>p.id===store.id);
+          const brand=photos.brands?.find(p=>p.aliases.some(alias=>normalized.startsWith(alias.toLowerCase())));
+          store.photos=exact?.photos || brand?.photos || [];
+          store.photo=store.photos[0] || null;
           stores.set(store.id, store);
           return store;
         },

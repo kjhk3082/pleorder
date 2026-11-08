@@ -1,0 +1,267 @@
+{
+  "retrievedAt": "2026-11-09",
+  "brands": [
+    {
+      "brand": "스타벅스",
+      "aliases": [
+        "스타벅스",
+        "starbucks"
+      ],
+      "photos": [
+        {
+          "image": "images/official/starbucks-110563.jpg",
+          "name": "아이스 카페 아메리카노",
+          "sourcePage": "https://www.starbucks.co.kr/menu/drink_view.do?product_cd=110563",
+          "imageSource": "https://image.istarbucks.co.kr/upload/store/skuimg/2025/06/[110563]_20250626094354080.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        }
+      ]
+    },
+    {
+      "brand": "메가MGC커피",
+      "aliases": [
+        "메가mgc커피",
+        "메가커피",
+        "메가엠지씨커피",
+        "megacoffee"
+      ],
+      "photos": [
+        {
+          "image": "images/official/mega-0.jpg",
+          "name": "아메리카노",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610105645_1717984605982_8i5CoHU2NV.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-1.jpg",
+          "name": "(HOT)헛개리카노",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20250320000737_1742396857693_ngpZI3EbLM.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-2.jpg",
+          "name": "(ICE)헛개리카노",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20250320000925_1742396965069_ekSqAIVc1L.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-3.jpg",
+          "name": "꿀아메리카노",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610104349_1717983829122_YzOyiQAOOg.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-4.jpg",
+          "name": "디카페인 바닐라 아메리카노",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610104650_1717984010944__Ck8jyuaDL.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-5.jpg",
+          "name": "디카페인 헤이즐넛 아메리카노",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610105046_1717984246492_KeavFH2VTO.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-6.jpg",
+          "name": "라이트 바닐라 아몬드라떼",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240703154302_1719988982437_ZzHlEUdQwF.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-7.jpg",
+          "name": "메가리카노",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610132223_1717993343456_4KESgpG57t.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-8.jpg",
+          "name": "바닐라라떼",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610104603_1717983963750_lApih2z1h0.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-9.jpg",
+          "name": "바닐라아메리카노",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610104740_1717984060714__tk3s9Kb_s.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-10.jpg",
+          "name": "에스프레소",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610105357_1717984437294_AduuhU3VyW.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-11.jpg",
+          "name": "에스프레소 도피오",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610105413_1717984453131_1es5v0RxH2.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-12.jpg",
+          "name": "연유라떼",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610132459_1717993499610_KiXcTR2q5P.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-13.jpg",
+          "name": "왕메가카페라떼",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20250320004326_1742399006488_yI4cvwXy6N.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-14.jpg",
+          "name": "왕메가헛개리카노",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20250320001838_1742397518902_MCGDHqjxXi.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-15.jpg",
+          "name": "왕할메가커피",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610114915_1717987755314_1rAv8UqZUm.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-16.png",
+          "name": "음, 괜찮은 휴식이군 블레이드 초코크림커피",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20261008180742_1791450462501_fdbGBH46Jw.png",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-17.jpg",
+          "name": "초코젤라또 말차라떼",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20251210155814_1765349894904_ps9wkFJ_kA.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-18.jpg",
+          "name": "할메가미숫커피",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240904234012_1725460812247_PgldrBOdUW.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/mega-19.jpg",
+          "name": "할메가커피",
+          "sourcePage": "https://www.mega-mgccoffee.com/menu/menu.php?category=1&menu_category1=1&menu_category2=1&page=1",
+          "imageSource": "https://img.mega-mgccoffee.com/megahp/manager/upload/menu/20240610113252_1717986772176_6c36zo5yuf.jpg",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        }
+      ]
+    },
+    {
+      "brand": "이디야커피",
+      "aliases": [
+        "이디야",
+        "ediya"
+      ],
+      "photos": [
+        {
+          "image": "images/official/ediya-0.png",
+          "name": "(L) 청도홍시주스",
+          "sourcePage": "https://ediya.com/contents/drink.html",
+          "imageSource": "https://ediya.com/files/menu/IMG_1793001500179.png",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/ediya-1.png",
+          "name": "(EX) 청도홍시주스",
+          "sourcePage": "https://ediya.com/contents/drink.html",
+          "imageSource": "https://ediya.com/files/menu/IMG_1793001589251.png",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/ediya-2.png",
+          "name": "(L) 연유 콜드브루",
+          "sourcePage": "https://ediya.com/contents/drink.html",
+          "imageSource": "https://ediya.com/files/menu/IMG_1647387558230.png",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/ediya-3.png",
+          "name": "(L) HOT 가나 시그니처 초콜릿",
+          "sourcePage": "https://ediya.com/contents/drink.html",
+          "imageSource": "https://ediya.com/files/menu/IMG_1790644382294.png",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/ediya-4.png",
+          "name": "(EX) 연유 콜드브루 ",
+          "sourcePage": "https://ediya.com/contents/drink.html",
+          "imageSource": "https://ediya.com/files/menu/IMG_1647320633102.png",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/ediya-5.png",
+          "name": "(EX) HOT 가나 시그니처 초콜릿",
+          "sourcePage": "https://ediya.com/contents/drink.html",
+          "imageSource": "https://ediya.com/files/menu/IMG_1790644657339.png",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/ediya-6.png",
+          "name": "(L) 연유 콜드브루",
+          "sourcePage": "https://ediya.com/contents/drink.html",
+          "imageSource": "https://ediya.com/files/menu/IMG_1765780268389.png",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        },
+        {
+          "image": "images/official/ediya-7.png",
+          "name": "(L) ICED 가나 시그니처 초콜릿",
+          "sourcePage": "https://ediya.com/contents/drink.html",
+          "imageSource": "https://ediya.com/files/menu/IMG_1790644461569.png",
+          "kind": "brand",
+          "retrievedAt": "2026-11-09"
+        }
+      ]
+    }
+  ],
+  "places": []
+}

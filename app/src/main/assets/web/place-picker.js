@@ -3,27 +3,9 @@ window.PleorderPlaces = (() => {
     marker,
     candidate,
     sequence = 0;
-  const cache = new Map();
-  const endpoint = "https://photon.komoot.io";
-  const pinIcon = () =>
-    L.divIcon({
-      className: "picker-pin",
-      html: '<svg width="38" height="46" viewBox="0 0 38 46"><path d="M19 44S2 29 2 19a17 17 0 0 1 34 0c0 10-17 25-17 25Z" fill="#164a6c" stroke="white" stroke-width="2"/><circle cx="19" cy="18" r="6" fill="white"/></svg>',
-      iconSize: [38, 46],
-      iconAnchor: [19, 44],
-    });
+  const pin = '<svg width="38" height="46" viewBox="0 0 38 46"><path d="M19 44S2 29 2 19a17 17 0 0 1 34 0c0 10-17 25-17 25Z" fill="#164a6c" stroke="white" stroke-width="2"/><circle cx="19" cy="18" r="6" fill="white"/></svg>';
   const normalize = PleorderLocation.normalize;
-  async function get(path) {
-    if (cache.has(path)) return cache.get(path);
-    const response = await fetch(endpoint + path, {
-      signal: AbortSignal.timeout(12000),
-    });
-    if (!response.ok) throw Error("검색 서비스 응답 지연");
-    const json = await response.json();
-    const places = (json.features || []).map(normalize).filter(Boolean);
-    cache.set(path, places);
-    return places;
-  }
+  const makeMarker = p => picker.marker(p, {html:pin,className:'picker-pin',size:[38,46],anchor:[19,44],label:'선택한 위치'});
   function destroy() {
     sequence++;
     if (picker) {
@@ -35,6 +17,7 @@ window.PleorderPlaces = (() => {
   }
   function renderCandidate(place, exact = true) {
     candidate = place;
+    document.getElementById("placeSource").textContent = place.source ? `주소 출처: ${place.source}` : "도로명주소 · 네이버 / 장소 이름 · OpenStreetMap 검색";
     document.getElementById("placeName").value = place.name;
     document.getElementById("placeAddress").value = place.description;
     document.getElementById("placeNotice").textContent = exact
@@ -43,9 +26,7 @@ window.PleorderPlaces = (() => {
     document.getElementById("savePlace").disabled = !place.description;
     if (marker) marker.setLatLng([place.lat, place.lng]);
     else
-      marker = L.marker([place.lat, place.lng], { icon: pinIcon() }).addTo(
-        picker,
-      );
+      marker = makeMarker([place.lat, place.lng]);
   }
   async function reverse(lat, lng) {
     const token = ++sequence;
@@ -56,12 +37,10 @@ window.PleorderPlaces = (() => {
       "주소를 확인하고 있어요…";
     document.getElementById("savePlace").disabled = true;
     try {
-      const places = await get(
-        `/reverse?lat=${lat}&lon=${lng}&limit=1&lang=default`,
-      );
+      const place = await PleorderLocation.reverse(lat, lng);
       if (token !== sequence || !picker) return;
-      if (!places.length) throw Error("no address");
-      renderCandidate({ ...places[0], lat, lng }, false);
+      if (!place) throw Error("no address");
+      renderCandidate({ ...place, lat, lng }, false);
     } catch {
       if (token !== sequence || !picker) return;
       candidate = { lat, lng, name: "선택한 장소", description: "" };
@@ -76,27 +55,20 @@ window.PleorderPlaces = (() => {
     modal(
       options.title || "배달받을 위치",
       "장소를 검색하거나 지도에서 선택하세요",
-      `<form id="placeSearch" class="place-search"><input id="placeQuery" class="field" aria-label="장소 또는 주소 검색" placeholder="예: 롯데호텔 서울, 올림픽로 300" maxlength="120"><button type="button" class="icon-button" data-action="voice-place" aria-label="목적지 음성 입력">${icon("mic", 22)}</button><button type="submit" class="button primary">검색</button></form><div id="placeResults" class="place-results"></div><div id="placeMap" class="place-map" aria-label="수령 위치 선택 지도"></div><p class="micro-note">© OpenStreetMap · Photon 장소 검색</p><p id="placeNotice" class="place-notice" role="status">지도에서 정확한 수령 지점을 선택해 주세요.</p><div class="place-fields"><label>장소 이름<input id="placeName" class="field" maxlength="40" placeholder="예: 여행 숙소"></label><label>주소<input id="placeAddress" class="field" maxlength="160" placeholder="도로명주소"></label><label class="place-detail-label">상세주소<div class="voice-field"><input id="placeDetail" class="field" maxlength="80" placeholder="동·호수, 로비 등"><button type="button" class="icon-button" data-action="voice-detail" aria-label="상세주소 음성 입력">${icon("mic", 22)}</button></div></label></div><button id="savePlace" class="button primary full-width" disabled>이 위치로 설정</button>`,
+      `<form id="placeSearch" class="place-search"><input id="placeQuery" class="field" aria-label="장소 또는 주소 검색" placeholder="예: 롯데호텔 서울, 올림픽로 300" maxlength="120"><button type="button" class="icon-button" data-action="voice-place" aria-label="목적지 음성 입력">${icon("mic", 22)}</button><button type="submit" class="button primary">검색</button></form><div id="placeResults" class="place-results"></div><div id="placeMap" class="place-map" aria-label="수령 위치 선택 지도"></div><p id="placeSource" class="micro-note"></p><p id="placeNotice" class="place-notice" role="status">지도에서 정확한 수령 지점을 선택해 주세요.</p><div class="place-fields"><label>장소 이름<input id="placeName" class="field" maxlength="40" placeholder="예: 여행 숙소"></label><label>주소<input id="placeAddress" class="field" maxlength="160" placeholder="도로명주소"></label><label class="place-detail-label">상세주소<div class="voice-field"><input id="placeDetail" class="field" maxlength="80" placeholder="동·호수, 로비 등"><button type="button" class="icon-button" data-action="voice-detail" aria-label="상세주소 음성 입력">${icon("mic", 22)}</button></div></label></div><button id="savePlace" class="button primary full-width" disabled>이 위치로 설정</button>`,
       "place-picker",
     );
     const footer = document.createElement("div");
     footer.className = "place-picker-footer";
     footer.appendChild(document.getElementById("savePlace"));
     document.getElementById("modalContent").appendChild(footer);
-    picker = L.map("placeMap", { scrollWheelZoom: false }).setView(
-      [initial.lat, initial.lng],
-      16,
-    );
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution:
-        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(picker);
+    picker = PleorderMaps.create("placeMap", {center:[initial.lat,initial.lng],zoom:16,zoomControl:true,
+      onStatus: text => {const notice=document.getElementById('placeNotice');if(notice && text)notice.textContent=text;}});
     renderCandidate({...initial,description:initial.description || ""});
     document.getElementById("placeDetail").value = initial.detail || "";
     picker.on("click", (e) => {
       if (marker) marker.setLatLng(e.latlng);
-      else marker = L.marker(e.latlng, { icon: pinIcon() }).addTo(picker);
+      else marker = makeMarker(e.latlng);
       reverse(e.latlng.lat, e.latlng.lng);
     });
     setTimeout(() => picker?.invalidateSize(), 100);

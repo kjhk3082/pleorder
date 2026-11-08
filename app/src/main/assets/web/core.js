@@ -311,6 +311,19 @@
         version: 1,
       });
     }
+    resetDemo() {
+      // Keep the configured test region; clear every transaction and transient action.
+      const fresh = new OrderRepository();
+      fresh.home = this.home ? {...this.home} : {...DATA.home};
+      fresh.origin = {...this.origin};
+      fresh.savedPlaces = JSON.parse(JSON.stringify(this.savedPlaces));
+      fresh.preferences = {...fresh.preferences, catalogMode:this.preferences.catalogMode,
+        addressDetail:fresh.home.detail || '', locationSource:this.preferences.locationSource,
+        ui:this.preferences.ui ? {...this.preferences.ui} : undefined};
+      fresh.recentOrders = [];
+      fresh.simulation = {paused:true,rate:10,savedWall:Date.now()};
+      return fresh;
+    }
     activeOrder() {
       return (
         this.orders.find(
@@ -715,6 +728,7 @@
         delayMinutes,
         stage: "accepted",
         simulated: true,
+        courier: d.mode === 'delivery' ? {source:'simulation', transport:['motorcycle','bicycle','walking','car'][(this.counter-1)%4]} : null,
         payment,
         events: [],
         merchantRejectMinutes:
@@ -1062,6 +1076,8 @@
         return result("asking", "배달받을 곳을 선택해 주세요.", {
           open: "address",
         });
+      const namedCard = /현대\s*카드|현대\s*엠|현대\s*M/i.test(t) ? 'test-card' : /신한|미스터\s*라이프|Mr\.?\s*Life/i.test(t) ? 'limit-card' : /삼성|탭탭|taptap/i.test(t) ? 'test-pay' : null;
+      if (namedCard && /카드|결제|지불|바꿔|변경|선택|으로|로\s*해/.test(t)) return this.selectPayment(namedCard);
       const cardMatch = t.match(/([ABC에이비씨])\s*카드/i);
       if (cardMatch) {
         const id = /b|비/i.test(cardMatch[1])

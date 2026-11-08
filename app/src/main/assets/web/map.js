@@ -1,26 +1,17 @@
 class JourneyMap {
   constructor() {
-    this.map = L.map("map", {
-      zoomControl: false,
-      scrollWheelZoom: false,
-      attributionControl: true,
-    }).setView([DATA.home.lat, DATA.home.lng], 16);
-    this.tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(this.map);
+    this.map = PleorderMaps.create("map", {
+      center: [DATA.home.lat, DATA.home.lng], zoom: 16,
+      onStatus: text => this.notice(text),
+    });
     this.cache = new Map();
     this.pending = new Set();
     this.retryAfter = new Map();
+    this.routeTimes = new Map();
+    this.recentRoutes = new Map();
     this.markers = new Map();
-    this.routeLayer = L.layerGroup().addTo(this.map);
     this.manualUntil = 0;
-    this.map.on("dragstart", () => (this.manualUntil = Date.now() + 15000));
-    this.tiles.on("tileerror", () =>
-      this.notice("지도를 불러오지 못했어요. 주문 정보는 유지됩니다."),
-    );
-    this.tiles.on("load", () => this.notice(""));
+    this.map.on("dragstart", () => {this.manualUntil=Date.now()+15000;this.followCurrent=false;});
     this.ready = fetch("routes.json")
       .then((r) => r.json())
       .then((d) => {
@@ -31,6 +22,7 @@ class JourneyMap {
     new ResizeObserver(() => this.map.invalidateSize()).observe($("map"));
   }
   notice(text) {
+    text=text || PleorderMapSdk.state.reason || '';
     $("mapStatus").textContent = text;
     $("mapStatus").hidden = !text;
   }
@@ -58,9 +50,14 @@ class JourneyMap {
   }
   route(points, kind) {
     if (points.some((p) => !p)) return null;
-    const key = this.key(points);
-    if (this.cache.has(key)) return this.cache.get(key);
-    const fixture = this.fixture(points, kind);
+    const endpoint=PleorderMapSdk.state.routeEndpoint;
+    const naverRoute=!!endpoint && !kind.startsWith('delivery-');
+    const key = (naverRoute?'naver:':'osrm:')+this.key(points);
+    if (this.cache.has(key) && (!naverRoute || Date.now()-(this.routeTimes.get(key)||0)<60000)) return this.cache.get(key);
+    const recent=this.recentRoutes.get(kind);
+    // Live GPS fixes should move markers immediately, not create a paid request each second.
+    if(naverRoute && this.repo?.liveLocation && recent && Date.now()-recent.at<30000 && this.same(points.at(-1),recent.destination) && this.key(points.slice(1))===recent.stops)return recent.route;
+    const fixture = naverRoute?null:this.fixture(points, kind);
     if (fixture) {
       this.cache.set(key, fixture);
       return fixture;
@@ -72,44 +69,45 @@ class JourneyMap {
     )
       return null;
     this.pending.add(key);
-    const url =
+    const url = naverRoute ? endpoint :
       "https://router.project-osrm.org/route/v1/driving/" +
       points.map((p) => `${p.lng},${p.lat}`).join(";") +
       "?overview=full&geometries=geojson&steps=false";
-    fetch(url, { signal: AbortSignal.timeout(10000) })
-      .then((r) => r.json())
+    fetch(url, { signal: AbortSignal.timeout(10000), ...(naverRoute?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({points:points.map(p=>({lat:p.lat,lng:p.lng}))})}:{}) })
+      .then(async r => {const d=await r.json();if(!r.ok)throw Error(d.message || '경로 연결을 확인해 주세요.');return d;})
       .then((d) => {
-        if (d.code !== "Ok" || !d.routes?.[0]) throw Error("No route");
-        this.cache.set(key, d.routes[0]);
+        const route=naverRoute?d.route:d.routes?.[0];
+        if (!route || (!naverRoute && d.code!=="Ok")) throw Error("경로를 찾지 못했어요.");
+        this.cache.set(key,route);this.routeTimes.set(key,Date.now());
+        this.recentRoutes.set(kind,{at:Date.now(),route,destination:points.at(-1),stops:this.key(points.slice(1))});
         this.notice("");
         this.update(this.repo);
         window.Pleorder?.onRouteUpdate();
       })
-      .catch(() => {
+      .catch(error => {
         this.retryAfter.set(key, Date.now() + 30000);
-        this.notice("경로를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.");
+        this.notice(naverRoute?error.message:"경로를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.");
       })
       .finally(() => this.pending.delete(key));
     return null;
   }
   point(pos, type, label) {
-    return L.marker(pos, {
-      icon: L.divIcon({
-        className: "map-marker",
-        html: `<span class="point ${type}">${type === "store" ? icon("bowl", 17) : icon(type === "rider" ? "bike" : type === "car" ? "car" : "home", type === "store" ? 17 : 22)}</span>`,
-        iconSize: type === "store" ? [32, 32] : [40, 40],
-        iconAnchor: type === "store" ? [16, 16] : [20, 20],
-      }),
-    }).bindTooltip(label, { className: "map-label", direction: "top" });
+    const courier=type.startsWith("rider-");
+    return this.map.marker(pos, {
+      html: `<span class="point ${courier ? "rider" : type}">${icon(type === "store" ? "bowl" : courier ? PleorderTracking.transport(type.slice(6)).icon : type === "car" ? "car" : "home", type === "store" ? 17 : 22)}</span>`,
+      label, size: type === "store" ? [32,32] : [40,40], anchor: type === "store" ? [16,16] : [20,20],
+    });
   }
-  mark(id, pos, type, label) {
+  mark(id, pos, type, label, routeMotion=false) {
     let marker = this.markers.get(id);
+    if(marker && marker.kind!==type){marker.remove();this.markers.delete(id);marker=null;}
     if (!marker) {
-      marker = this.point(pos, type, label).addTo(this.map);
-      if (type === "rider")
+      marker = this.point(pos, type, label);
+      marker.kind=type;
+      if (type.startsWith("rider-"))
         marker.getElement()?.classList.add("rider-tracking");
       this.markers.set(id, marker);
-    } else marker.setLatLng(pos);
+    } else if (!type.startsWith("rider-") && !routeMotion) marker.setLatLng(pos, type === "car");
     return marker;
   }
   keep(ids) {
@@ -143,10 +141,7 @@ class JourneyMap {
   update(repo) {
     if (!repo) return;
     this.repo = repo;
-    if (repo.scenario.offline) {
-      if (this.map.hasLayer(this.tiles)) this.map.removeLayer(this.tiles);
-      this.notice("지도 연결 없음 · 저장된 경로");
-    } else if (!this.map.hasLayer(this.tiles)) this.tiles.addTo(this.map);
+    this.map.setOffline(!!repo.scenario.offline);
     const home = repo.home,
       origin = this.origin(),
       o = repo.activeOrder() || repo.orders[0],
@@ -159,12 +154,15 @@ class JourneyMap {
     const homeRoute = this.route([origin, home], "home");
     if (homeRoute) {
       const key = this.key([origin, home]);
-      if (repo.routeMetrics?.home?.key !== key || repo.liveLocation) {
+      if (repo.routeMetrics?.home?.key !== key || repo.liveLocation || repo.routeMetrics?.home?.provider !== (homeRoute.provider || 'osrm') || repo.routeMetrics?.home?.queriedAt !== homeRoute.queriedAt) {
         repo.routeMetrics = {
           home: {
             key,
             distance: homeRoute.distance,
             duration: homeRoute.duration,
+            provider:homeRoute.provider || 'osrm',
+            traffic:homeRoute.traffic === true,
+            queriedAt:homeRoute.queriedAt,
             at: repo.clock,
             etaAt: repo.clock + homeRoute.duration * 1000,
           },
@@ -175,18 +173,19 @@ class JourneyMap {
     this.mark("home", [home.lat, home.lng], "home", home.name || "배송지");
     let line = null,
       focusPoints = [];
+    let courierFrame=null, pickupPosition=null;
     if (active?.mode === "delivery") {
       const store = repo.store(active.storeId),
         r = this.route([store, home], "delivery-" + store.id);
       line = r;
-      if (["delivering", "contact_needed"].includes(active.stage) && r) {
-        const p =
-            (repo.clock - (active.dispatchAt || active.readyAt)) /
-            (active.deliveryAt - (active.dispatchAt || active.readyAt)),
-          pos = this.interpolate(r, p);
+      courierFrame=PleorderTracking.courier(active,repo.clock,r);
+      if (courierFrame) {
+        const p=courierFrame.position,pos=[p.lat,p.lng];
         keep.push("rider");
-        this.mark("rider", pos, "rider", "배달기사님");
-        focusPoints = [pos, [home.lat, home.lng]];
+        const marker=this.mark("rider",pos,"rider-"+(active.courier?.transport || "motorcycle"),"배달기사님 · "+courierFrame.transport.label);
+        if(courierFrame.source==='simulation')marker.setRouteProgress(r,courierFrame.progress);
+        else marker.setLatLng(pos,true);
+        focusPoints=[pos,[home.lat,home.lng]];
       } else {
         keep.push(store.id);
         this.mark(store.id, [store.lat, store.lng], "store", store.name);
@@ -220,6 +219,7 @@ class JourneyMap {
               : progress,
           ) || [origin.lat, origin.lng];
       this.mark("car", pos, "car", "현 위치");
+      pickupPosition={lat:pos[0],lng:pos[1]};
       focusPoints = [[store.lat, store.lng], pos];
     } else {
       const scope = repo.preferences.scope || "home",
@@ -242,24 +242,27 @@ class JourneyMap {
       focusPoints = [[center.lat, center.lng]];
       if (o?.stage === "completed") focusPoints = [[home.lat, home.lng]];
     }
+    let carPosition=repo.liveLocation || pickupPosition || origin;
+    if(!repo.liveLocation && homeRoute && (active?.mode==='delivery' || (o?.mode==='delivery' && o.stage==='completed'))){
+      carPosition=PleorderTracking.along(homeRoute,(repo.clock-repo.startedAt)/Math.max(60000,repo.homeMinutes*60000)) || origin;
+    }
+    if(!keep.includes('car')) {
+      keep.push('car');
+      const marker=this.mark('car',[carPosition.lat,carPosition.lng],'car',repo.liveLocation?'내 차량 · 차량 위치':'내 차량 · 이동 시뮬레이션',!repo.liveLocation && !!homeRoute && o?.mode==='delivery');
+      if(!repo.liveLocation && homeRoute && o?.mode==='delivery')marker.setRouteProgress(homeRoute,PleorderTracking.clamp((repo.clock-repo.startedAt)/Math.max(60000,repo.homeMinutes*60000)));
+    }
+    this.carPosition=carPosition;
+    const motion=$('motionStatus');
+    motion.hidden=false;
+    motion.textContent=(repo.liveLocation?'차량 위치 연동':'차량 이동 시뮬레이션')+(courierFrame?' · '+courierFrame.transport.label+' 배달 '+(courierFrame.source==='simulation'?'시뮬레이션':'위치 연동'):'');
+    if(this.followCurrent){this.map.setView([carPosition.lat,carPosition.lng],17,{animate:false});this.manualUntil=Date.now()+2000;}
     this.keep(keep);
-    const lineKey = line?.geometry
-      ? JSON.stringify(line.geometry.coordinates[0]) +
-        line.geometry.coordinates.length
-      : "";
+    const lineKey = line?.geometry ? JSON.stringify(line.geometry.coordinates) : "";
     if (this.lineKey !== lineKey) {
       this.lineKey = lineKey;
-      this.routeLayer.clearLayers();
-      if (line)
-        L.geoJSON(line.geometry, {
-          style: {
-            className: "delivery-route",
-            color: active?.mode === "delivery" ? "#258e87" : "#00365b",
-            weight: 5,
-            opacity: 0.85,
-          },
-        }).addTo(this.routeLayer);
+      this.map.drawRoute(line?.geometry, active?.mode === "delivery" ? "#258e87" : "#00365b");
     }
+
     const stateKey =
       (active?.id || "idle") +
       ":" +
@@ -283,7 +286,7 @@ class JourneyMap {
     if (points.length === 1)
       this.map.setView(points[0], 16, { animate: false });
     else {
-      this.map.fitBounds(L.latLngBounds(points).pad(0.24), {
+      this.map.fitBounds(points, {
         maxZoom: 17,
         paddingTopLeft: [22, 205],
         paddingBottomRight: [
@@ -298,6 +301,7 @@ class JourneyMap {
     }
   }
   focusHome() {
+    this.followCurrent=false;
     if (this.repo?.home) {
       this.manualUntil = Date.now() + 8000;
       this.map.setView([this.repo.home.lat, this.repo.home.lng], 16.5, {
@@ -307,7 +311,8 @@ class JourneyMap {
     }
   }
   focusCurrent() {
-    const p = this.origin();
+    const p = this.repo?.liveLocation || this.carPosition || this.origin();
+    this.followCurrent = true;
     this.showCurrent = true;
     this.mark("car", [p.lat, p.lng], "car", "현 위치");
     this.manualUntil = Date.now() + 8000;
@@ -341,10 +346,7 @@ class JourneyMap {
     let nearest = 0,
       distance = Infinity;
     for (let i = 0; i < coordinates.length; i++) {
-      const d = L.latLng(coordinates[i][1], coordinates[i][0]).distanceTo([
-        store.lat,
-        store.lng,
-      ]);
+      const d = PleorderCatalog.meters({lat:coordinates[i][1],lng:coordinates[i][0]}, store);
       if (d < distance) {
         nearest = i;
         distance = d;
@@ -353,10 +355,7 @@ class JourneyMap {
     const leg = coordinates.slice(0, Math.max(2, nearest + 1));
     let length = 0;
     for (let i = 1; i < leg.length; i++)
-      length += L.latLng(leg[i - 1][1], leg[i - 1][0]).distanceTo([
-        leg[i][1],
-        leg[i][0],
-      ]);
+      length += PleorderCatalog.meters({lat:leg[i-1][1],lng:leg[i-1][0]}, {lat:leg[i][1],lng:leg[i][0]});
     return {
       geometry: { type: "LineString", coordinates: leg },
       distance: length,
@@ -367,20 +366,11 @@ class JourneyMap {
     };
   }
   interpolate(route, progress) {
-    if (!route?.geometry?.coordinates.length) return null;
-    const c = route.geometry.coordinates,
-      target = Math.max(0, Math.min(1, progress)) * route.distance;
-    let sum = 0;
-    for (let i = 1; i < c.length; i++) {
-      const a = L.latLng(c[i - 1][1], c[i - 1][0]),
-        b = L.latLng(c[i][1], c[i][0]),
-        d = a.distanceTo(b);
-      if (sum + d >= target) {
-        const p = d ? (target - sum) / d : 0;
-        return [a.lat + (b.lat - a.lat) * p, a.lng + (b.lng - a.lng) * p];
-      }
-      sum += d;
-    }
-    return [c.at(-1)[1], c.at(-1)[0]];
+    const p=PleorderTracking.along(route,progress);
+    return p?[p.lat,p.lng]:null;
+  }
+  reset() {
+    this.keep([]);this.map.clearRoute();this.lineKey='';this.stateKey=null;
+    this.followCurrent=false;this.showCurrent=false;this.selectedStore=null;this.carPosition=null;this.manualUntil=0;
   }
 }
