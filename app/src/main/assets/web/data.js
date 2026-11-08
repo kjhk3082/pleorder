@@ -28,6 +28,7 @@
     },
     {
       id: "ongi",
+      simulation: {delay:3},
       name: "온기국밥",
       subtitle: "오래 끓인 국물의 위로",
       category: "한식",
@@ -42,7 +43,7 @@
     },
     {
       id: "crisp",
-      name: "바삭연구소",
+      name: "교촌치킨 잠실점",
       subtitle: "집에 도착하면, 치킨",
       category: "치킨",
       lat: 37.5124,
@@ -56,6 +57,7 @@
     },
     {
       id: "burger",
+      simulation: {riderDelay:6},
       name: "코너버거",
       subtitle: "퇴근길에 들르기 좋은",
       category: "버거",
@@ -84,6 +86,7 @@
     },
     {
       id: "noodle",
+      simulation: {merchantReject:2},
       name: "면과밤",
       subtitle: "하루의 끝에 따뜻한 면",
       category: "일식",
@@ -140,7 +143,7 @@
       desc: "후라이드 반, 달콤한 양념 반",
       art: "chicken",
       tags: ["함께 먹어요"],
-      aliases: ["치킨", "반반", "닭", "바삭"],
+      aliases: ["치킨", "반반", "닭", "바삭", "교촌"],
     },
     {
       id: "burger",

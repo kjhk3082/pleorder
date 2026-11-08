@@ -4,12 +4,14 @@
     <meta charset="utf-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'self' 'unsafe-inline'"
+      content="default-src 'none'; script-src 'self' 'unsafe-inline'; connect-src 'self'"
     />
   </head>
   <body>
     <script src="data.js"></script>
+    <script src="real-catalog.js"></script>
     <script src="payments.js"></script>
+    <script src="catalog.js"></script>
     <script src="core.js"></script>
     <script>
       function dispatch(name, params, state, id) {
@@ -65,7 +67,8 @@
         };
         Headless.complete(id, repo.serialize(), JSON.stringify(response));
       }
-      Headless.ready();
+      if (globalThis.PleorderRealCatalog) PleorderRealCatalog.ready.then(()=>Headless.ready());
+      else Headless.ready();
     </script>
   </body>
 </html>

@@ -6,95 +6,74 @@
     <meta name="color-scheme" content="light" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self' https://router.project-osrm.org; object-src 'none'; base-uri 'none'; frame-src 'none'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self' https://router.project-osrm.org https://photon.komoot.io; object-src 'none'; base-uri 'none'; frame-src 'none'"
     />
-    <link rel="icon" type="image/svg+xml" href="logo-mark.svg" />
-    <title>플레오더 · 가는 길에, 한 끼</title>
+    <link rel="icon" href="logo-mark.svg" type="image/svg+xml" />
+    <title>플레오더</title>
     <link rel="stylesheet" href="vendor/leaflet.css" />
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="glass.css" />
   </head>
   <body>
     <div class="app-shell">
       <header class="app-header">
-        <a href="#" id="brand" class="brand" aria-label="플레오더 홈"></a>
-        <nav aria-label="주문 방식">
-          <button id="deliveryTab" class="nav-tab active" data-mode="delivery">
-            배달</button
-          ><button id="pickupTab" class="nav-tab" data-mode="pickup">
-            픽업</button
+        <a id="brand" class="brand" href="#" aria-label="플레오더 홈"></a>
+        <nav id="primaryNav" aria-label="주문 방식">
+          <button id="deliveryTab" class="nav-tab active">배달</button
+          ><button id="pickupTab" class="nav-tab">픽업</button
           ><button id="ordersTab" class="nav-tab">
             주문 내역<span id="orderDot"></span>
           </button>
         </nav>
         <div class="header-tools">
-          <span class="demo-label"><i></i> 주문 시뮬레이션</span
-          ><button
-            id="labButton"
-            class="icon-button"
-            aria-label="테스트 시나리오 열기"
-          ></button>
+          <span class="demo-label">DEMO</span
+          ><button id="walletButton" class="wallet-button"></button>
+          <button id="settingsButton" class="icon-button settings-button" aria-label="앱 설정"></button>
         </div>
       </header>
-      <main id="main" class="workspace">
+      <main class="workspace">
         <section class="discovery">
-          <div class="greeting">
-            <p class="eyebrow">가는 길에, 한 끼</p>
-            <h1 id="greeting">오늘 저녁, 뭐 먹을까요?</h1>
-            <p id="intro" class="muted">
-              집에 도착할 때쯤, 따뜻한 저녁도 도착하도록.
-            </p>
+          <div class="discovery-title">
+            <div>
+              <p id="areaLabel">잠실동 · 집 주변</p>
+              <h1 id="catalogTitle">가까운 맛집</h1>
+            </div>
+            <button id="addressButton" class="subtle-button"></button>
           </div>
-          <div class="choices-toolbar">
-            <div
-              id="categories"
-              class="categories"
-              aria-label="음식 종류"
-            ></div>
-            <button id="timingButton" class="timing-button"></button>
-          </div>
+          <button id="originButton" class="origin-chip" aria-label="출발 위치 변경"></button>
+          <div id="scopeTabs" class="scope-tabs" aria-label="추천 지역"></div>
+          <input id="storeSearch" class="field store-search" aria-label="음식 또는 가게 검색" placeholder="음식이나 가게를 찾아보세요" maxlength="80">
+          <div id="categories" class="categories" aria-label="음식 종류"></div>
+          <div
+            id="recommendationBanner"
+            class="recommendation-banner"
+            hidden
+          ></div>
           <div id="restaurantList" class="restaurant-list"></div>
         </section>
         <aside class="journey-panel">
           <div class="journey-top">
             <div>
-              <span class="eyebrow">지금 가는 길</span>
-              <h2 id="destinationName">우리 집으로</h2>
+              <span class="section-label" id="destinationLabel">배송지</span
+              ><button id="destinationButton" class="destination-button">
+                우리 집 · 잠실동
+              </button>
             </div>
-            <button id="locationButton" class="subtle-button">데모 위치</button>
-          </div>
-          <div class="route-summary">
-            <div>
-              <span class="muted">현재 위치</span
-              ><strong id="currentPlace">삼성역 인근</strong>
-            </div>
-            <div>
-              <span class="muted">집까지 도로 거리</span
-              ><strong id="homeDistance">경로 확인 중</strong>
-            </div>
-            <div>
-              <span class="muted">모의 도착까지</span
-              ><strong id="homeTime">24<span>분</span></strong>
-            </div>
+            <button id="timingButton" class="subtle-button"></button>
           </div>
           <div class="map-frame">
             <div
               id="map"
               role="img"
-              aria-label="서울 실제 지도 위 가상 음식점과 귀가 경로"
+              aria-label="배송지 주변 지도와 주문 이동 경로"
             ></div>
-            <div class="map-legend">
-              <span><i class="legend-car"></i> 내 차</span
-              ><span><i class="legend-store"></i> 가상 매장</span
-              ><span><i class="legend-home"></i> 우리 집</span>
+            <div id="trackingHud" class="tracking-hud"></div>
+            <div class="map-buttons">
+              <button id="currentLocationButton"></button
+              ><button id="homeLocationButton"></button>
             </div>
-            <div id="mapStatus" class="map-status">실제 지도 · 가상 매장</div>
-            <button
-              id="mapFit"
-              class="map-fit icon-button"
-              aria-label="전체 경로 보기"
-            ></button>
+            <div id="mapStatus" class="map-status" hidden></div>
           </div>
-          <div id="journeyNote" class="journey-note"></div>
           <div id="orderPanel" class="order-panel"></div>
         </aside>
       </main>
@@ -102,35 +81,41 @@
         <button
           id="micButton"
           class="mic-button"
-          aria-label="음성으로 주문하기"
+          aria-label="음성 주문 시작"
         ></button>
         <div class="voice-copy">
-          <strong id="voiceTitle">말로 편하게 주문하세요</strong
-          ><span id="voiceStatus">“비빔밥 한 개, 집으로 배달해 줘”</span>
+          <strong id="voiceTitle">이렇게 말해 보세요</strong
+          ><span id="voiceStatus" aria-live="polite">“치킨 먹고 싶어”</span>
         </div>
-        <button id="textButton" class="text-button">문장으로 테스트</button
+        <button id="textButton" class="text-button">텍스트 입력</button
         ><button
           id="speakButton"
           class="icon-button"
-          aria-label="현재 상태 읽어주기"
+          aria-label="주문 상태 읽어주기"
         ></button>
       </footer>
     </div>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <dialog id="modal"><div id="modalContent"></div></dialog>
-    <div id="restriction" hidden>
-      <h1>운전에 집중해 주세요</h1>
-      <p>
-        차량이 허용하는 음성 기능을 이용하거나 주차 후 화면을 이용해 주세요.
-      </p>
+    <div id="restriction" role="status" hidden>
+      <h1>주행 중에는 화면 조작이 제한돼요</h1>
+      <p>Gleo를 불러 음성으로 주문하거나<br>주문 현황을 확인해 주세요.</p>
+      <p class="restriction-note">화면은 안전하게 주차한 뒤 이용할 수 있어요.</p>
     </div>
     <script src="vendor/leaflet.js"></script>
     <script src="data.js"></script>
+    <script src="real-catalog.js"></script>
     <script src="payments.js"></script>
+    <script src="catalog.js"></script>
     <script src="core.js"></script>
+    <script src="checkout.js"></script>
+    <script src="vendor/lucide-paths.js"></script>
     <script src="icons.js"></script>
+    <script src="product-views.js"></script>
+    <script src="ux-policy.js"></script>
+    <script src="motion.js"></script>
     <script src="map.js"></script>
-    <script src="service-ui.js"></script>
-    <script src="app.js"></script>
+    <script src="place-picker.js"></script>
+    <script src="boot.js"></script>
   </body>
 </html>

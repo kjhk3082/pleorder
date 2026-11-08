@@ -4,10 +4,11 @@
     typeof module === "object"
       ? require("./payments.js")
       : root.PleorderPayments,
+    typeof module === "object" ? require("./catalog.js") : root.PleorderCatalog,
   );
   if (typeof module === "object") module.exports = value;
   else root.PleorderCore = value;
-})(globalThis, (DATA, PAYMENT) => {
+})(globalThis, (DATA, PAYMENT, CATALOG) => {
   "use strict";
   const { PaymentRepository } = PAYMENT;
   const MINUTE = 60000;
@@ -248,6 +249,32 @@
       this.navigationRequested = false;
       this.navigationAccepted = false;
       this.payments = new PaymentRepository();
+      this.preferences = {
+        catalogMode: DATA.realStores ? "real" : "demo",
+        scope: "home",
+        handoff: this.scenario.recipientAbsent ? "hand" : "door",
+        request: "문 앞에 놓아주세요",
+        addressDetail: "",
+      };
+      this.recentOrders = [
+        {
+          storeId: "crisp",
+          menuId: "chicken",
+          quantity: 1,
+          mode: "delivery",
+          seeded: true,
+        },
+      ];
+      this.savedPlaces = [
+        { ...DATA.home, detail: "" },
+        {
+          ...DATA.origin,
+          id: "work",
+          name: "회사",
+          description: "삼성동 · 테스트 배송지",
+          detail: "",
+        },
+      ];
     }
     static restore(value) {
       try {
@@ -292,19 +319,134 @@
       );
     }
     menu(id) {
-      return DATA.menus.find((m) => m.id === id);
+      return DATA.resolveMenu?.(id) || DATA.menus.find((m) => m.id === id);
     }
     store(id) {
-      return DATA.stores.find((s) => s.id === id);
+      return DATA.resolveStore?.(id) || DATA.stores.find((s) => s.id === id);
+    }
+    homeRoute() {
+      const points = [this.liveLocation || this.origin, this.home];
+      if (points.some((p) => !p)) return null;
+      const key = points
+        .map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`)
+        .join(";");
+      const route = this.routeMetrics?.home;
+      return route?.key === key && Number.isFinite(route.etaAt) ? route : null;
+    }
+    needsRouteForArrival() {
+      return !!this.liveLocation || this.preferences.locationSource === "manual" || this.origin.lat !== DATA.origin.lat || this.origin.lng !== DATA.origin.lng || (this.home && (this.home.lat !== DATA.home.lat || this.home.lng !== DATA.home.lng));
+    }
+    fulfillmentIssue(store, mode) {
+      if (mode === "delivery" && store?.delivery === "no") return "이 매장은 공개 지도에 배달하지 않는 것으로 표시돼 있어요. 픽업으로 변경해 주세요.";
+      if (mode === "pickup" && store?.takeaway === "no") return "이 매장은 포장하지 않는 것으로 표시돼 있어요. 다른 매장을 골라 주세요.";
+      return null;
+    }
+    setSimulationOrigin(place) {
+      if (!place || !Number.isFinite(place.lat) || !Number.isFinite(place.lng) || Math.abs(place.lat) > 90 || Math.abs(place.lng) > 180)
+        return result("fail", "출발 위치를 지도에서 다시 선택해 주세요.");
+      if (this.activeOrder() || this.payments.transactions.some(p=>p.status === "pending"))
+        return result("fail", "진행 중인 주문과 결제 확인을 마친 뒤 출발 위치를 변경해 주세요.");
+      this.origin = {...place};
+      this.liveLocation = null;
+      this.preferences.locationSource = "manual";
+      this.routeMetrics = null;
+      this.startedAt = this.clock;
+      if (this.draft) {
+        this.draft.id = `draft-${this.clock}-${++this.counter}`;
+        this.draft.createdAt = this.clock;
+      }
+      return result("success", "출발 위치를 변경했어요.");
+    }
+    receiveVehicleLocation(place) {
+      if (!place || !Number.isFinite(place.lat) || !Number.isFinite(place.lng) || Math.abs(place.lat) > 90 || Math.abs(place.lng) > 180 || (place.lat === 0 && place.lng === 0)) return false;
+      this.lastVehicleLocation = {...place};
+      if (this.preferences.locationSource === "manual") return false;
+      this.liveLocation = {...place};
+      return true;
+    }
+    useVehicleLocation() {
+      this.preferences.locationSource = "vehicle";
+      this.liveLocation = this.lastVehicleLocation ? {...this.lastVehicleLocation} : null;
+      this.routeMetrics = null;
+      return result("success", this.liveLocation ? "차량의 현재 위치를 사용해요." : "차량 위치를 확인하고 있어요.");
+    }
+    updateVehicleDestination(place) {
+      if (
+        !place ||
+        !Number.isFinite(place.lat) ||
+        !Number.isFinite(place.lng) ||
+        Math.abs(place.lat) > 90 ||
+        Math.abs(place.lng) > 180 ||
+        (place.lat === 0 && place.lng === 0)
+      )
+        return false;
+      const key = `${place.lat.toFixed(5)},${place.lng.toFixed(5)}`;
+      this.navigationDestination = {
+        ...place,
+        key,
+        id: "vehicle-" + key,
+        source: "vehicle",
+      };
+      return true;
     }
     available(menu) {
       return (
         menu &&
+        !menu.soldOut &&
         !(this.scenario.soldOut || []).includes(menu.id) &&
         !(this.scenario.closed || []).includes(menu.storeId)
       );
     }
-    prepare({ items, mode = this.mode, timing = this.timing } = {}) {
+    recommend(query = "", scope = this.preferences.scope, options = {}) {
+      const history = [
+        ...this.orders
+          .filter((o) => o.stage === "completed")
+          .flatMap((o) =>
+            o.items.map((i) => ({
+              storeId: o.storeId,
+              menuId: i.menuId,
+              quantity: i.quantity,
+              mode: o.mode,
+            })),
+          ),
+        ...this.recentOrders,
+      ];
+      return CATALOG.rank(DATA, {
+        query,
+        scope,
+        origin: this.liveLocation || this.origin,
+        home: this.home,
+        history,
+        available: (m) => this.available(m),
+        realOnly: this.preferences.catalogMode === "real",
+        fulfillment: this.mode,
+        ...options,
+      });
+    }
+    selectPayment(id) {
+      if (!this.payments.select(id))
+        return result(
+          "fail",
+          "확인 중인 결제가 있거나 사용할 수 없는 카드예요.",
+        );
+      this.resetPaymentOnNextOrder = false;
+      if (this.draft) {
+        this.draft.id = `draft-${this.clock}-${++this.counter}`;
+        this.draft.createdAt = this.clock;
+      }
+      return result(
+        "asking",
+        "결제 카드를 변경했어요. 금액을 다시 확인해 주세요.",
+        { draft: this.draft },
+      );
+    }
+    prepare({
+      items,
+      mode = this.mode,
+      timing = this.timing,
+      handoff = this.preferences.handoff,
+      request = this.preferences.request,
+    } = {}) {
       if (this.payments.transactions.some((p) => p.status === "pending"))
         return result("asking", "확인 중인 결제 결과를 먼저 조회해 주세요.");
       if (this.activeOrder())
@@ -345,10 +487,21 @@
       }
       if (mode === "delivery" && !this.home)
         return result("asking", "배달받을 곳을 먼저 정해 주세요.");
-      if (timing === "arrival" && this.liveLocation)
+      const fulfillmentIssue = this.fulfillmentIssue(this.store(storeId), mode);
+      if (fulfillmentIssue) return result("fail", fulfillmentIssue);
+      if (
+        mode === "delivery" &&
+        this.home &&
+        CATALOG.meters(this.home, this.store(storeId)) > 8000
+      )
+        return result(
+          "fail",
+          "이 주소는 매장 배달 지역 밖이에요. 다른 가게를 선택하거나 픽업으로 바꿔 주세요.",
+        );
+      if (timing === "arrival" && this.needsRouteForArrival() && !this.homeRoute())
         return result(
           "asking",
-          "차량 GPS 모드에서는 아직 실시간 도착 시점 예약을 지원하지 않아요. 바로 배달하거나 데모 경로로 전환해 주세요.",
+          "현재 위치에서 집까지 경로를 확인하고 있어요. 경로가 준비되면 다시 시도해 주세요.",
         );
       if (mode === "delivery" && this.scenario.outsideArea)
         return result(
@@ -358,6 +511,10 @@
       const store = this.store(storeId),
         subtotal = rows.reduce((a, b) => a + b.price * b.quantity, 0),
         fee = mode === "delivery" ? store.fee : 0;
+      if (!this.draft && this.resetPaymentOnNextOrder) {
+        this.payments.select(this.payments.defaultId);
+        this.resetPaymentOnNextOrder = false;
+      }
       this.mode = mode;
       this.timing = timing;
       this.draft = {
@@ -370,12 +527,49 @@
         subtotal,
         fee,
         total: subtotal + fee,
+        handoff: handoff === "hand" ? "hand" : "door",
+        request: String(request || "").slice(0, 120),
+        address: this.home
+          ? { ...this.home, detail: this.preferences.addressDetail }
+          : null,
       };
       return result(
         "asking",
-        `${store.name}, ${rows.map((i) => `${i.name} ${i.quantity}개`).join(", ")}. ${mode === "delivery" ? "집으로 배달" : "매장에서 픽업"}, 합계 ${this.draft.total.toLocaleString("ko-KR")}원이에요. 이대로 주문할까요?`,
-        { draft: this.draft },
+        `${store.name}, ${rows.map((i) => `${i.name} ${i.quantity}개`).join(", ")}. ${mode === "delivery" ? `${this.home?.name || "선택한 장소"}(으)로 배달` : "매장에서 픽업"}, 합계 ${this.draft.total.toLocaleString("ko-KR")}원이에요. 이대로 주문할까요?`,
+        {
+          draft: this.draft,
+          voiceText: `${store.name}, ${rows.map((i) => `${i.name} ${i.quantity}개`).join(", ")}. ${mode === "delivery" ? `${this.home?.name || "선택한 장소"}(으)로 배달` : "매장에서 픽업"}, 합계 ${this.draft.total.toLocaleString("ko-KR")}원이에요. ${this.payments.method()?.name || "등록할 카드"}로 결제하려면 ‘결제 승인’, 취소하려면 ‘취소’라고 말씀해 주세요.`,
+        },
       );
+    }
+    estimateOrder(d = this.draft) {
+      if (!d) return null;
+      const s = this.store(d.storeId);
+      const delayMinutes = this.scenario.delay || s.simulation?.delay || 0;
+      const prepMinutes = s.prep + delayMinutes;
+      const travelMinutes = 10;
+      const riderDelay =
+        this.scenario.riderDelay || s.simulation?.riderDelay || 0;
+      const startAt =
+        d.mode === "delivery" && d.timing === "arrival"
+          ? Math.max(
+              this.clock,
+              (this.homeRoute()?.etaAt ||
+                this.startedAt + this.homeMinutes * MINUTE) -
+                (prepMinutes + travelMinutes + riderDelay) * MINUTE,
+            )
+          : this.clock;
+      return {
+        delayMinutes,
+        prepMinutes,
+        travelMinutes,
+        riderDelay,
+        startAt,
+        readyAt: startAt + prepMinutes * MINUTE,
+        dispatchAt: startAt + (prepMinutes + riderDelay) * MINUTE,
+        deliveryAt:
+          startAt + (prepMinutes + riderDelay + travelMinutes) * MINUTE,
+      };
     }
     confirm(id, confirmation) {
       const existing = this.orders.find((o) => o.draftId === id);
@@ -403,8 +597,15 @@
         return result("fail", "이미 진행 중인 주문이 있어요.");
       const d = this.draft,
         s = this.store(d.storeId);
+      if (d.timing === "arrival" && this.needsRouteForArrival() && !this.homeRoute())
+        return result(
+          "asking",
+          "위치가 바뀌어 도착 경로를 다시 확인하고 있어요. 잠시 후 결제를 승인해 주세요.",
+        );
       if (d.items.some((i) => !this.available(this.menu(i.menuId))))
         return result("fail", "메뉴 판매 상태가 바뀌었어요. 다시 골라 주세요.");
+      const fulfillmentIssue = this.fulfillmentIssue(s, d.mode);
+      if (fulfillmentIssue) return result("fail", fulfillmentIssue);
       const pending = this.payments.transactions.find(
         (p) => p.key === d.id && p.status === "pending",
       );
@@ -421,16 +622,18 @@
       const outcome =
         this.payments.selected === "test-card"
           ? this.scenario.payment || "success"
-          : "success";
+          : "auto";
       const payment = this.payments.charge(d.id, d.total, this.clock, outcome);
       if (payment.status === "failed") {
         const detail =
-          payment.reason === "insufficient"
-            ? "사용 가능 잔액 또는 한도가 부족해요."
-            : "카드사에서 승인을 거절했어요.";
+          payment.reason === "no_method"
+            ? "등록된 결제 카드가 없어요."
+            : payment.reason === "insufficient"
+              ? "사용 가능 잔액 또는 한도가 부족해요."
+              : "카드사에서 승인을 거절했어요.";
         return result("fail", detail + " 다른 결제 수단을 선택해 주세요.", {
           payment,
-          voiceText: `${payment.name} 끝번호 ${payment.last4}로 ${d.total.toLocaleString("ko-KR")}원 모의 결제를 시도했지만, ${detail} 주문은 접수되지 않았어요. 다른 결제 수단으로 바꿀 수 있어요.`,
+          voiceText: `${payment.name || "결제 카드"} ${payment.last4 ? "끝번호 " + payment.last4 : ""}로 ${d.total.toLocaleString("ko-KR")}원 결제를 시도했지만, ${detail} 주문은 접수되지 않았어요. 다른 결제 수단으로 바꿀 수 있어요.`,
         });
       }
       if (payment.status === "pending")
@@ -442,19 +645,8 @@
             voiceText: `총 ${d.total.toLocaleString("ko-KR")}원 모의 결제의 승인 결과를 아직 확인하지 못했어요. 주문도 아직 보내지 않았어요. 이중 결제를 막기 위해 결과를 먼저 확인할게요.`,
           },
         );
-      const delayMinutes = this.scenario.delay || 0,
-        prepMinutes = s.prep + delayMinutes,
-        travelMinutes = 10,
-        riderDelay = this.scenario.riderDelay || 0;
-      const startAt =
-        d.mode === "delivery" && d.timing === "arrival"
-          ? Math.max(
-              this.clock,
-              this.startedAt +
-                this.homeMinutes * MINUTE -
-                (prepMinutes + travelMinutes) * MINUTE,
-            )
-          : this.clock;
+      const { delayMinutes, prepMinutes, travelMinutes, riderDelay, startAt } =
+        this.estimateOrder(d);
       const order = {
         ...JSON.parse(JSON.stringify(d)),
         id: `PO-${String(++this.counter).padStart(4, "0")}`,
@@ -470,6 +662,8 @@
         simulated: true,
         payment,
         events: [],
+        merchantRejectMinutes:
+          this.scenario.merchantReject || s.simulation?.merchantReject || 0,
       };
       this.event(
         order,
@@ -479,6 +673,7 @@
       );
       this.orders.unshift(order);
       this.draft = null;
+      this.resetPaymentOnNextOrder = true;
       return result("success", `${s.name}에 모의 주문을 보냈어요.`, {
         order,
         voiceText: this.describe(order),
@@ -500,8 +695,8 @@
           );
         if (["cancelled", "completed"].includes(o.stage)) continue;
         if (
-          this.scenario.merchantReject &&
-          this.clock >= o.createdAt + this.scenario.merchantReject * MINUTE
+          o.merchantRejectMinutes &&
+          this.clock >= o.createdAt + o.merchantRejectMinutes * MINUTE
         ) {
           o.stage = "cancelled";
           o.cancelReason = "매장 사정으로 주문이 취소됐어요.";
@@ -509,11 +704,11 @@
             o,
             "merchant_cancelled",
             o.cancelReason,
-            o.createdAt + this.scenario.merchantReject * MINUTE,
+            o.createdAt + o.merchantRejectMinutes * MINUTE,
           );
           this.payments.refund(
             o.payment.id,
-            o.createdAt + this.scenario.merchantReject * MINUTE,
+            o.createdAt + o.merchantRejectMinutes * MINUTE,
             this.scenario.refundDelay || 3,
           );
           this.event(
@@ -555,7 +750,10 @@
           continue;
         }
         if (this.clock >= o.deliveryAt) {
-          if (this.scenario.recipientAbsent && !o.recipientAvailable) {
+          if (
+            (this.scenario.recipientAbsent || o.handoff === "hand") &&
+            !o.recipientAvailable
+          ) {
             o.stage = "contact_needed";
             this.event(
               o,
@@ -565,7 +763,23 @@
             );
           } else {
             o.stage = "completed";
-            this.event(o, "delivered", "모의 배달을 완료했어요.", o.deliveryAt);
+            o.completedAt =
+              o.handoff === "hand" || this.scenario.recipientAbsent
+                ? this.clock
+                : o.deliveryAt;
+            if (o.handoff !== "hand")
+              o.proof = {
+                image: "images/delivery-proof.png",
+                capturedAt: o.completedAt,
+                sample: true,
+                note: o.request || "문 앞에 놓아주세요",
+              };
+            this.event(
+              o,
+              "delivered",
+              "모의 배달을 완료했어요.",
+              o.completedAt,
+            );
           }
         } else if (this.clock >= o.dispatchAt) {
           o.stage = "delivering";
@@ -664,6 +878,7 @@
             },
           );
         this.draft = null;
+        this.resetPaymentOnNextOrder = true;
         return result("asking", "담아 둔 주문을 비웠어요.");
       }
       this.update();
@@ -717,11 +932,14 @@
         {
           voiceText:
             "조회 결과, 모의 결제 승인이 이루어지지 않았어요. 주문은 접수되지 않았고 차감된 금액도 없어요. 다른 결제 수단으로 다시 시도할 수 있어요.",
+          payment: p,
         },
       );
     }
-    resolveIssue(kind) {
-      const o = this.activeOrder() || this.orders[0];
+    resolveIssue(kind, orderId) {
+      const o = orderId
+        ? this.orders.find((o) => o.id === orderId)
+        : this.activeOrder() || this.orders[0];
       if (!o) return result("asking", "먼저 주문 내역을 확인해 주세요.");
       if (kind === "recipient-ready" && o.stage === "contact_needed") {
         o.recipientAvailable = true;
@@ -756,6 +974,38 @@
       if (typeof input !== "string" || input.length > 500)
         return result("fail", "명령을 짧게 다시 말해 주세요.");
       const t = input.trim();
+      const destinationQuery = t.match(
+        /^(?:목적지|배송지)(?:는|를)?\s+(.+?)(?:으로\s*설정.*|로\s*설정.*|\s*검색.*)?$/,
+      );
+      if (destinationQuery)
+        return result(
+          "asking",
+          "장소 검색 결과에서 정확한 위치를 선택해 주세요.",
+          { open: "place-search", query: destinationQuery[1] },
+        );
+      const addressDetail = t.match(/^상세\s*주소(?:는|를)?\s+(.+)$/);
+      if (addressDetail) {
+        if (
+          this.activeOrder() ||
+          this.payments.transactions.some((p) => p.status === "pending")
+        )
+          return result(
+            "asking",
+            "진행 중인 주문 또는 결제 확인을 먼저 마쳐 주세요.",
+          );
+        this.preferences.addressDetail = addressDetail[1].slice(0, 80);
+        if (this.home) this.home.detail = this.preferences.addressDetail;
+        if (this.draft) {
+          if (this.draft.address)
+            this.draft.address.detail = this.preferences.addressDetail;
+          this.draft.id = `draft-${this.clock}-${++this.counter}`;
+        }
+        return result(
+          "asking",
+          `상세주소를 ${this.preferences.addressDetail}로 입력했어요. 내용을 확인해 주세요.`,
+          { draft: this.draft },
+        );
+      }
       if (
         /못\s*받|안\s*받|받을\s*수\s*없|완료.*(안|못)|결제.*(하지\s*마|안\s*할|아니)/.test(
           t,
@@ -766,12 +1016,63 @@
           "완료나 결제로 처리하지 않았어요. 현재 주문 상태를 유지할게요.",
         );
       if (/결제.*(조회|확인)/.test(t)) return this.reconcilePayment(true);
+      if (/카드\s*등록/.test(t))
+        return result("asking", "테스트 카드 등록을 열게요.", {
+          open: "registration",
+        });
+      if (/현\s*위치|현재\s*위치/.test(t))
+        return result("success", "현재 위치를 확인할게요.", {
+          open: "location",
+        });
+      if (/배송지\s*(변경|설정)/.test(t))
+        return result("asking", "배달받을 곳을 선택해 주세요.", {
+          open: "address",
+        });
+      const cardMatch = t.match(/([ABC에이비씨])\s*카드/i);
+      if (cardMatch) {
+        const id = /b|비/i.test(cardMatch[1])
+          ? "limit-card"
+          : /c|씨/i.test(cardMatch[1])
+            ? "test-pay"
+            : "test-card";
+        return this.selectPayment(id);
+      }
+      if (/문\s*앞/.test(t)) {
+        if (this.payments.transactions.some((p) => p.status === "pending"))
+          return result("asking", "결제 결과를 먼저 확인해 주세요.");
+        this.preferences.handoff = "door";
+        this.preferences.request = "문 앞에 놓아주세요";
+        if (this.draft) {
+          this.draft.id = `draft-${this.clock}-${++this.counter}`;
+          this.draft.handoff = "door";
+          this.draft.request = this.preferences.request;
+        }
+        return result("asking", "문 앞에 놓아드리도록 요청할게요.", {
+          draft: this.draft,
+        });
+      }
+      if (/최근\s*주문|지난번\s*주문/.test(t)) {
+        const last = this.recentOrders[0];
+        if (last) {
+          this.pendingRecommendation = { ...last };
+          return result(
+            "asking",
+            `최근 주문한 ${this.store(last.storeId).name}의 ${this.menu(last.menuId).name}을 다시 담을까요?`,
+            { recommendation: last },
+          );
+        }
+      }
       if (/페이로|다른\s*카드|결제\s*수단\s*변경/.test(t)) {
         if (this.payments.transactions.some((p) => p.status === "pending"))
           return result("asking", "결제 결과 확인이 먼저 필요해요.");
-        this.payments.select(
-          this.payments.selected === "test-card" ? "test-pay" : "test-card",
+        const alternative = this.payments.methods.find(
+          (p) => p.registered && p.id !== this.payments.selected,
         );
+        if (!alternative)
+          return result("asking", "결제할 카드를 먼저 등록해 주세요.", {
+            open: "registration",
+          });
+        this.selectPayment(alternative.id);
         return result(
           "asking",
           `${this.payments.method().name}로 바꿨어요. 주문 내용을 다시 확인해 주세요.`,
@@ -779,6 +1080,7 @@
       }
       if (/잔액|한도/.test(t)) {
         const p = this.payments.method();
+        if (!p) return result("asking", "결제할 카드를 먼저 등록해 주세요.");
         return result(
           "success",
           `${p.name}의 모의 사용 가능 금액은 ${p.balance.toLocaleString("ko-KR")}원이에요.`,
@@ -789,6 +1091,17 @@
       if (/수령\s*가능|받을\s*수/.test(t))
         return this.resolveIssue("recipient-ready");
       if (/취소|하지\s*마|안\s*할|^아니/.test(t)) return this.cancel();
+      if (
+        this.pendingRecommendation &&
+        /^(네|예|응|좋아|그걸로|그거|응 그걸로|네 그걸로)[.!\s]*$/.test(t)
+      ) {
+        const rec = this.pendingRecommendation;
+        this.pendingRecommendation = null;
+        return this.prepare({
+          items: [{ menuId: rec.menuId, quantity: rec.quantity || 1 }],
+          mode: rec.mode || this.mode,
+        });
+      }
       if (/어디|상태|얼마나|언제.*(와|도착|돼)|주문\s*조회/.test(t))
         return this.status();
       if (/수령.*완료|받았|픽업.*완료/.test(t)) return this.collect();
@@ -810,7 +1123,25 @@
         }))
         .filter((x) => x.score > 0)
         .sort((a, b) => b.score - a.score);
-      const menu = matches[0]?.menu;
+      let menu = matches[0]?.menu;
+      if (this.preferences.catalogMode === "real")
+        menu = this.recommend(wanted, this.preferences.scope, {fulfillment:mode})[0]?.menu;
+      if (menu && /먹고\s*싶|추천|땡겨|^치킨$|다시\s*먹/.test(t)) {
+        const choice = this.recommend(menu.short, this.preferences.scope, {fulfillment:mode})[0];
+        if (choice) {
+          this.pendingRecommendation = {
+            storeId: choice.store.id,
+            menuId: choice.menu.id,
+            quantity: 1,
+            mode,
+          };
+          return result(
+            "asking",
+            `${choice.recent ? "최근 주문하신 " : "가까운 "}${choice.store.name}에서 ${choice.menu.name} 주문할까요?`,
+            { recommendation: this.pendingRecommendation },
+          );
+        }
+      }
       if (menu) {
         let quantity = 1;
         const n = t.match(/(\d+)\s*(개|인분|마리)/);
@@ -826,11 +1157,17 @@
       if (/바꿔|변경/.test(t) && this.draft)
         return this.prepare({ items: this.draft.items, mode });
       if (
-        /^(네|예|응|좋아|확정|주문해\s*줘|주문할게|이대로\s*주문)[.!\s]*$/.test(
+        /^(결제\s*승인|결제해\s*줘|이대로\s*결제|주문해\s*줘|주문할게|이대로\s*주문)[.!\s]*$/.test(
           t,
         )
       )
         return this.confirm(this.draft?.id, true);
+      if (this.draft && /^(네|예|응|좋아)[.!\s]*$/.test(t))
+        return result(
+          "asking",
+          "결제하려면 화면을 끝까지 밀거나, ‘결제 승인’이라고 말씀해 주세요.",
+          { draft: this.draft },
+        );
       return result(
         "asking",
         "“비빔밥 한 개 집으로 배달해 줘”처럼 말해 주세요. 주문 내용은 한 번 더 확인할게요.",
@@ -848,7 +1185,7 @@
         return result("fail", "메뉴를 짧게 알려 주세요.");
       if (!["delivery", "pickup"].includes(params.fulfillment))
         return result("asking", "배달 또는 픽업을 알려 주세요.");
-      const menu = DATA.menus
+      let menu = DATA.menus
         .map((m) => ({
           menu: m,
           score:
@@ -863,6 +1200,8 @@
         }))
         .sort((a, b) => b.score - a.score)
         .find((x) => x.score > 0)?.menu;
+      if (this.preferences.catalogMode === "real")
+        menu = this.recommend(params.query, this.preferences.scope, {fulfillment:params.fulfillment})[0]?.menu;
       if (!menu)
         return result(
           "asking",

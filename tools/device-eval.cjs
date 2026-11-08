@@ -56,5 +56,5 @@ const fs = require("node:fs");
   ws.close();
 })().catch((e) => {
   console.error(e);
-  process.exitCode = 1;
+  process.exit(1);
 });

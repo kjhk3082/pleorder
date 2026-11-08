@@ -20,12 +20,13 @@ import ai.pleos.playground.location.fused.model.LocationData;
 
 public final class MainActivity extends Activity {
     private static java.lang.ref.WeakReference<MainActivity> active=new java.lang.ref.WeakReference<>(null);
-    static boolean deliverGleo(Intent intent){MainActivity activity=active.get();if(activity==null||activity.isFinishing()||!activity.ready)return false;activity.receive(intent);return true;}
+    static boolean deliverGleo(Intent intent){MainActivity activity=active.get();if(activity==null||activity.isFinishing()||!activity.ready||!activity.foreground)return false;activity.receive(intent);return true;}
     static void refreshExternalState(String state){MainActivity activity=active.get();if(activity!=null)try{activity.send(new JSONObject().put("type","external-state").put("state",state));}catch(Exception ignored){}}
     private static final String ORIGIN="https://appassets.androidplatform.net";
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final ArrayDeque<JSONObject> pending=new ArrayDeque<>();
     private WebView web;
+    private boolean foreground;
     private SpeechController speech;
     private NavigationController navigation;
     private FusedLocation fused;
@@ -70,12 +71,14 @@ public final class MainActivity extends Activity {
     private void reply(String action,String status,String message,String data){try{JSONObject body=new JSONObject().put("functionName",action).put("status",status).put("message",message).put("data",data).put("mode","voice");Intent response=new Intent("ai.pleos.playground.intent.action.APP_ACTION_RESPONSE").setPackage("ai.umos.ambientai").putExtra("packageName",getPackageName()).putExtra("response",body.toString());sendBroadcast(response);Log.i("PleorderGleo","CALLBACK "+action+" status="+status);}catch(Exception ignored){}}
     private final class Bridge {
         @JavascriptInterface public String loadState(){return getPreferences(MODE_PRIVATE).getString("simulation-v1","");}
-        @JavascriptInterface public void saveState(String state){if(state!=null&&state.length()<200000)getPreferences(MODE_PRIVATE).edit().putString("simulation-v1",state).apply();}
-        @JavascriptInterface public void ready(){handler.post(()->{ready=true;while(!pending.isEmpty())send(pending.remove());Log.i("Pleorder","UI_READY");});}
+        @JavascriptInterface public void saveState(String state){if(state!=null&&state.length()<200000)getPreferences(MODE_PRIVATE).edit().putString("simulation-v1",state).commit();}
+        @JavascriptInterface public void ready(){handler.post(()->{ready=true;while(!pending.isEmpty())send(pending.remove());if(checkSelfPermission("pleos.car.permission.NAVI_ROUTE")==PackageManager.PERMISSION_GRANTED)navigation.readDestination();Log.i("Pleorder","UI_READY");});}
         @JavascriptInterface public void startListening(){handler.post(()->{if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},20);}else speech.listen(null);});}
         @JavascriptInterface public void stopSpeech(){handler.post(()->speech.stop());}
         @JavascriptInterface public void speak(String text){handler.post(()->speech.speak(text));}
         @JavascriptInterface public void requestLocation(){handler.post(()->location());}
+        @JavascriptInterface public void requestDestination(){handler.post(()->{if(checkSelfPermission("pleos.car.permission.NAVI_ROUTE")==PackageManager.PERMISSION_GRANTED)navigation.readDestination();else requestPermissions(new String[]{"pleos.car.permission.NAVI_ROUTE"},31);});}
+        @JavascriptInterface public void openExternal(String url){handler.post(()->{try{Uri uri=Uri.parse(url);if(("https".equals(uri.getScheme())||"http".equals(uri.getScheme()))&&uri.getHost()!=null)startActivity(new Intent(Intent.ACTION_VIEW,uri));}catch(Exception ignored){}});}
         @JavascriptInterface public void navigate(String payload){if(payload!=null&&payload.length()<5000)handler.post(()->requestNavigation(payload));}
         @JavascriptInterface public void replyAction(String payload){if(payload==null||payload.length()>12000)return;try{JSONObject p=new JSONObject(payload);reply(p.getString("functionName"),p.getString("status"),p.getString("message"),p.optString("data","[]"));}catch(Exception e){Log.w("PleorderGleo","INVALID_CALLBACK");}}
     }
@@ -90,11 +93,25 @@ public final class MainActivity extends Activity {
         uxListener=java.lang.reflect.Proxy.newProxyInstance(listenerClass.getClassLoader(),new Class[]{listenerClass},(p,m,args)->{if(m.getName().equals("onUxRestrictionsChanged"))restriction(args[0]);return null;});
         uxManager.getClass().getMethod("registerListener",listenerClass).invoke(uxManager,uxListener);restriction(uxManager.getClass().getMethod("getCurrentCarUxRestrictions").invoke(uxManager));
     }catch(Throwable e){Log.w("Pleorder","UX_RESTRICTION_MANAGER_UNAVAILABLE");}}
-    private void restriction(Object value){try{boolean restricted=(boolean)value.getClass().getMethod("isRequiresDistractionOptimization").invoke(value);send(new JSONObject().put("type","restriction").put("restricted",restricted));}catch(Exception ignored){}}
+    private void restriction(Object value){
+        try{
+            Class<?> type=value.getClass();
+            boolean requiresDo=(boolean)type.getMethod("isRequiresDistractionOptimization").invoke(value);
+            int mask=(int)type.getMethod("getActiveRestrictions").invoke(value);
+            JSONObject event=new JSONObject().put("type","restriction").put("requiresDo",requiresDo).put("known",true).put("activeRestrictions",mask);
+            for(String[] field:new String[][]{{"maxStringLength","getMaxRestrictedStringLength"},{"maxContentItems","getMaxCumulativeContentItems"},{"maxContentDepth","getMaxContentDepth"}})
+                event.put(field[0],type.getMethod(field[1]).invoke(value));
+            send(event);
+            Log.i("PleorderUx","DO="+requiresDo+" mask=0x"+Integer.toHexString(mask));
+        }catch(Exception e){
+            Log.w("PleorderUx","UX_POLICY_UNAVAILABLE");
+            try{send(new JSONObject().put("type","restriction").put("requiresDo",true).put("known",false));}catch(Exception ignored){}
+        }
+    }
     private void requestNavigation(String payload){String[] permissions={"pleos.car.permission.NAVI_ROUTE","pleos.car.permission.NAVI_ROUTE_SEARCH"};boolean granted=true;for(String permission:permissions)granted&=checkSelfPermission(permission)==PackageManager.PERMISSION_GRANTED;if(granted)navigation.request(payload);else{pendingNavigation=payload;requestPermissions(permissions,30);}}
-    @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] result){super.onRequestPermissionsResult(requestCode,permissions,result);if(requestCode==20){if(result.length>0&&result[0]==PackageManager.PERMISSION_GRANTED)speech.listen(null);else emitMessage("speech-error","마이크 권한이 필요해요. 화면에서 주문할 수도 있어요.");}if(requestCode==30){boolean granted=result.length>0;for(int value:result)granted&=value==PackageManager.PERMISSION_GRANTED;String payload=pendingNavigation;pendingNavigation=null;if(granted&&payload!=null)navigation.request(payload);else try{send(new JSONObject().put("type","navigation").put("success",false).put("message","내비게이션 경로 권한이 필요해요."));}catch(Exception ignored){}}}
+    @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] result){super.onRequestPermissionsResult(requestCode,permissions,result);if(requestCode==20){if(result.length>0&&result[0]==PackageManager.PERMISSION_GRANTED)speech.listen(null);else emitMessage("speech-error","마이크 권한이 필요해요. 화면에서 주문할 수도 있어요.");}if(requestCode==31){if(result.length>0&&result[0]==PackageManager.PERMISSION_GRANTED)navigation.readDestination();}if(requestCode==30){boolean granted=result.length>0;for(int value:result)granted&=value==PackageManager.PERMISSION_GRANTED;String payload=pendingNavigation;pendingNavigation=null;if(granted&&payload!=null)navigation.request(payload);else try{send(new JSONObject().put("type","navigation").put("success",false).put("message","내비게이션 경로 권한이 필요해요."));}catch(Exception ignored){}}}
+    @Override protected void onResume(){super.onResume();foreground=true;if(ready&&checkSelfPermission("pleos.car.permission.NAVI_ROUTE")==PackageManager.PERMISSION_GRANTED)navigation.readDestination();}
+    @Override protected void onPause(){foreground=false;super.onPause();}
     @Override protected void onStop(){speech.stop();super.onStop();}
     @Override protected void onDestroy(){active.clear();speech.stop();navigation.release();if(fused!=null){try{fused.unregisterFusedLocationCallback(locationListener);fused.release();}catch(Throwable ignored){}}if(uxManager!=null)try{uxManager.getClass().getMethod("unregisterListener").invoke(uxManager);}catch(Throwable ignored){}if(car!=null)try{car.getClass().getMethod("disconnect").invoke(car);}catch(Throwable ignored){}handler.removeCallbacksAndMessages(null);web.removeJavascriptInterface("Native");web.destroy();super.onDestroy();}
 }
-
-

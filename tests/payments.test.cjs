@@ -41,9 +41,9 @@ test("refund remains pending then completes exactly once", () => {
 test("switching method can recover from a decline without reusing failed charge", () => {
   const p = new PaymentRepository();
   assert.equal(p.charge("a", 10000, 0, "declined").status, "failed");
-  p.select("test-pay");
+  p.select("test-card");
   assert.equal(p.charge("a", 10000, 0).status, "paid");
-  assert.equal(p.methods[1].balance, 40000);
+  assert.equal(p.method().balance, 110000);
 });
 test("restoring transactions preserves idempotency", () => {
   const p = new PaymentRepository();

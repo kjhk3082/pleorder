@@ -14,11 +14,14 @@ test("confirmation explains meal, total and simulated card", () => {
   assert.equal(r.orders[0].payment.status, "paid");
 });
 test("insufficient payment leaves draft intact and makes no order", () => {
-  const [r, a] = order("payment-insufficient");
+  const r = new OrderRepository({ now: 0 });
+  r.payments.select("limit-card");
+  r.prepare({ mode: "delivery", items: [{ menuId: "bibimbap", quantity: 1 }] });
+  const a = r.confirm(r.draft.id, true);
   assert.equal(a.status, "fail");
   assert.ok(r.draft);
   assert.equal(r.orders.length, 0);
-  r.payments.select("test-pay");
+  r.payments.select("test-card");
   assert.equal(r.confirm(r.draft.id, true).status, "success");
 });
 test("pending payment is neither declared failed nor charged again", () => {
@@ -103,7 +106,10 @@ test("changing selected method cannot duplicate a reconciled payment", () => {
   r.payments.selected = "test-pay";
   r.reconcilePayment(true);
   assert.equal(r.payments.transactions.length, 1);
-  assert.equal(r.payments.methods[1].balance, 50000);
+  assert.equal(
+    r.payments.methods.find((c) => c.id === "test-pay").balance,
+    50000,
+  );
   assert.equal(r.orders[0].payment.methodId, "test-card");
 });
 test("negative speech never authorizes payment or reports receipt", () => {

@@ -1,8 +1,8 @@
 {
   "packageName": "dev.pleorder.app",
-  "appDescription": "Pleorder simulates food delivery to home and food pickup on the driving route. All orders, restaurants, couriers and payments are simulated. It prepares a draft before explicit confirmation.",
+  "appDescription": "Pleorder simulates food delivery to home and food pickup on the driving route. Restaurant identities and locations can come from public map data. Orders, couriers and payments are simulated; menu provenance is included in results. It prepares a draft before explicit confirmation.",
   "invokeWord": "플레오더",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "actionCalls": [
     {
       "type": "function",
@@ -20,7 +20,7 @@
             "fulfillment": {
               "type": "string",
               "enum": ["delivery", "pickup"],
-              "description": "delivery sends food to the demo home; pickup collects it at the simulated restaurant."
+              "description": "delivery sends food to the selected delivery location; pickup collects it at the selected restaurant. No real order is sent."
             },
             "quantity": {
               "type": "integer",
