@@ -1173,12 +1173,49 @@
         "“비빔밥 한 개 집으로 배달해 줘”처럼 말해 주세요. 주문 내용은 한 번 더 확인할게요.",
       );
     }
+    gleoQuoteFingerprint() {
+      const card = this.payments.method();
+      return JSON.stringify({ draft: this.draft, card: card && { id: card.id, name: card.name, last4: card.last4 } });
+    }
+    quoteForGleo() {
+      const d = this.draft, card = this.payments.method();
+      if (!d) return result("asking", "먼저 주문할 메뉴를 알려 주세요.");
+      this.gleoQuote = { draftId: d.id, fingerprint: this.gleoQuoteFingerprint(), expiresAt: Date.now() + 180000 };
+      const message = `${this.store(d.storeId).name}, ${d.items.map(i => `${i.name} ${i.quantity}개`).join(", ")}. ${d.mode === "pickup" ? "매장 픽업" : `${d.address?.name || "선택한 장소"}(으)로 배달`}, 합계 ${d.total.toLocaleString("ko-KR")}원이에요. ${card?.name || "등록할 카드"}${card?.last4 ? `, 끝 번호 ${card.last4}` : ""}로 모의 결제하려면 ‘결제 승인’, 취소하려면 ‘취소’라고 말씀해 주세요.`;
+      return result("asking", message, { draft: d, voiceText: message });
+    }
     handleAction(name, params = {}) {
       if (!params || typeof params !== "object" || Array.isArray(params))
         return result("fail", "올바르지 않은 요청이에요.");
-      if (name === "GET_FOOD_ORDER_STATUS") return this.status();
-      if (name === "CONFIRM_FOOD_ORDER")
-        return this.confirm(params.draftId, params.confirmation);
+      if (name === "GET_FOOD_ORDER_STATUS") return this.draft ? this.quoteForGleo() : this.status();
+      if (name === "CONFIRM_FOOD_ORDER") {
+        // Gleo may not retain opaque IDs between turns. Resolve only the quote
+        // this app actually read back, never an arbitrary current UI draft.
+        let draftId = params.draftId;
+        if (draftId === undefined || draftId === "current") {
+          const q = this.gleoQuote;
+          if (!q || q.expiresAt < Date.now()) return this.quoteForGleo();
+          const paid = this.orders.find(o => o.draftId === q.draftId);
+          if (paid && !this.draft) return this.confirm(q.draftId, params.confirmation);
+          if (!this.draft || q.fingerprint !== this.gleoQuoteFingerprint()) return this.quoteForGleo();
+          draftId = q.draftId;
+        }
+        if (this.orders.some(o => o.draftId === draftId)) return this.confirm(draftId, params.confirmation);
+        if (params.paymentMethod !== undefined) {
+          const method = this.payments.methods.find(m => m.label === params.paymentMethod && m.registered);
+          if (!method) return result("fail", "등록된 결제수단을 선택해 주세요.");
+          if (!this.draft || this.draft.id !== draftId) return result("fail", "주문 내용이 바뀌었어요. 다시 확인해 주세요.");
+          if (method.id !== this.payments.selected) {
+            const changed = this.selectPayment(method.id);
+            return changed.draft ? this.quoteForGleo() : changed;
+          }
+        }
+        if (params.confirmation === false && this.draft?.id === draftId) {
+          this.gleoQuote = null;
+          return this.cancel();
+        }
+        return this.confirm(draftId, params.confirmation);
+      }
       if (name !== "PREPARE_FOOD_ORDER")
         return result("fail", "지원하지 않는 요청이에요.");
       if (typeof params.query !== "string" || params.query.length > 500)
@@ -1207,7 +1244,7 @@
           "asking",
           "원하는 메뉴를 다시 알려 주세요. 비빔밥, 국밥, 치킨 등을 주문할 수 있어요.",
         );
-      return this.prepare({
+      const prepared = this.prepare({
         items: [
           {
             menuId: menu.id,
@@ -1217,7 +1254,30 @@
         mode: params.fulfillment,
         timing: params.timing || "soon",
       });
+      return prepared.draft ? this.quoteForGleo() : prepared;
     }
   }
-  return { OrderRepository, SCENARIOS, MINUTE, DATA };
+  function gleoCallback(name, r) {
+    return {
+      functionName: name,
+      status: r.status,
+      message: r.status === "success"
+        ? "This action completed in a simulation. State that no real order or payment was made, and report the details in data."
+        : r.status === "asking"
+          ? "This simulated order requires the user's explicit confirmation or missing details. Read the amount and payment method in data."
+          : "This simulated action failed. Explain the reason and next step in data. No real payment was made.",
+      data: JSON.stringify([{
+        simulated: true,
+        detail: r.voiceText || r.message,
+        draftId: r.draft?.id,
+        orderId: r.order?.id,
+        fulfillment: r.draft?.mode || r.order?.mode,
+        total: r.draft?.total ?? r.order?.total,
+        payment: r.payment || r.order?.payment,
+        stage: r.order?.stage,
+      }]),
+      mode: "voice",
+    };
+  }
+  return { OrderRepository, SCENARIOS, MINUTE, DATA, gleoCallback };
 });

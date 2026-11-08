@@ -18,7 +18,9 @@ import ai.pleos.playground.location.fused.FusedLocation;
 import ai.pleos.playground.location.fused.listener.FusedLocationListener;
 import ai.pleos.playground.location.fused.model.LocationData;
 
-public final class MainActivity extends Activity {
+public class MainActivity extends Activity {
+    protected boolean drivingSurface(){return false;}
+    private boolean switchingSurface;
     private static java.lang.ref.WeakReference<MainActivity> active=new java.lang.ref.WeakReference<>(null);
     static boolean deliverGleo(Intent intent){MainActivity activity=active.get();if(activity==null||activity.isFinishing()||!activity.ready||!activity.foreground)return false;activity.receive(intent);return true;}
     static void refreshExternalState(String state){MainActivity activity=active.get();if(activity!=null)try{activity.send(new JSONObject().put("type","external-state").put("state",state));}catch(Exception ignored){}}
@@ -50,35 +52,42 @@ public final class MainActivity extends Activity {
             }
         });
         web.setWebChromeClient(new WebChromeClient(){@Override public boolean onConsoleMessage(ConsoleMessage m){if(BuildConfig.DEBUG)Log.d("PleorderWeb",m.message()+" @"+m.lineNumber());return true;}});
-        setContentView(web);web.loadUrl(ORIGIN+"/web/index.html");receive(getIntent());handler.postDelayed(this::watchDrivingRestrictions,1200);
+        setContentView(web);web.loadUrl(ORIGIN+"/web/"+(drivingSurface()?"driving.html":"index.html"));receive(getIntent());watchDrivingRestrictions();
     }
     void send(JSONObject event){handler.post(()->{if(!ready){if(pending.size()<20)pending.add(event);return;}web.evaluateJavascript("window.Pleorder&&window.Pleorder.receiveNative("+event.toString()+")",null);});}
     private void emitMessage(String type,String message){try{send(new JSONObject().put("type",type).put("message",message));}catch(Exception ignored){}}
     @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);receive(intent);}
     private void receive(Intent intent){
-        String action=intent.getAction();
-        if(BuildConfig.DEBUG&&intent.hasExtra("qaSpeechFile")){String name=intent.getStringExtra("qaSpeechFile");if("order.pcm".equals(name)||"confirm.pcm".equals(name)){handler.postDelayed(()->{try{speech.listen(java.nio.file.Files.readAllBytes(new java.io.File(getFilesDir(),name).toPath()));}catch(Exception e){Log.w("PleorderSpeech","PCM_MISSING");}},1200);}return;}
+        String action=GleoActions.normalize(intent.getAction());
+        if(BuildConfig.DEBUG&&intent.hasExtra("qaSpeechFile")){String name=intent.getStringExtra("qaSpeechFile");if(java.util.Set.of("order.pcm","confirm.pcm","status.pcm","decline.pcm","card-a.pcm","card-b.pcm","cancel.pcm").contains(name)){handler.postDelayed(()->{try{speech.listen(java.nio.file.Files.readAllBytes(new java.io.File(getFilesDir(),name).toPath()));}catch(Exception e){Log.w("PleorderSpeech","PCM_MISSING");}},1800);}return;}
         if(BuildConfig.DEBUG&&intent.hasExtra("qaSpeak")){handler.postDelayed(()->speech.speak("플레오더입니다. 배달과 픽업을 음성으로 주문할 수 있어요."),1500);return;}
         if(!java.util.Set.of("PREPARE_FOOD_ORDER","CONFIRM_FOOD_ORDER","GET_FOOD_ORDER_STATUS").contains(action==null?"":action))return;
         try{
             String raw=intent.getStringExtra("ACTION_PARAM");if(raw!=null&&raw.length()>8192)throw new IllegalArgumentException("oversized");
             JSONObject params=new JSONObject();if(raw!=null){Object value=new org.json.JSONTokener(raw).nextValue();if(value instanceof String)value=new JSONObject((String)value);if(!(value instanceof JSONObject))throw new IllegalArgumentException("object required");JSONObject obj=(JSONObject)value;params=obj.optJSONObject("actionParameters");if(params==null)params=obj;}
-            else if(intent.getExtras()!=null)for(String key:new String[]{"query","fulfillment","quantity","timing","draftId","confirmation"})if(intent.hasExtra(key))params.put(key,intent.getExtras().get(key));
+            else if(intent.getExtras()!=null)for(String key:new String[]{"query","fulfillment","quantity","timing","draftId","confirmation","paymentMethod"})if(intent.hasExtra(key))params.put(key,intent.getExtras().get(key));
             send(new JSONObject().put("type","gleo-action").put("name",action).put("params",params));
             Log.i("PleorderGleo","ACTION_RECEIVED "+action);
         }catch(Exception e){reply(action,"fail","Invalid action parameters.","[]");}
     }
     private void reply(String action,String status,String message,String data){try{JSONObject body=new JSONObject().put("functionName",action).put("status",status).put("message",message).put("data",data).put("mode","voice");Intent response=new Intent("ai.pleos.playground.intent.action.APP_ACTION_RESPONSE").setPackage("ai.umos.ambientai").putExtra("packageName",getPackageName()).putExtra("response",body.toString());sendBroadcast(response);Log.i("PleorderGleo","CALLBACK "+action+" status="+status);}catch(Exception ignored){}}
     private final class Bridge {
-        @JavascriptInterface public String loadState(){return getPreferences(MODE_PRIVATE).getString("simulation-v1","");}
-        @JavascriptInterface public void saveState(String state){if(state!=null&&state.length()<200000)getPreferences(MODE_PRIVATE).edit().putString("simulation-v1",state).commit();}
+        @JavascriptInterface public String loadState(){return getSharedPreferences("MainActivity",MODE_PRIVATE).getString("simulation-v1","");}
+        @JavascriptInterface public void saveState(String state){if(state!=null&&state.length()<200000)getSharedPreferences("MainActivity",MODE_PRIVATE).edit().putString("simulation-v1",state).commit();}
         @JavascriptInterface public void ready(){handler.post(()->{ready=true;while(!pending.isEmpty())send(pending.remove());if(checkSelfPermission("pleos.car.permission.NAVI_ROUTE")==PackageManager.PERMISSION_GRANTED)navigation.readDestination();Log.i("Pleorder","UI_READY");});}
-        @JavascriptInterface public void startListening(){handler.post(()->{if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},20);}else speech.listen(null);});}
+        @JavascriptInterface public void startListening(){handler.post(()->{if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){if(drivingSurface())emitMessage("speech-error","주차 후 마이크 권한을 허용해 주세요. Gleo 음성 호출은 계속 이용할 수 있어요.");else requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},20);}else speech.listen(null);});}
+        @JavascriptInterface public void startGleo(){handler.post(()->{
+            speech.stop();
+            boolean shown=false;
+            try{shown=showAssist(new Bundle());}catch(Exception ignored){}
+            Log.i("PleorderGleo","ASSIST_REQUEST shown="+shown);
+            if(!shown)emitMessage("speech-error","차량 음성 버튼으로 Gleo를 불러 ‘플레오더에서 주문해 줘’라고 말씀해 주세요.");
+        });}
         @JavascriptInterface public void stopSpeech(){handler.post(()->speech.stop());}
         @JavascriptInterface public void speak(String text){handler.post(()->speech.speak(text));}
         @JavascriptInterface public void requestLocation(){handler.post(()->location());}
         @JavascriptInterface public void requestDestination(){handler.post(()->{if(checkSelfPermission("pleos.car.permission.NAVI_ROUTE")==PackageManager.PERMISSION_GRANTED)navigation.readDestination();else requestPermissions(new String[]{"pleos.car.permission.NAVI_ROUTE"},31);});}
-        @JavascriptInterface public void openExternal(String url){handler.post(()->{try{Uri uri=Uri.parse(url);if(("https".equals(uri.getScheme())||"http".equals(uri.getScheme()))&&uri.getHost()!=null)startActivity(new Intent(Intent.ACTION_VIEW,uri));}catch(Exception ignored){}});}
+        @JavascriptInterface public void openExternal(String url){if(drivingSurface())return;handler.post(()->{try{Uri uri=Uri.parse(url);if(("https".equals(uri.getScheme())||"http".equals(uri.getScheme()))&&uri.getHost()!=null)startActivity(new Intent(Intent.ACTION_VIEW,uri));}catch(Exception ignored){}});}
         @JavascriptInterface public void navigate(String payload){if(payload!=null&&payload.length()<5000)handler.post(()->requestNavigation(payload));}
         @JavascriptInterface public void replyAction(String payload){if(payload==null||payload.length()>12000)return;try{JSONObject p=new JSONObject(payload);reply(p.getString("functionName"),p.getString("status"),p.getString("message"),p.optString("data","[]"));}catch(Exception e){Log.w("PleorderGleo","INVALID_CALLBACK");}}
     }
@@ -86,13 +95,18 @@ public final class MainActivity extends Activity {
         @Override public void onChanged(LocationData d){if(d==null)return;try{send(new JSONObject().put("type","location").put("lat",d.getLatitude()).put("lng",d.getLongitude()));}catch(Exception ignored){}}
         @Override public void onError(Exception e){emitMessage("speech-error","차량 위치를 가져오지 못했어요. 데모 경로는 계속 사용할 수 있어요.");}
     };handler.postDelayed(()->{if(fused!=null){fused.getLastKnownLocation(locationListener);fused.registerFusedLocationCallback(locationListener);}},1800);}else fused.getLastKnownLocation(locationListener);}catch(Throwable e){emitMessage("speech-error","차량 위치 연결을 확인해 주세요.");}}
-    /** Use the platform restriction manager when present; never claim distraction optimization. */
+    /** Only the separate, bounded voice surface declares distraction optimization. */
     private void watchDrivingRestrictions(){try{
         Class<?> carClass=Class.forName("android.car.Car");car=carClass.getMethod("createCar",android.content.Context.class).invoke(null,this);uxManager=carClass.getMethod("getCarManager",String.class).invoke(car,"uxrestriction");
+        if(BuildConfig.DEBUG)try{
+            Object packages=carClass.getMethod("getCarManager",String.class).invoke(car,"package");
+            Object allowed=packages.getClass().getMethod("isActivityDistractionOptimized",String.class,String.class).invoke(packages,getPackageName(),getClass().getName());
+            Log.i("PleorderUx","PLATFORM_DO_RECOGNIZED="+allowed+" activity="+getClass().getSimpleName());
+        }catch(Throwable ignored){Log.i("PleorderUx","PLATFORM_DO_DIAGNOSTIC_UNAVAILABLE");}
         Class<?> listenerClass=Class.forName("android.car.drivingstate.CarUxRestrictionsManager$OnUxRestrictionsChangedListener");
         uxListener=java.lang.reflect.Proxy.newProxyInstance(listenerClass.getClassLoader(),new Class[]{listenerClass},(p,m,args)->{if(m.getName().equals("onUxRestrictionsChanged"))restriction(args[0]);return null;});
         uxManager.getClass().getMethod("registerListener",listenerClass).invoke(uxManager,uxListener);restriction(uxManager.getClass().getMethod("getCurrentCarUxRestrictions").invoke(uxManager));
-    }catch(Throwable e){Log.w("Pleorder","UX_RESTRICTION_MANAGER_UNAVAILABLE");}}
+    }catch(Throwable e){Log.w("Pleorder","UX_RESTRICTION_MANAGER_UNAVAILABLE");try{send(new JSONObject().put("type","restriction").put("requiresDo",true).put("known",false));}catch(Exception ignored){}}}
     private void restriction(Object value){
         try{
             Class<?> type=value.getClass();
@@ -102,16 +116,32 @@ public final class MainActivity extends Activity {
             for(String[] field:new String[][]{{"maxStringLength","getMaxRestrictedStringLength"},{"maxContentItems","getMaxCumulativeContentItems"},{"maxContentDepth","getMaxContentDepth"}})
                 event.put(field[0],type.getMethod(field[1]).invoke(value));
             send(event);
+            switchSurfaceIfNeeded(requiresDo);
             Log.i("PleorderUx","DO="+requiresDo+" mask=0x"+Integer.toHexString(mask));
         }catch(Exception e){
             Log.w("PleorderUx","UX_POLICY_UNAVAILABLE");
             try{send(new JSONObject().put("type","restriction").put("requiresDo",true).put("known",false));}catch(Exception ignored){}
         }
     }
+    private void switchSurfaceIfNeeded(boolean requiresDo){
+        if(switchingSurface||isFinishing()||drivingSurface()==requiresDo)return;
+        switchingSurface=true;
+        // State writes are synchronous. Persist the current clock before changing surfaces.
+        web.evaluateJavascript("window.Pleorder&&window.Pleorder.suspend&&window.Pleorder.suspend()",ignored->{
+            Intent next=new Intent(this,requiresDo?DrivingActivity.class:MainActivity.class);
+            next.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(next);finish();
+        });
+    }
     private void requestNavigation(String payload){String[] permissions={"pleos.car.permission.NAVI_ROUTE","pleos.car.permission.NAVI_ROUTE_SEARCH"};boolean granted=true;for(String permission:permissions)granted&=checkSelfPermission(permission)==PackageManager.PERMISSION_GRANTED;if(granted)navigation.request(payload);else{pendingNavigation=payload;requestPermissions(permissions,30);}}
     @Override public void onRequestPermissionsResult(int requestCode,String[] permissions,int[] result){super.onRequestPermissionsResult(requestCode,permissions,result);if(requestCode==20){if(result.length>0&&result[0]==PackageManager.PERMISSION_GRANTED)speech.listen(null);else emitMessage("speech-error","마이크 권한이 필요해요. 화면에서 주문할 수도 있어요.");}if(requestCode==31){if(result.length>0&&result[0]==PackageManager.PERMISSION_GRANTED)navigation.readDestination();}if(requestCode==30){boolean granted=result.length>0;for(int value:result)granted&=value==PackageManager.PERMISSION_GRANTED;String payload=pendingNavigation;pendingNavigation=null;if(granted&&payload!=null)navigation.request(payload);else try{send(new JSONObject().put("type","navigation").put("success",false).put("message","내비게이션 경로 권한이 필요해요."));}catch(Exception ignored){}}}
-    @Override protected void onResume(){super.onResume();foreground=true;if(ready&&checkSelfPermission("pleos.car.permission.NAVI_ROUTE")==PackageManager.PERMISSION_GRANTED)navigation.readDestination();}
-    @Override protected void onPause(){foreground=false;super.onPause();}
+    @Override protected void onResume(){
+        super.onResume();foreground=true;
+        if(ready)try{send(new JSONObject().put("type","external-state").put("state",getSharedPreferences("MainActivity",MODE_PRIVATE).getString("simulation-v1","")));send(new JSONObject().put("type","visibility").put("visible",true));}catch(Exception ignored){}
+        if(uxManager!=null)try{restriction(uxManager.getClass().getMethod("getCurrentCarUxRestrictions").invoke(uxManager));}catch(Exception ignored){}
+        if(ready&&checkSelfPermission("pleos.car.permission.NAVI_ROUTE")==PackageManager.PERMISSION_GRANTED)navigation.readDestination();
+    }
+    @Override protected void onPause(){foreground=false;try{send(new JSONObject().put("type","visibility").put("visible",false));}catch(Exception ignored){}super.onPause();}
     @Override protected void onStop(){speech.stop();super.onStop();}
-    @Override protected void onDestroy(){active.clear();speech.stop();navigation.release();if(fused!=null){try{fused.unregisterFusedLocationCallback(locationListener);fused.release();}catch(Throwable ignored){}}if(uxManager!=null)try{uxManager.getClass().getMethod("unregisterListener").invoke(uxManager);}catch(Throwable ignored){}if(car!=null)try{car.getClass().getMethod("disconnect").invoke(car);}catch(Throwable ignored){}handler.removeCallbacksAndMessages(null);web.removeJavascriptInterface("Native");web.destroy();super.onDestroy();}
+    @Override protected void onDestroy(){if(active.get()==this)active.clear();speech.stop();navigation.release();if(fused!=null){try{fused.unregisterFusedLocationCallback(locationListener);fused.release();}catch(Throwable ignored){}}if(uxManager!=null)try{uxManager.getClass().getMethod("unregisterListener").invoke(uxManager);}catch(Throwable ignored){}if(car!=null)try{car.getClass().getMethod("disconnect").invoke(car);}catch(Throwable ignored){}handler.removeCallbacksAndMessages(null);web.removeJavascriptInterface("Native");web.destroy();super.onDestroy();}
 }

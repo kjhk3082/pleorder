@@ -28,8 +28,9 @@ public final class GleoReceiver extends BroadcastReceiver {
     private static String expectedState;
     private record Job(Context context,Intent intent,PendingResult pending,long id) {}
     @Override public void onReceive(Context context,Intent intent){
-        String action=intent.getAction();
-        if(!Set.of("PREPARE_FOOD_ORDER","CONFIRM_FOOD_ORDER","GET_FOOD_ORDER_STATUS").contains(action==null?"":action))return;
+        String action=GleoActions.normalize(intent.getAction());
+        if(action==null)return;
+        intent=new Intent(intent).setAction(action);
         if(MainActivity.deliverGleo(intent))return;
         PendingResult pending=goAsync();
         if(QUEUE.size()>12){respond(context,action,"fail","The action queue is busy. Please query the order status before retrying.","[]");pending.finish();return;}
@@ -56,7 +57,7 @@ public final class GleoReceiver extends BroadcastReceiver {
     private static void runNext(){
         if(!ready||current!=null||QUEUE.isEmpty())return;
         current=QUEUE.remove();Job job=current;
-        try{String raw=job.intent.getStringExtra("ACTION_PARAM");JSONObject params=new JSONObject();if(raw!=null){if(raw.length()>8192)throw new IllegalArgumentException();Object value=new JSONTokener(raw).nextValue();if(value instanceof String)value=new JSONObject((String)value);if(!(value instanceof JSONObject))throw new IllegalArgumentException();params=((JSONObject)value).optJSONObject("actionParameters");if(params==null)params=(JSONObject)value;}else for(String key:new String[]{"query","fulfillment","quantity","timing","draftId","confirmation"})if(job.intent.hasExtra(key))params.put(key,job.intent.getExtras().get(key));String state=job.context.getSharedPreferences("MainActivity",Context.MODE_PRIVATE).getString("simulation-v1","");expectedState=state;engine.evaluateJavascript("dispatch("+JSONObject.quote(job.intent.getAction())+","+params+","+JSONObject.quote(state)+","+job.id+")",null);}catch(Exception e){respond(job.context,job.intent.getAction(),"fail","Invalid action parameters.","[]");finish(job);return;}
+        try{String raw=job.intent.getStringExtra("ACTION_PARAM");JSONObject params=new JSONObject();if(raw!=null){if(raw.length()>8192)throw new IllegalArgumentException();Object value=new JSONTokener(raw).nextValue();if(value instanceof String)value=new JSONObject((String)value);if(!(value instanceof JSONObject))throw new IllegalArgumentException();params=((JSONObject)value).optJSONObject("actionParameters");if(params==null)params=(JSONObject)value;}else for(String key:new String[]{"query","fulfillment","quantity","timing","draftId","confirmation","paymentMethod"})if(job.intent.hasExtra(key))params.put(key,job.intent.getExtras().get(key));String state=job.context.getSharedPreferences("MainActivity",Context.MODE_PRIVATE).getString("simulation-v1","");expectedState=state;engine.evaluateJavascript("dispatch("+JSONObject.quote(job.intent.getAction())+","+params+","+JSONObject.quote(state)+","+job.id+")",null);}catch(Exception e){respond(job.context,job.intent.getAction(),"fail","Invalid action parameters.","[]");finish(job);return;}
         MAIN.postDelayed(()->{if(current==job){respond(job.context,job.intent.getAction(),"fail","The action timed out. Query status before retrying.","[]");finish(job);}},5500);
     }
     private static void finish(Job job){if(current!=job)return;job.pending.finish();current=null;runNext();MAIN.postDelayed(()->{if(current==null&&QUEUE.isEmpty()&&engine!=null){engine.destroy();engine=null;ready=false;}},30000);}

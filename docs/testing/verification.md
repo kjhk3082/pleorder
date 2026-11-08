@@ -62,3 +62,12 @@ powershell.exe -NoProfile -File .\tools\New-SpeechFixtures.ps1
 - C 드라이브 정리: 사용 중인 AVD를 확인한 뒤 미사용 AVD 2개와 미참조 API37 이미지만 삭제. 가용 공간 10.63GB → 24.34GB. 활성 API34 환경과 프로젝트/키는 유지.
 
 개인 집/상세주소/테스트 출발지는 로컬 앱 상태에 설정하며 저장소 기본 데이터·공개 검증 이미지에 넣지 않는다.
+
+## 최신 v8 검증 · Gleo 음성 및 DO 진단
+
+- `npm test`: 87/87 통과. Gleo 견적 보관/만료/변경 후 재승인, 카드 변경 후 별도 승인, 중복 결제 방지 포함.
+- 실제 Gleo 마이크 경로로 배달 21,000원, 픽업 19,000원, B 카드 거절→A 재승인, 결제하지 말라는 명시적 거절, 현황 음성 응답까지 검증했다. 입력은 Windows 합성 음성이며 사람이 말한 시험은 아니다.
+- 설정 앱을 전면에 두고 `BACKGROUND_CALLBACK`에서 처리됨을 확인했다. 상세 재현은 [Gleo 음성 검증](gleo-voice-e2e.md)에 기록했다.
+- DO 별도 Activity와 태스크 재생성 후 **D단 정차·콜드 실행·27km/h에서 실제 시스템 화면 표시를 확인했다**. 일반 CarPackageManager는 false지만 Pleos HomeScreen은 새 태스크를 DO=true로 판정한다. 일반 API false를 차단의 직접 원인으로 단정했던 중간 판단을 정정한다. [진단 근거](korea-driving-policy.md).
+- 앱 마이크 버튼은 `showAssist()`로 Gleo를 연다. 실제 버튼 클릭→합성 음성 인식→Gleo 현황 콜백을 확인했다.
+- 원본 참조 P PNG를 웹/Android에 공통 적용하고 같은 크기의 비교 이미지를 확인했다. 원본과 픽셀 동일한 추출물은 아니다.

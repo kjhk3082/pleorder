@@ -27,11 +27,31 @@
 
 앱은 설정·카드 등록/기본값 관리만 제한하고, 저장 카드 선택·주문 요청 입력은 유지한다. DO 상태에서는 반복 애니메이션과 장식 전환을 중단한다. 전체 제한 또는 정책 읽기 실패 시에만 앱 자체 블러 안내가 적용된다. 마이크 주문과 Gleo 배경 함수 계약은 별도다.
 
-## 남은 시스템 조건
+## 별도 주행 화면과 실제 표시 검증
 
-`MainActivity`는 DO 메타데이터를 선언하지 않는다. 그러므로 에뮬레이터는 `requiresDO=true`에서 여전히 시스템 차단 화면을 띄울 수 있다. 해당 화면의 문구·배경은 앱 소유가 아니다. 이번 수정으로 주행 중 전체 화면 사용이 승인됐다고 주장하지 않는다.
+`DrivingActivity`만 `distractionOptimized=true`를 선언한다. 앱 진입 및 차량 제한 변경 때 `CarUxRestrictions`에 따라 주차용 `MainActivity`와 전환한다. 주행 화면은 음성 주문·금액/카드 확인·현황·미결제 취소만 제공하며 지도, 메뉴 탐색, 설정, 반복 모션을 제거했다. 두 화면은 동일한 저장소를 사용한다. 이 선언은 심사 승인이나 실차 안전 인증을 의미하지 않는다.
 
-주행용 시각 UI를 제공하려면 실제로 DO 원칙을 충족하는 화면을 만들고 검토해야 한다. 풀 메뉴·설정 화면에 메타데이터만 추가해 차단을 제거하지 않았다. [Android DO/제한 구분](https://source.android.com/docs/automotive/driver_distraction/consume), [플래그 의미](https://developer.android.com/reference/android/car/drivingstate/CarUxRestrictions).
+2026-11-09 최종 검증에서 **D단 정차, D단 콜드 실행, 에뮬레이터 27km/h 주행 상태에서 실제 시스템 화면에 주행 UI가 보임**을 확인했다. 처음에는 CDP 내부 렌더링만 보고 성공을 잘못 판단했고, 다음에는 일반 CarPackageManager의 false 결과를 Pleos 차단의 직접 원인으로 잘못 단정했다. 최종 결과는 Pleos HomeScreen의 태스크 판정 로그와 전체 시스템 캡처를 기준으로 한다.
+
+| 확인 대상 | 실제 결과 |
+|---|---|
+| 실행 중 화면 | `dev.pleorder.app/.DrivingActivity` |
+| Pleos 런처의 새 태스크 판정 | `DrivingActivity ... distractionOptimized: true` |
+| 일반 CarPackageManager 조회 | `PLATFORM_DO_RECOGNIZED=false activity=DrivingActivity` — 실제 Pleos 표출과 다름 |
+| 차량 제한 | D / 0 km/h, `DO=true mask=0x50` |
+| 빌드 종류 | `ro.build.type=user`, `ro.debuggable=0` |
+| 설치 출처 | `installer=null` (ADB 설치) |
+| CarService 로그 | `dev.pleorder.app not installed from permitted sources NULL` |
+| CarServiceUpdatable 리소스 | `array/allowedAppInstallSources`, size=0 |
+| 적용 오버레이 | `CarServiceOverlayCuttleFish.apk`에 해당 배열 재정의 없음 |
+
+[AOSP CarPackageManagerService](https://android.googlesource.com/platform/packages/services/Car/+/master/service/src/com/android/car/pm/CarPackageManagerService.java)의 설치 출처 검사는 일반 API가 false인 이유를 설명하지만 **이 값이 Pleos HomeScreen의 최종 차단 판정과 같다는 증거는 없다**. 실제로 같은 조건에서 Pleos 런처는 새 DrivingActivity 태스크를 DO=true로 기록했고 화면을 표시했다. API false만으로 개발 이미지 교체나 추가 설치 승인이 필수라고 단정하지 않는다.
+
+변경 전 일반 화면/기존 태스크가 남은 실행과 새 주행용 태스크의 판정이 달랐다. `tools/Build-Pleorder.ps1`는 설치 후 앱 태스크를 종료하고 DO를 선언한 DrivingActivity로 새로 실행하도록 수정했다. 기존 태스크의 런처 판정 캐시가 원인에 관여한 것으로 추정되며, 정확한 OEM 내부 캐시 구현까지 검증한 것은 아니다. 주차 시 MainActivity, DO 요구 시 DrivingActivity로 전환한다. P→D→P 왕복 후 주문 1건·거래 1건이 보존됐다.
+
+[공식 ADB 안내](https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/adb-command-reference-guide)의 `hmg_car_service`는 현재 이미지에 없었다. 주행 규제를 강제로 끄거나 설치 출처를 위장한 조치는 하지 않았다. 새 화면의 DO 선언과 정상 태스크 실행으로 검증했다. 제품 심사·실차 안전 검증을 통과했다는 의미는 아니다.
+
+Gleo의 service 방식 주문도 별도로 실행된다. [실제 음성 검증](gleo-voice-e2e.md)을 참고한다. 30km/h 입력 후 콘솔의 감속을 반영한 **27km/h 전체 시스템 캡처**는 `pleorder-driving-27kmh.png`이며, 주행 중 Gleo 현황 조회 콜백도 성공했다. 시험 후 속도 0/P로 복원했다.
 
 ## 검증
 

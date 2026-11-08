@@ -2,13 +2,14 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
-const { OrderRepository } = require("../app/src/main/assets/web/core.js");
+const Core = require("../app/src/main/assets/web/core.js");
+const { OrderRepository } = Core;
 const html = fs.readFileSync("app/src/main/assets/web/headless.html", "utf8");
 const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)][0][1];
 function engine() {
   let output;
   const context = {
-    PleorderCore: { OrderRepository },
+    PleorderCore: Core,
     Date: { now: () => 0 },
     Headless: {
       ready() {},
@@ -46,6 +47,8 @@ test("headless Gleo contract prepares then confirms without a UI", () => {
   );
   assert.equal(order.id, 42);
   assert.equal(order.response.status, "success");
+  assert.match(order.response.message, /simulation/);
+  assert.match(JSON.parse(order.response.data)[0].detail, /12,500/);
   assert.equal(order.state.orders.length, 1);
   assert.equal(order.state.simulation.paused, false);
 });

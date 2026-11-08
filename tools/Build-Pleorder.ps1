@@ -19,4 +19,11 @@ $gradle=Join-Path $env:USERPROFILE '.gradle\wrapper\dists\gradle-8.11.1-bin\bpt9
 if($LASTEXITCODE -ne 0){throw 'Pleorder build failed'}
 $apk=Join-Path $buildRoot 'app\build\outputs\apk\debug\app-debug.apk'
 Write-Output "PLEORDER_APK=$apk"
-if($Install){$adb=Join-Path $env:ANDROID_HOME 'platform-tools\adb.exe'; & $adb -s emulator-5554 install -r $apk;if($LASTEXITCODE -ne 0){throw 'Install failed'}; & $adb -s emulator-5554 shell am start -n dev.pleorder.app/.MainActivity}
+if($Install){
+ $adb=Join-Path $env:ANDROID_HOME 'platform-tools\adb.exe'
+ & $adb -s emulator-5554 install -r $apk
+ if($LASTEXITCODE -ne 0){throw 'Install failed'}
+ # Pleos caches each task's DO status. Recreate tasks after manifest updates.
+ & $adb -s emulator-5554 shell am force-stop --user current dev.pleorder.app
+ & $adb -s emulator-5554 shell am start --user current -W -n dev.pleorder.app/.DrivingActivity
+}

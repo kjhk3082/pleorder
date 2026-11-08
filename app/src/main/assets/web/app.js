@@ -30,6 +30,7 @@ let voiceTarget = null;
 let navigationDraft = null;
 let placePurpose = "destination";
 let uxPolicy = PleorderUx.fromEvent({requiresDo:false, activeRestrictions:0});
+let pageActive = true;
 let storeTab = "menu",
   menuLimit = 12,
   showSampleMenus = false;
@@ -714,7 +715,7 @@ $("micButton").onclick = () => {
   voiceTarget = null;
   if (!window.Native) return openText();
   if (listening) Native.stopSpeech();
-  else Native.startListening();
+  else Native.startGleo();
 };
 document.addEventListener("click", (e) => {
   const b = e.target.closest("button");
@@ -1039,7 +1040,9 @@ window.Pleorder = {
     save();
   },
   runCommand,
+  suspend() { save(); },
   receiveNative(e) {
+    if (e.type === "visibility") { if (!e.visible) save(); pageActive = e.visible; }
     if (e.type === "vehicle-destination") {
       if (repo.updateVehicleDestination(e.destination)) {
         repo.navigationStatus = "ready";
@@ -1125,29 +1128,7 @@ window.Pleorder = {
       render();
       if (r.draft) openCheckout();
       else if (r.order) close();
-      const payload = {
-        functionName: e.name,
-        status: r.status,
-        message:
-          r.status === "success"
-            ? "The simulated action completed. Describe the payment and order data."
-            : r.status === "asking"
-              ? "Ask the user to confirm the detailed order and payment information."
-              : "Explain why the action failed and the next available step.",
-        data: JSON.stringify([
-          {
-            simulated: true,
-            detail: r.voiceText || r.message,
-            draftId: r.draft?.id,
-            orderId: r.order?.id,
-            mode: r.draft?.mode || r.order?.mode,
-            total: r.draft?.total || r.order?.total,
-            payment: r.payment || r.order?.payment,
-            stage: r.order?.stage,
-          },
-        ]),
-        mode: "voice",
-      };
+      const payload = PleorderCore.gleoCallback(e.name, r);
       if (window.Native) Native.replyAction(JSON.stringify(payload));
     }
   },
@@ -1160,6 +1141,7 @@ if (!paused && repo.simulation?.savedWall)
     ),
   );
 setInterval(() => {
+  if (!pageActive) return;
   const now = Date.now();
   if (!paused) {
     const o = repo.activeOrder() || repo.orders[0],
@@ -1212,6 +1194,7 @@ setInterval(() => {
   }, 170);
 }, 5000);
 document.addEventListener("visibilitychange", () => {
+  if (!pageActive) return;
   lastWall = Date.now();
   save();
 });

@@ -11,11 +11,15 @@
     <application android:label="플레오더" android:icon="@drawable/ic_pleorder" android:allowBackup="false" android:usesCleartextTraffic="false" android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <uses-library android:name="android.car" android:required="false" />
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboardHidden">
-            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
             <intent-filter><action android:name="PREPARE_FOOD_ORDER" /><action android:name="CONFIRM_FOOD_ORDER" /><action android:name="GET_FOOD_ORDER_STATUS" /><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+        </activity>
+        <activity android:name=".DrivingActivity" android:exported="true" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboardHidden">
+            <meta-data android:name="distractionOptimized" android:value="true" />
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
         </activity>
         <receiver android:name=".GleoReceiver" android:exported="true">
             <intent-filter><action android:name="PREPARE_FOOD_ORDER" /><action android:name="CONFIRM_FOOD_ORDER" /><action android:name="GET_FOOD_ORDER_STATUS" /><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+            <intent-filter><action android:name="dev.pleorder.app.PREPARE_FOOD_ORDER" /><action android:name="dev.pleorder.app.CONFIRM_FOOD_ORDER" /><action android:name="dev.pleorder.app.GET_FOOD_ORDER_STATUS" /><category android:name="android.intent.category.DEFAULT" /></intent-filter>
         </receiver>
     </application>
 </manifest>
