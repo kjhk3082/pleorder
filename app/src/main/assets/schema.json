@@ -1,0 +1,71 @@
+{
+  "packageName": "dev.pleorder.app",
+  "appDescription": "Pleorder simulates food delivery to home and food pickup on the driving route. All orders, restaurants, couriers and payments are simulated. It prepares a draft before explicit confirmation.",
+  "invokeWord": "플레오더",
+  "version": "0.1.0",
+  "actionCalls": [
+    {
+      "type": "function",
+      "function": {
+        "component": "activity",
+        "name": "PREPARE_FOOD_ORDER",
+        "description": "Prepare a simulated food order for delivery or pickup. Never submits an order. Read back the draft ID, meal, quantity, fulfillment and total, then ask the user to confirm.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Meal or restaurant requested by the user, such as 비빔밥, 국밥, 치킨, 버거, 샐러드 or 라멘."
+            },
+            "fulfillment": {
+              "type": "string",
+              "enum": ["delivery", "pickup"],
+              "description": "delivery sends food to the demo home; pickup collects it at the simulated restaurant."
+            },
+            "quantity": {
+              "type": "integer",
+              "description": "Number of meals, from 1 to 20."
+            },
+            "timing": {
+              "type": "string",
+              "enum": ["soon", "arrival"],
+              "description": "soon prepares now; arrival schedules simulated delivery around the driver's home arrival."
+            }
+          },
+          "required": ["query", "fulfillment"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "component": "activity",
+        "name": "CONFIRM_FOOD_ORDER",
+        "description": "Confirm the current simulated draft only after the user explicitly agrees to the read-back details. Copy the draftId from PREPARE_FOOD_ORDER. A changed or expired draft needs a fresh confirmation.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "draftId": {
+              "type": "string",
+              "description": "Exact current draft ID returned by PREPARE_FOOD_ORDER."
+            },
+            "confirmation": {
+              "type": "boolean",
+              "description": "True only when the user explicitly confirmed the current order details."
+            }
+          },
+          "required": ["draftId", "confirmation"]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "component": "activity",
+        "name": "GET_FOOD_ORDER_STATUS",
+        "description": "Get the current simulated food delivery or pickup status and remaining preparation or delivery information.",
+        "parameters": { "type": "object", "properties": {}, "required": [] }
+      }
+    }
+  ]
+}
