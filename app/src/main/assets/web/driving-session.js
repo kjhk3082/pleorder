@@ -5,6 +5,7 @@
       this.repo.preferences.catalogMode||='real';
       this.policy=Ux.fromEvent({requiresDo:true,known:false});
       this.lastWall=this.repo.simulation?.savedWall||now;
+      this.repo.guardTrackingGap(now);
       this.tick(now);
     }
     tick(now=Date.now()){

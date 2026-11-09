@@ -123,9 +123,9 @@ test("scheduled delivery never starts earlier than required", () => {
   r.confirm(r.draft.id, true);
   const o = r.orders[0];
   assert.ok(o.startAt > r.clock);
-  assert.equal(o.stage, "accepted");
+  assert.equal(o.stage, "reserved");
   r.advance(2);
-  assert.equal(o.stage, "accepted");
+  assert.equal(o.stage, "reserved");
 });
 test("voice negation takes precedence over confirmation", () => {
   const r = make();
@@ -172,7 +172,7 @@ test("Gleo actions share the same order use cases", () => {
   );
   assert.equal(r.handleAction("GET_FOOD_ORDER_STATUS", {}).status, "success");
 });
-test("Gleo invalid parameters and an additional active order are rejected", () => {
+test("Gleo rejects invalid parameters; a separate draft can coexist with a paid order", () => {
   const r = make();
   assert.equal(
     r.handleAction("PREPARE_FOOD_ORDER", {
@@ -183,7 +183,7 @@ test("Gleo invalid parameters and an additional active order are rejected", () =
   );
   draft(r);
   r.confirm(r.draft.id, true);
-  assert.equal(draft(r).status, "fail");
+  assert.equal(draft(r).status, "asking");
   assert.equal(r.orders.length, 1);
 });
 test("delay moves delivery estimate but does not rewind completed orders", () => {

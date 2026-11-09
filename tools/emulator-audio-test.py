@@ -4,7 +4,9 @@ Uses the installed emulator_controller.proto wire fields (AudioFormat/AudioPacke
 Local emulator authentication stays in memory. No cloud credentials are read.
 Requires grpcio and protobuf. Start the AVD with -grpc 8554 -grpc-use-token.
 """
-import argparse, os, pathlib, subprocess, threading, time
+import argparse, os, pathlib, subprocess, threading, time, sys
+local_deps=pathlib.Path(__file__).resolve().parent.parent/'.cache/voice-python'
+if local_deps.is_dir():sys.path.insert(0,str(local_deps))
 import grpc
 from google.protobuf import descriptor_pb2, descriptor_pool, message_factory, empty_pb2
 

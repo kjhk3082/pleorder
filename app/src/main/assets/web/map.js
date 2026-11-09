@@ -136,6 +136,14 @@ class JourneyMap {
     const store = this.repo.store(id),
       home = this.route([this.origin(), destination], "home"),
       via = this.route([this.origin(), store, destination], "via-" + id);
+    if(via?.legs?.[0]){
+      const current=this.repo.routeMetrics?.pickups?.[id];
+      if(current?.queriedAt!==via.queriedAt||!current){
+        this.repo.routeMetrics ||= {};
+        this.repo.routeMetrics.pickups ||= {};
+        this.repo.routeMetrics.pickups[id]={etaAt:this.repo.clock+via.legs[0].duration*1000,queriedAt:via.queriedAt,measuredAt:via.queriedAt||Date.now(),provider:via.provider};
+      }
+    }
     return PleorderCatalog.routeFacts(home, via);
   }
   update(repo) {
@@ -154,8 +162,9 @@ class JourneyMap {
     const homeRoute = this.route([origin, home], "home");
     if (homeRoute) {
       const key = this.key([origin, home]);
-      if (repo.routeMetrics?.home?.key !== key || repo.liveLocation || repo.routeMetrics?.home?.provider !== (homeRoute.provider || 'osrm') || repo.routeMetrics?.home?.queriedAt !== homeRoute.queriedAt) {
+      if (repo.routeMetrics?.home?.key !== key || repo.routeMetrics?.home?.provider !== (homeRoute.provider || 'osrm') || repo.routeMetrics?.home?.queriedAt !== homeRoute.queriedAt) {
         repo.routeMetrics = {
+          ...repo.routeMetrics,
           home: {
             key,
             distance: homeRoute.distance,

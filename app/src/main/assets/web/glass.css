@@ -1585,3 +1585,14 @@ dialog[data-kind="place-picker"] #modalContent { display:flex; flex-direction:co
 dialog[data-kind="place-picker"] .modal-head { flex:none; }
 dialog[data-kind="place-picker"] .modal-body { min-height:0; max-height:none; overflow:auto; flex:1; }
 .place-picker-footer { flex:none; padding:14px 26px 20px; border-top:1px solid #cfdde570; }
+
+/* Conversation and reservation surfaces reuse the app glass palette. */
+.conversation-choices{display:grid;gap:12px;margin-bottom:20px}
+.conversation-choice{display:flex;align-items:center;gap:16px;width:100%;text-align:left;padding:20px;border:1px solid rgba(255,255,255,.8);border-radius:22px;background:rgba(255,255,255,.62);color:var(--ink,#17394c);transition:transform .18s ease-out,background .18s ease-out}
+.conversation-choice:active{transform:scale(.985);background:rgba(255,255,255,.92)}
+.conversation-choice>span:nth-child(2){flex:1;min-width:0}.conversation-choice strong{display:block;font-size:22px}.conversation-choice small{display:block;margin-top:7px;color:#5b7381;line-height:1.5}
+.choice-number{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:50%;background:#e4efef;font-variant-numeric:tabular-nums;font-weight:700}
+.reservation-summary{padding:22px 0;line-height:1.6}.reservation-summary>strong{font-size:24px;color:#168b83}.reservation-summary p{margin:10px 0;color:#526e7d}.reservation-summary small{color:#526e7d}.reservation-card.held .reservation-summary>strong{color:#956215}.reservation-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:#e0f0ed}.reservation-card.held .reservation-icon{background:#f6ead4}
+.tracked-orders{display:flex;gap:8px;overflow-x:auto;margin:0 0 10px;scrollbar-width:none}.tracked-orders button{flex-shrink:0;border:1px solid rgba(255,255,255,.9);border-radius:18px;padding:12px 16px;background:rgba(255,255,255,.9);color:#4b6674}.tracked-orders button[aria-pressed=true]{background:#063851;color:white}.line-options{display:block;color:#62808b;margin-top:5px;font-size:14px}
+@media(prefers-reduced-motion:reduce){.conversation-choice{transition:none}.conversation-choice:active{transform:none}}
+.reservation-card .order-actions .button{min-height:48px}.tracked-orders button{min-height:48px}

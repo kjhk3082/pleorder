@@ -5,10 +5,12 @@
       ? require("./payments.js")
       : root.PleorderPayments,
     typeof module === "object" ? require("./catalog.js") : root.PleorderCatalog,
+    typeof module === "object" ? require("./order-assistant.js") : root.PleorderAssistant,
+    typeof module === "object" ? require("./order-scheduler.js") : root.PleorderScheduler,
   );
   if (typeof module === "object") module.exports = value;
   else root.PleorderCore = value;
-})(globalThis, (DATA, PAYMENT, CATALOG) => {
+})(globalThis, (DATA, PAYMENT, CATALOG, ASSISTANT, SCHEDULER) => {
   "use strict";
   const { PaymentRepository } = PAYMENT;
   const MINUTE = 60000;
@@ -325,6 +327,10 @@
       return fresh;
     }
     activeOrder() {
+      const selected = this.orders.find(o => o.id === this.selectedOrderId && !["completed", "cancelled"].includes(o.stage));
+      if (selected) return selected;
+      const held = this.orders.find(o => o.stage === "held");
+      if (held) return held;
       return (
         this.orders.find(
           (o) => !["completed", "cancelled"].includes(o.stage),
@@ -517,8 +523,8 @@
     } = {}) {
       if (this.payments.transactions.some((p) => p.status === "pending"))
         return result("asking", "확인 중인 결제 결과를 먼저 조회해 주세요.");
-      if (this.activeOrder())
-        return result("fail", "진행 중인 주문을 먼저 확인해 주세요.");
+      if (this.activeOrders().length >= 3)
+        return result("fail", "동시에 3개 주문까지 진행할 수 있어요. 진행 중인 주문을 먼저 확인해 주세요.");
       if (!["delivery", "pickup"].includes(mode))
         return result("fail", "배달 또는 픽업을 선택해 주세요.");
       if (!["soon", "arrival"].includes(timing))
@@ -546,11 +552,14 @@
         if (storeId && storeId !== menu.storeId)
           return result("fail", "한 주문에는 같은 매장의 메뉴를 담아 주세요.");
         storeId = menu.storeId;
+        const options=ASSISTANT.resolveOptions(menu,line.options);
+        if(!options)return result("fail","메뉴 옵션이 바뀌었어요. 등록된 옵션을 다시 골라 주세요.");
         rows.push({
           menuId: menu.id,
           name: menu.name,
           quantity: line.quantity,
-          price: menu.price,
+          price: menu.price + options.reduce((sum,o)=>sum+o.price,0),
+          options,
         });
       }
       if (mode === "delivery" && !this.home)
@@ -566,7 +575,7 @@
           "fail",
           "이 주소는 매장 배달 지역 밖이에요. 다른 가게를 선택하거나 픽업으로 바꿔 주세요.",
         );
-      if (timing === "arrival" && this.needsRouteForArrival() && !this.homeRoute())
+      if (timing === "arrival" && !this.reservationRoute({mode,storeId,address:this.home}))
         return result(
           "asking",
           "현재 위치에서 집까지 경로를 확인하고 있어요. 경로가 준비되면 다시 시도해 주세요.",
@@ -603,10 +612,10 @@
       };
       return result(
         "asking",
-        `${store.name}, ${rows.map((i) => `${i.name} ${i.quantity}개`).join(", ")}. ${mode === "delivery" ? `${this.home?.name || "선택한 장소"}(으)로 배달` : "매장에서 픽업"}, 합계 ${this.draft.total.toLocaleString("ko-KR")}원이에요. 이대로 주문할까요?`,
+        `${store.name}, ${rows.map((i) => `${i.name} ${i.quantity}개${i.options?.length?` (${i.options.map(o=>o.name).join(", ")})`:""}`).join(", ")}. ${mode === "delivery" ? `${this.home?.name || "선택한 장소"}(으)로 배달` : "매장에서 픽업"}, 합계 ${this.draft.total.toLocaleString("ko-KR")}원이에요. 이대로 주문할까요?`,
         {
           draft: this.draft,
-          voiceText: `${store.name}, ${rows.map((i) => `${i.name} ${i.quantity}개`).join(", ")}. ${mode === "delivery" ? `${this.home?.name || "선택한 장소"}(으)로 배달` : "매장에서 픽업"}, 합계 ${this.draft.total.toLocaleString("ko-KR")}원이에요. ${this.payments.method()?.name || "등록할 카드"}로 결제하려면 ‘결제 승인’, 취소하려면 ‘취소’라고 말씀해 주세요.`,
+          voiceText: `${store.name}, ${rows.map((i) => `${i.name} ${i.quantity}개${i.options?.length?` (${i.options.map(o=>o.name).join(", ")})`:""}`).join(", ")}. ${mode === "delivery" ? `${this.home?.name || "선택한 장소"}(으)로 배달` : "매장에서 픽업"}, 합계 ${this.draft.total.toLocaleString("ko-KR")}원이에요. ${this.payments.method()?.name || "등록할 카드"}로 결제하려면 ‘결제 승인’, 취소하려면 ‘취소’라고 말씀해 주세요.`,
         },
       );
     }
@@ -619,12 +628,12 @@
       const riderDelay =
         this.scenario.riderDelay || s.simulation?.riderDelay || 0;
       const startAt =
-        d.mode === "delivery" && d.timing === "arrival"
+        d.timing === "arrival"
           ? Math.max(
               this.clock,
-              (this.homeRoute()?.etaAt ||
+              (this.reservationRoute(d)?.etaAt ||
                 this.startedAt + this.homeMinutes * MINUTE) -
-                (prepMinutes + travelMinutes + riderDelay) * MINUTE,
+                (prepMinutes + (d.mode === "delivery" ? travelMinutes + riderDelay : 1)) * MINUTE,
             )
           : this.clock;
       return {
@@ -661,11 +670,11 @@
           "주문 확인 시간이 지났어요. 메뉴를 다시 골라 주세요.",
         );
       }
-      if (this.activeOrder())
-        return result("fail", "이미 진행 중인 주문이 있어요.");
+      if (this.activeOrders().length >= 3)
+        return result("fail", "동시에 진행할 수 있는 주문 수를 초과했어요.");
       const d = this.draft,
         s = this.store(d.storeId);
-      if (d.timing === "arrival" && this.needsRouteForArrival() && !this.homeRoute())
+      if (d.timing === "arrival" && !this.reservationRoute(d))
         return result(
           "asking",
           "위치가 바뀌어 도착 경로를 다시 확인하고 있어요. 잠시 후 결제를 승인해 주세요.",
@@ -741,9 +750,11 @@
         this.clock,
       );
       this.orders.unshift(order);
+      this.selectedOrderId = order.id;
+      this.initializeReservation(order);
       this.draft = null;
       this.resetPaymentOnNextOrder = true;
-      return result("success", `${s.name}에 모의 주문을 보냈어요.`, {
+      return result("success", order.stage === "reserved" ? `${s.name} 주문을 예약했어요.` : `${s.name}에 모의 주문을 보냈어요.`, {
         order,
         voiceText: this.describe(order),
       });
@@ -763,9 +774,10 @@
             o.payment.refundedAt,
           );
         if (["cancelled", "completed"].includes(o.stage)) continue;
+        if (!this.dispatchReservation(o)) continue;
         if (
           o.merchantRejectMinutes &&
-          this.clock >= o.createdAt + o.merchantRejectMinutes * MINUTE
+          this.clock >= (o.submittedAt ?? o.createdAt) + o.merchantRejectMinutes * MINUTE
         ) {
           o.stage = "cancelled";
           o.cancelReason = "매장 사정으로 주문이 취소됐어요.";
@@ -773,11 +785,11 @@
             o,
             "merchant_cancelled",
             o.cancelReason,
-            o.createdAt + o.merchantRejectMinutes * MINUTE,
+            (o.submittedAt ?? o.createdAt) + o.merchantRejectMinutes * MINUTE,
           );
           this.payments.refund(
             o.payment.id,
-            o.createdAt + o.merchantRejectMinutes * MINUTE,
+            (o.submittedAt ?? o.createdAt) + o.merchantRejectMinutes * MINUTE,
             this.scenario.refundDelay || 3,
           );
           this.event(
@@ -883,7 +895,7 @@
     describe(o) {
       if (!o)
         return "아직 진행 중인 주문이 없어요. 먹고 싶은 메뉴와 배달 또는 픽업을 알려 주세요.";
-      const meal = o.items.map((i) => `${i.name} ${i.quantity}개`).join(", "),
+      const meal = o.items.map((i) => `${i.name} ${i.quantity}개${i.options?.length?` (${i.options.map(o=>o.name).join(", ")})`:""}`).join(", "),
         price = o.total.toLocaleString("ko-KR"),
         p = o.payment;
       const paid = p
@@ -920,6 +932,8 @@
         order
           ? {
               accepted: "매장 확인을 기다리고 있어요.",
+              reserved: "도착에 맞춰 주문을 예약했어요.",
+              held: "예약 확인이 필요해요.",
               cooking: "맛있게 준비하고 있어요.",
               delivering: "라이더가 집으로 가고 있어요.",
               ready: "음식이 준비됐어요.",
@@ -932,8 +946,8 @@
         { order: order || null, voiceText: this.describe(order) },
       );
     }
-    cancel() {
-      if (this.draft) {
+    cancel(orderId) {
+      if (this.draft && !orderId) {
         const pending = this.payments.transactions.find(
           (p) => p.key === this.draft.id && p.status === "pending",
         );
@@ -951,9 +965,9 @@
         return result("asking", "담아 둔 주문을 비웠어요.");
       }
       this.update();
-      const order = this.activeOrder();
+      const order = orderId ? this.orders.find(o=>o.id===orderId) : this.activeOrder();
       if (!order) return result("asking", "취소할 주문이 없어요.");
-      if (order.stage !== "accepted")
+      if (!["accepted", "reserved", "held"].includes(order.stage))
         return result(
           "fail",
           "이미 조리를 시작해 자동 취소할 수 없어요. 문의 접수에서 상황을 알려 주세요.",
@@ -1231,7 +1245,7 @@
       const d = this.draft, card = this.payments.method();
       if (!d) return result("asking", "먼저 주문할 메뉴를 알려 주세요.");
       this.gleoQuote = { draftId: d.id, fingerprint: this.gleoQuoteFingerprint(), expiresAt: Date.now() + 180000 };
-      const message = `${this.store(d.storeId).name}, ${d.items.map(i => `${i.name} ${i.quantity}개`).join(", ")}. ${d.mode === "pickup" ? "매장 픽업" : `${d.address?.name || "선택한 장소"}(으)로 배달`}, 합계 ${d.total.toLocaleString("ko-KR")}원이에요. ${card?.name || "등록할 카드"}${card?.last4 ? `, 끝 번호 ${card.last4}` : ""}로 모의 결제하려면 ‘결제 승인’, 취소하려면 ‘취소’라고 말씀해 주세요.`;
+      const message = `${this.store(d.storeId).name}, ${d.items.map(i => `${i.name} ${i.quantity}개${i.options?.length?` (${i.options.map(o=>o.name).join(", ")})`:""}`).join(", ")}. ${d.mode === "pickup" ? "매장 픽업" : `${d.address?.name || "선택한 장소"}(으)로 배달`}, 합계 ${d.total.toLocaleString("ko-KR")}원이에요. ${card?.name || "등록할 카드"}${card?.last4 ? `, 끝 번호 ${card.last4}` : ""}로 모의 결제하려면 ‘결제 승인’, 취소하려면 ‘취소’라고 말씀해 주세요.`;
       return result("asking", message, { draft: d, voiceText: message });
     }
     handleAction(name, params = {}) {
@@ -1319,7 +1333,7 @@
         : r.status === "success"
         ? "This action completed in a simulation. State that no real order or payment was made, and report the details in data."
         : r.status === "asking"
-          ? "This simulated order requires the user's explicit confirmation or missing details. Read the amount and payment method in data."
+          ? "Read the exact next step in data.detail. Ask only for the missing choice or details. Payment needs a separate explicit approval after the app quotes the amount and card. Never infer approval from selecting a menu or repeating a request."
           : "This simulated action failed. Explain the reason and next step in data. No real payment was made.",
       data: JSON.stringify([{
         simulated: true,
@@ -1331,10 +1345,14 @@
         payment: r.payment || r.order?.payment,
         stage: r.order?.stage,
         candidates: r.candidates,
+        conversation: r.conversation,
+        orders: r.orders,
         location: r.location && {name:r.location.name,address:r.location.description,detail:r.location.detail},
       }]),
       mode: "voice",
     };
   }
+  ASSISTANT.install(OrderRepository, DATA, CATALOG);
+  SCHEDULER.install(OrderRepository, CATALOG);
   return { OrderRepository, SCENARIOS, MINUTE, DATA, gleoCallback };
 });

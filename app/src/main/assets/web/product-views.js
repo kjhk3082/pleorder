@@ -33,6 +33,7 @@ function trackingView(repo) {
     const route = repo.homeRoute();
     return `<div><span class="hud-label">${repo.liveLocation ? "현재 위치에서" : "출발 위치에서"} ${safe(repo.home?.name || "배송지")}까지</span><strong class="hud-title">${route ? `${(route.distance / 1000).toFixed(1)}<small>km</small> <span class="hud-distance-separator">·</span> ${Math.max(1, Math.ceil((route.etaAt - repo.clock) / 60000))}<small>분</small>` : "경로 확인 중"}</strong></div><span class="hud-mark">${icon("car", 25)}</span>`;
   }
+  if(["reserved","held"].includes(o.stage))return `<div><span class="hud-label">${o.stage==='held'?'예약 보류':'도착 맞춤 예약'}</span><strong class="hud-title">${o.stage==='held'?'확인 필요':clockText(o.startAt)+' 전송'}</strong></div><span class="hud-mark">${icon("clock",25)}</span>`;
   if (o.stage === "completed")
     return `<div><span class="hud-label">${o.mode === "delivery" ? "배달 완료" : "픽업 완료"}</span><strong class="hud-title">${clockText(o.completedAt || o.deliveryAt)}</strong></div><span class="hud-check">${icon("check", 25)}</span>`;
   if (o.stage === "cancelled")
@@ -63,6 +64,8 @@ function serviceOrderView(repo) {
   if (d)
     return `<div class="delivery-card compact"><div class="delivery-title"><h2>주문 확인</h2><strong>${cash(d.total)}</strong></div><p>${d.items.map((i) => `${safe(i.name)} ${i.quantity}개`).join(" · ")}</p><button class="button primary full-width" data-command="summary">결제 정보 확인 ${icon("arrow")}</button></div>`;
   if (!o) {
+    const personal=repo.personalHistory();
+    if(personal.last){const usual=personal.usual;const last=usual?.order||personal.last;return `<div class="recent-order"><div><span class="section-label">${usual?`${usual.count}번 함께한 한 끼`:'최근 완료한 주문'}</span><strong>${safe(repo.store(last.storeId).name)}</strong><p>${safe(last.items.map(i=>`${i.name} ${i.quantity}개`).join(' · '))}</p></div><button class="button secondary" data-reorder-kind="${usual?'usual':'last'}">다시 담기</button></div>`;}
     const last = repo.recentOrders.find(entry => {
       const s = repo.store(entry.storeId);
       return s && (repo.mode === "pickup" || (s.delivery !== "no" && PleorderCatalog.meters(repo.home,s) <= 8000));
@@ -72,6 +75,7 @@ function serviceOrderView(repo) {
       ? `<div class="recent-order"><div><span class="section-label">최근 주문한 가게</span><strong>${safe(store.name)}</strong><p>${safe(repo.menu(last.menuId).name)} · 배달</p></div><button class="button secondary" data-reorder="${last.menuId}">다시 주문</button></div>`
       : "";
   }
+  if(['reserved','held'].includes(o.stage))return `<section class="delivery-card reservation-card ${o.stage}"><div class="delivery-title"><h2>${o.stage==='held'?'예약을 확인해 주세요':'도착에 맞춰 준비할게요'}</h2><span class="reservation-icon">${icon(o.stage==='held'?'pause':'clock',25)}</span></div><p class="order-menu">${safe(repo.store(o.storeId).name)} · ${safe(o.items.map(i=>`${i.name} ${i.quantity}개`).join(', '))}</p><div class="reservation-summary"><strong>${o.stage==='held'?'전송 보류':`${Math.max(0,Math.ceil((o.startAt-repo.clock)/60000))}분 후 매장에 전송`}</strong><p>${safe(o.stage==='held'?o.holdReason:'아직 조리 전이에요. 출발 시간이 달라지면 알려 주세요.')}</p><small>${o.mode==='pickup'?'매장 픽업':safe(o.address?.name||'선택한 배송지')} · ${cash(o.total)} 모의 결제 완료</small></div><div class="order-actions">${o.stage==='held'?'<button class="button primary" data-command="resume-reservation">기존 장소로 예약 재개</button>':''}<button class="button outlined" data-command="details">상세 내역</button><button class="button outlined" data-command="cancel">예약 취소</button></div></section>`;
   const labels =
     o.mode === "delivery"
       ? ["주문 확인", "조리 중", "배달 중", "배달 완료"]

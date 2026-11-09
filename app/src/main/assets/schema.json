@@ -2,12 +2,158 @@
   "packageName": "dev.pleorder.app",
   "appDescription": "Pleorder prepares food delivery and pickup orders using public restaurant data. Orders and payments are simulated and require explicit confirmation.",
   "invokeWord": "플레오더",
-  "version": "0.4.0",
+  "version": "0.5.1",
   "actionCalls": [
     {
       "type": "function",
       "function": {
-        "component": "service",
+        "component": "activity",
+        "name": "FIND_FOOD",
+        "description": "Recommend restaurants near the saved delivery place, current position or route; browse menus with prices; continue numbered choices; recall last or usual completed orders. Choosing never makes a payment. More/choose refer to the previous app conversation.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "request": {
+              "type": "string",
+              "description": "Operation requested by the user.",
+              "enum": [
+                "recommend",
+                "menus",
+                "detail",
+                "more",
+                "choose",
+                "usual",
+                "last"
+              ]
+            },
+            "query": {
+              "type": "string",
+              "description": "Food, restaurant or menu name, without filler words."
+            },
+            "selection": {
+              "type": "number",
+              "description": "Number from the previously returned list, starting at 1."
+            },
+            "answer": {
+              "type": "string",
+              "description": "Exact spoken choice or refusal. Preserve negation."
+            },
+            "storeId": {
+              "type": "string",
+              "description": "Exact restaurant ID returned by the app; never invent."
+            },
+            "fulfillment": {
+              "type": "string",
+              "description": "Requested fulfillment.",
+              "enum": [
+                "delivery",
+                "pickup"
+              ]
+            },
+            "timing": {
+              "type": "string",
+              "description": "Schedule around arrival only when requested.",
+              "enum": [
+                "soon",
+                "arrival"
+              ]
+            },
+            "location": {
+              "type": "string",
+              "description": "Recommendation area.",
+              "enum": [
+                "home",
+                "nearby",
+                "route"
+              ]
+            },
+            "excludeRecent": {
+              "type": "boolean",
+              "description": "True when user wants something different from the last meal."
+            }
+          },
+          "required": [
+            "request"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "component": "activity",
+        "name": "MANAGE_FOOD_ORDER",
+        "description": "Modify the unapproved draft, identify one of several orders, query order number/status, cancel, resume a HELD reservation keeping its original delivery address, or confirm pickup collection. Never approve payment. If user changes destination use delivery location search instead.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "description": "Requested operation.",
+              "enum": [
+                "modify",
+                "status",
+                "number",
+                "cancel",
+                "resume",
+                "collect"
+              ]
+            },
+            "target": {
+              "type": "string",
+              "description": "Exact order ID or restaurant name for a placed order. Ask which one if ambiguous."
+            },
+            "menu": {
+              "type": "string",
+              "description": "Menu name whose quantity should change."
+            },
+            "quantity": {
+              "type": "number",
+              "description": "New absolute quantity, 1 to 20."
+            },
+            "add": {
+              "type": "string",
+              "description": "Exact menu name to add from the same store."
+            },
+            "remove": {
+              "type": "string",
+              "description": "Exact menu name to remove."
+            },
+            "note": {
+              "type": "string",
+              "description": "Kitchen/delivery requests exactly as spoken, not a paid option."
+            },
+            "fulfillment": {
+              "type": "string",
+              "description": "Change draft delivery or pickup.",
+              "enum": [
+                "delivery",
+                "pickup"
+              ]
+            },
+            "timing": {
+              "type": "string",
+              "description": "Change draft timing.",
+              "enum": [
+                "soon",
+                "arrival"
+              ]
+            },
+            "option": {
+              "type": "string",
+              "description": "Exact registered menu option name to change; not a free-form paid add-on."
+            }
+          },
+          "required": [
+            "action"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "component": "activity",
         "name": "PREPARE_FOOD_ORDER",
         "description": "Prepare a simulated delivery or pickup draft with meal, quantity, destination, total and selected payment method. Submission requires a separate explicit confirmation.",
         "parameters": {
@@ -36,6 +182,25 @@
                 "arrival"
               ],
               "description": "soon prepares now; arrival schedules simulated delivery around the driver's home arrival."
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Multiple menu items with Korean quantities, e.g. [\"비빔밥 두 개\", \"불고기 한 개\"]. Only one restaurant per draft."
+            },
+            "reorder": {
+              "type": "string",
+              "description": "Only when user requests a previous completed order.",
+              "enum": [
+                "last",
+                "usual"
+              ]
+            },
+            "note": {
+              "type": "string",
+              "description": "Free kitchen request, not a paid option."
             }
           },
           "required": [
@@ -48,7 +213,7 @@
     {
       "type": "function",
       "function": {
-        "component": "service",
+        "component": "activity",
         "name": "CONFIRM_FOOD_ORDER",
         "description": "Approve or decline the current simulated draft after the user reviews its total and payment method. Changing a payment method creates a new draft requiring fresh confirmation.",
         "parameters": {
@@ -64,12 +229,11 @@
             },
             "paymentMethod": {
               "type": "string",
-              "enum": [
-                "A",
-                "B",
-                "C"
-              ],
-              "description": "Registered test card label selected by the user, when changing the payment method."
+              "description": "Registered card name (현대카드 M, 신한카드 Mr.Life, 삼성카드 taptap O). Changing a card only re-quotes and needs a separate approval."
+            },
+            "utterance": {
+              "type": "string",
+              "description": "The exact user approval/refusal utterance, preserving ALL negation. Never convert a choice or repeated meal request into consent."
             }
           },
           "required": [
@@ -81,12 +245,17 @@
     {
       "type": "function",
       "function": {
-        "component": "service",
+        "component": "activity",
         "name": "GET_FOOD_ORDER_STATUS",
         "description": "Get the current simulated food delivery or pickup status and remaining preparation or delivery information.",
         "parameters": {
           "type": "object",
-          "properties": {},
+          "properties": {
+            "target": {
+              "type": "string",
+              "description": "Optional order ID or restaurant name when several orders exist."
+            }
+          },
           "required": []
         }
       }
@@ -94,7 +263,7 @@
     {
       "type": "function",
       "function": {
-        "component": "service",
+        "component": "activity",
         "name": "SEARCH_DELIVERY_DESTINATION",
         "description": "Search for a delivery destination in Pleorder. Returns numbered real places for the user to choose. Does not change vehicle navigation or save a destination until confirmed. Use when the user asks to set or change the food delivery address, hotel or destination.",
         "parameters": {
@@ -114,7 +283,7 @@
     {
       "type": "function",
       "function": {
-        "component": "service",
+        "component": "activity",
         "name": "CONFIRM_DELIVERY_DESTINATION",
         "description": "Confirm or reject a previously searched Pleorder delivery destination. Call only after the user selects a numbered result or explicitly confirms the single result. Never invent coordinates.",
         "parameters": {
@@ -138,7 +307,7 @@
     {
       "type": "function",
       "function": {
-        "component": "service",
+        "component": "activity",
         "name": "SET_DELIVERY_ADDRESS_DETAIL",
         "description": "Save or correct the building unit, room number, floor or lobby for the Pleorder delivery destination. Read the saved detail back. If destination selection is pending, attach it to the pending selection. Do not change vehicle navigation.",
         "parameters": {

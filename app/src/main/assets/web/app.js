@@ -9,6 +9,7 @@ try {
 } catch {}
 let repo = saved ? OrderRepository.restore(saved) : new OrderRepository();
 repo.preferences.catalogMode ||= "real";
+repo.guardTrackingGap();
 let searchQuery = "";
 let storeListLimit = 30;
 let category = "전체",
@@ -38,6 +39,10 @@ const hints = [
   "치킨 먹고 싶어",
   "최근 주문한 메뉴로 담아 줘",
   "집 주변 국밥 추천해 줘",
+  "방금 목록에서 1번으로 골라 줘",
+  "담아 둔 메뉴를 두 개로 바꿔 줘",
+  "평소에 자주 먹던 메뉴로 담아 줘",
+  "도착 시간에 맞춰 주문 예약해 줘",
   "신한카드로 바꿔 줘",
   "문 앞에 놓아 줘",
   "배달기사님 언제 도착해?",
@@ -119,6 +124,10 @@ function respond(r, { voice = false, payment = false } = {}) {
   save();
   render();
   if (voice) speak(r.voiceText || r.message);
+  if(r.conversation && r.candidates){
+    modal(r.conversation.stage === "stores" ? "어느 가게로 할까요?" : r.conversation.stage === "options" ? "옵션을 골라 주세요" : "메뉴를 골라 주세요", "음성으로도 번호를 말씀해 주세요.", `<div class="conversation-choices">${r.candidates.map((c,i)=>`<button class="conversation-choice" data-assistant-choice="${i+1}"><span class="choice-number">${i+1}</span><span><strong>${safe(c.name)}</strong><small>${safe(c.reason||'')}${Number.isFinite(c.price)?` · ${cash(c.price)}`:''}</small></span>${icon("chevron",20)}</button>`).join('')}</div>${r.conversation.stage!=="options"?`<button class="button outlined full-width" data-assistant-more="true">다른 ${r.conversation.stage === "stores" ? "가게" : "메뉴"} 보기</button>`:""}`, "conversation");
+    return r;
+  }
   if (r.recommendation) {
     focusedMenu = r.recommendation.menuId;
     openStore(focusedMenu, true);
@@ -246,7 +255,7 @@ function renderOrder() {
     (repo.draft ? "draft" : "idle");
   const changed = PleorderMotion.replace(
     $("orderPanel"),
-    serviceOrderView(repo),
+    (repo.activeOrders().length>1?`<nav class="tracked-orders" aria-label="진행 중인 주문">${repo.activeOrders().map(o=>`<button data-track-order="${o.id}" aria-pressed="${o.id===repo.activeOrder()?.id}">${safe(repo.store(o.storeId).name)}${o.stage==='held'?' · 확인 필요':''}</button>`).join('')}</nav>`:'')+serviceOrderView(repo),
   );
   if (changed && renderOrder.lastStage !== key) {
     PleorderMotion.pop(
@@ -353,7 +362,7 @@ function openCheckout() {
   modal(
     "주문 · 결제",
     repo.store(d.storeId).name,
-    `<div class="checkout-layout"><div class="checkout-main"><section class="checkout-section"><div class="section-heading"><h3>${d.mode === "delivery" ? "배달받을 곳" : "픽업 매장"}</h3><button class="text-link" data-action="address">변경</button></div><strong class="address-title">${safe(d.mode === "delivery" ? repo.home?.name || "배송지 미설정" : repo.store(d.storeId).name)}</strong><p>${safe(d.mode === "delivery" ? repo.home?.description || "" : repo.store(d.storeId).category)} ${safe(repo.preferences.addressDetail || "")}</p>${d.mode === "delivery" ? `<div class="handoff-options"><button class="${d.handoff === "door" ? "selected" : ""}" data-handoff="door">문 앞에 놓아주세요</button><button class="${d.handoff === "hand" ? "selected" : ""}" data-handoff="hand">직접 받을게요</button></div><label class="field-label" for="deliveryRequest">배달 요청사항</label><input id="deliveryRequest" maxlength="120" class="field" value="${safe(d.request)}" placeholder="예: 벨 누르지 말아주세요">` : ""}</section><section class="checkout-section"><div class="section-heading"><h3>주문 메뉴</h3><button class="text-link" data-action="edit-cart">변경</button></div>${d.items.map((i) => `<div class="detail-row"><span>${safe(i.name)} <b>${i.quantity}개</b></span><strong>${cash(i.price * i.quantity)}</strong></div>`).join("")}</section><section class="checkout-section"><div class="section-heading"><h3>결제 수단</h3><button class="text-link" data-action="choose-card">${card ? "변경" : "등록"}</button></div>${card ? `<button class="selected-payment" data-action="choose-card">${cardArt(card)}<span><strong>${safe(card.nickname || card.name)} · ${card.last4}</strong><small>${card.provider === "incar" ? "인카페이먼트" : "배달앱 등록 카드"}</small></span>${icon("chevron", 18)}</button>` : '<button class="button outlined full-width" data-action="register-card">결제 카드 등록</button>'}</section></div><aside class="checkout-total"><h3>결제 금액</h3><div class="detail-row"><span>메뉴 금액</span><strong>${cash(d.subtotal)}</strong></div><div class="detail-row"><span>배달팁</span><strong>${cash(d.fee)}</strong></div><div class="detail-row total-row"><span>총 결제금액</span><strong>${cash(d.total)}</strong></div><p class="payment-context">${d.mode === "delivery" ? `${clockText(repo.estimateOrder(d).deliveryAt)} 전후 도착 예정` : `약 ${repo.estimateOrder(d).prepMinutes}분 후 픽업 가능`}</p><div class="checkout-authorize">${card ? `<div id="paymentSlide" class="payment-slide" role="slider" tabindex="0" aria-label="밀어서 ${cash(d.total)} 결제" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="slide-fill"></div><span class="slide-copy">밀어서 ${cash(d.total)} 결제</span><span class="slide-thumb">${icon("arrow", 25)}</span></div><span class="slide-help">음성으로는 “결제 승인”이라고 말해 주세요.</span>` : '<button class="button primary full-width" data-action="register-card">카드 등록하고 결제</button>'}</div><p class="micro-note">실제 청구 없는 데모 결제</p></aside></div>`,
+    `<div class="checkout-layout"><div class="checkout-main"><section class="checkout-section"><div class="section-heading"><h3>${d.mode === "delivery" ? "배달받을 곳" : "픽업 매장"}</h3><button class="text-link" data-action="address">변경</button></div><strong class="address-title">${safe(d.mode === "delivery" ? repo.home?.name || "배송지 미설정" : repo.store(d.storeId).name)}</strong><p>${safe(d.mode === "delivery" ? repo.home?.description || "" : repo.store(d.storeId).category)} ${safe(repo.preferences.addressDetail || "")}</p>${d.mode === "delivery" ? `<div class="handoff-options"><button class="${d.handoff === "door" ? "selected" : ""}" data-handoff="door">문 앞에 놓아주세요</button><button class="${d.handoff === "hand" ? "selected" : ""}" data-handoff="hand">직접 받을게요</button></div><label class="field-label" for="deliveryRequest">배달 요청사항</label><input id="deliveryRequest" maxlength="120" class="field" value="${safe(d.request)}" placeholder="예: 벨 누르지 말아주세요">` : ""}</section><section class="checkout-section"><div class="section-heading"><h3>주문 메뉴</h3><button class="text-link" data-action="edit-cart">변경</button></div>${d.items.map((i) => `<div class="detail-row"><span>${safe(i.name)} <b>${i.quantity}개</b>${i.options?.length?`<small class="line-options">${safe(i.options.map(o=>o.name).join(" · "))}</small>`:""}</span><strong>${cash(i.price * i.quantity)}</strong></div>`).join("")}</section><section class="checkout-section"><div class="section-heading"><h3>결제 수단</h3><button class="text-link" data-action="choose-card">${card ? "변경" : "등록"}</button></div>${card ? `<button class="selected-payment" data-action="choose-card">${cardArt(card)}<span><strong>${safe(card.nickname || card.name)} · ${card.last4}</strong><small>${card.provider === "incar" ? "인카페이먼트" : "배달앱 등록 카드"}</small></span>${icon("chevron", 18)}</button>` : '<button class="button outlined full-width" data-action="register-card">결제 카드 등록</button>'}</section></div><aside class="checkout-total"><h3>결제 금액</h3><div class="detail-row"><span>메뉴 금액</span><strong>${cash(d.subtotal)}</strong></div><div class="detail-row"><span>배달팁</span><strong>${cash(d.fee)}</strong></div><div class="detail-row total-row"><span>총 결제금액</span><strong>${cash(d.total)}</strong></div><p class="payment-context">${d.mode === "delivery" ? `${clockText(repo.estimateOrder(d).deliveryAt)} 전후 도착 예정` : `약 ${repo.estimateOrder(d).prepMinutes}분 후 픽업 가능`}</p><div class="checkout-authorize">${card ? `<div id="paymentSlide" class="payment-slide" role="slider" tabindex="0" aria-label="밀어서 ${cash(d.total)} 결제" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="slide-fill"></div><span class="slide-copy">밀어서 ${cash(d.total)} 결제</span><span class="slide-thumb">${icon("arrow", 25)}</span></div><span class="slide-help">음성으로는 “결제 승인”이라고 말해 주세요.</span>` : '<button class="button primary full-width" data-action="register-card">카드 등록하고 결제</button>'}</div><p class="micro-note">실제 청구 없는 데모 결제</p></aside></div>`,
     "checkout",
   );
   if (card) attachSlide({ draftId: d.id, cardId: card.id, total: d.total });
@@ -592,7 +601,7 @@ function openHistory() {
   modal(
     "주문 내역",
     "",
-    `${repo.orders.map((o) => `<button class="history-order" data-order="${o.id}"><span class="history-food">${menuArt(repo.menu(o.items[0].menuId))}</span><span><small>${clockText(o.createdAt)} · ${o.mode === "delivery" ? "배달" : "픽업"} · ${{ accepted: "확인 중", cooking: "조리 중", waiting_rider: "기사님 배정 중", delivering: "배달 중", ready: "픽업 준비", contact_needed: "수령 확인", completed: "완료", cancelled: "취소" }[o.stage]}</small><strong>${safe(repo.store(o.storeId).name)}</strong><p>${o.items.map((i) => `${safe(i.name)} ${i.quantity}개`).join(", ")}</p><b>${cash(o.total)}</b></span>${icon("chevron", 20)}</button>`).join("")}${repo.orders.length ? "" : '<p class="empty-label">아직 진행한 주문이 없어요.</p>'}<h3 class="history-heading">최근에 주문한 가게</h3>${repo.recentOrders.map((o) => `<button class="address-option" data-reorder="${o.menuId}"><span class="history-food small">${menuArt(repo.menu(o.menuId))}</span><span><strong>${safe(repo.store(o.storeId).name)}</strong><small>${safe(repo.menu(o.menuId).name)} ${o.quantity}개</small></span><b>다시 주문</b></button>`).join("")}`,
+    `${repo.orders.map((o) => `<button class="history-order" data-order="${o.id}"><span class="history-food">${menuArt(repo.menu(o.items[0].menuId))}</span><span><small>${clockText(o.createdAt)} · ${o.mode === "delivery" ? "배달" : "픽업"} · ${{ reserved: "예약 대기", held: "예약 보류", accepted: "확인 중", cooking: "조리 중", waiting_rider: "기사님 배정 중", delivering: "배달 중", ready: "픽업 준비", contact_needed: "수령 확인", completed: "완료", cancelled: "취소" }[o.stage]}</small><strong>${safe(repo.store(o.storeId).name)}</strong><p>${o.items.map((i) => `${safe(i.name)} ${i.quantity}개`).join(", ")}</p><b>${cash(o.total)}</b></span>${icon("chevron", 20)}</button>`).join("")}${repo.orders.length ? "" : '<p class="empty-label">아직 진행한 주문이 없어요.</p>'}<h3 class="history-heading">최근에 주문한 가게</h3>${repo.recentOrders.map((o) => `<button class="address-option" data-reorder="${o.menuId}"><span class="history-food small">${menuArt(repo.menu(o.menuId))}</span><span><strong>${safe(repo.store(o.storeId).name)}</strong><small>${safe(repo.menu(o.menuId).name)} ${o.quantity}개</small></span><b>다시 주문</b></button>`).join("")}`,
     "history",
   );
 }
@@ -601,6 +610,7 @@ function openDetails(id) {
     ? repo.orders.find((o) => o.id === id)
     : repo.activeOrder() || repo.orders[0];
   if (!o) return;
+  repo.selectedOrderId=o.id;save();renderOrder();map.update(repo);
   modal(
     "주문 상세",
     o.id,
@@ -627,7 +637,7 @@ function cancelOrder() {
   modal(
     "주문을 취소할까요?",
     repo.store(o.storeId).name,
-    `<p class="dialog-description">${o.stage === "accepted" ? `${cash(o.total)}을 원래 결제한 카드로 환불 요청합니다.` : "이미 준비를 시작했어요. 매장 확인이 필요할 수 있습니다."}</p><div class="modal-actions"><button class="button outlined" data-action="close">계속 기다릴게요</button><button class="button danger" data-action="confirm-cancel">취소 요청</button></div>`,
+    `<p class="dialog-description">${["accepted","reserved","held"].includes(o.stage) ? `${cash(o.total)}을 원래 결제한 카드로 환불 요청합니다.` : "이미 준비를 시작했어요. 매장 확인이 필요할 수 있습니다."}</p><div class="modal-actions"><button class="button outlined" data-action="close">계속 기다릴게요</button><button class="button danger" data-action="confirm-cancel">취소 요청</button></div>`,
     "cancel",
   );
 }
@@ -748,6 +758,10 @@ document.addEventListener("click", (e) => {
     render();
     return scope === "nearby" ? map.focusCurrent() : map.focusHome();
   }
+  if(b.dataset.assistantChoice)return respond(repo.foodConversation({selection:Number(b.dataset.assistantChoice)}));
+  if(b.dataset.assistantMore)return respond(repo.foodConversation({request:'more'}));
+  if(b.dataset.trackOrder){repo.selectedOrderId=b.dataset.trackOrder;save();renderOrder();map.update(repo);return;}
+  if(b.dataset.reorderKind)return respond(repo.foodConversation({request:b.dataset.reorderKind}));
   if (b.dataset.quantity) {
     cart[b.dataset.id] = Math.max(
       0,
@@ -793,7 +807,7 @@ document.addEventListener("click", (e) => {
     return openWallet(walletContext);
   }
   if (b.dataset.cardRemove) {
-    if (repo.activeOrder()?.payment?.methodId === b.dataset.cardRemove)
+    if (repo.activeOrders().some(o=>o.payment?.methodId === b.dataset.cardRemove))
       return toast("진행 중인 주문에 사용한 카드는 완료 후 해제할 수 있어요.");
     const r = repo.payments.unregister(b.dataset.cardRemove);
     toast(r.message);
@@ -901,6 +915,9 @@ document.addEventListener("click", (e) => {
       break;
     case "details":
       openDetails();
+      break;
+    case "resume-reservation":
+      respond(repo.manageOrder({action:'resume',target:repo.activeOrder()?.id}), {voice:!!window.Native});
       break;
     case "proof":
       openProof();
@@ -1049,11 +1066,13 @@ window.Pleorder = {
     if (e.type === "vehicle-destination") {
       if (repo.updateVehicleDestination(e.destination)) {
         repo.navigationStatus = "ready";
+        save();
         render();
       }
     }
     if (e.type === "destination-state") {
-      repo.navigationStatus = e.status;
+      repo.observeNavigation(e);
+      save();
       if (e.status === "none") repo.navigationDestination = null;
       if (modalKind === "address") openAddresses();
       render();
