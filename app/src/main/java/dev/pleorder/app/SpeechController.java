@@ -10,6 +10,7 @@ import android.util.Log;
 import java.util.Locale;
 import org.json.JSONObject;
 import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicBoolean;
 import ai.pleos.playground.stt.SpeechToText;
 import ai.pleos.playground.tts.TextToSpeech;
 
@@ -20,6 +21,7 @@ final class SpeechController {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final AudioManager audio;
     private SpeechToText stt;
+    private ai.pleos.playground.stt.listener.ResultListener sttListener;
     private TextToSpeech tts;
     private AudioFocusRequest focus;
     private int generation;
@@ -35,21 +37,31 @@ final class SpeechController {
     void listen(byte[] pcm) {
         stop();if(!focus()){error("다른 오디오가 사용 중이에요. 잠시 후 다시 말해 주세요.");return;}
         final int token=++generation;
+        final AtomicBoolean finalDelivered=new AtomicBoolean(false);
         try {
             stt=new SpeechToText(context,ai.pleos.playground.stt.constant.Mode.ON_DEVICE);
             stt.initialize(new ai.pleos.playground.stt.listener.OnInitializeListener(){
                 @Override public void onSuccess(){handler.post(()->{
                     if(token!=generation||stt==null)return;
                     stt.setLocale(Locale.KOREA);
-                    stt.addListener(new ai.pleos.playground.stt.listener.ResultListener(){
+                    sttListener=new ai.pleos.playground.stt.listener.ResultListener(){
                         @Override public void onReady(){if(token==generation)event("speech-ready","ready",true);}
                         @Override public void onStartedRecognition(){Log.i("PleorderSpeech","STT_STARTED");}
-                        @Override public void onUpdated(String text,boolean complete){if(token!=generation)return;try{sink.accept(new JSONObject().put("type","speech-result").put("text",text).put("final",complete));Log.i("PleorderSpeech","STT_RESULT final="+complete);}catch(Exception ignored){}}
+                        @Override public void onUpdated(String text,boolean complete){
+                            if(token!=generation||finalDelivered.get())return;
+                            if(complete&&!finalDelivered.compareAndSet(false,true))return;
+                            if(text==null||text.trim().isEmpty()){
+                                if(complete){error("말씀을 듣지 못했어요. 마이크를 누르고 다시 말씀해 주세요.");abandon();}
+                                return;
+                            }
+                            try{sink.accept(new JSONObject().put("type","speech-result").put("text",text).put("final",complete));Log.i("PleorderSpeech","STT_RESULT final="+complete);}catch(Exception ignored){}
+                        }
                         @Override public void onUpdatedEpdData(long on,long off){}
                         @Override public void onUpdatedRms(double rms){}
                         @Override public void onEndedRecognition(){if(token==generation){event("speech-end","ended",true);abandon();}}
                         @Override public void onError(ai.pleos.playground.stt.constant.ErrorType e){if(token==generation){Log.w("PleorderSpeech","STT_ERROR "+e);error("잘 듣지 못했어요. 마이크를 누르고 다시 말해 주세요. ("+e+")");abandon();}}
-                    });
+                    };
+                    stt.addListener(sttListener);
                     if(pcm!=null){stt.sendAudio(pcm);stt.completeAudioSend();}else stt.request();
                     handler.postDelayed(()->{if(token==generation&&stt!=null)stt.stop();},15000);
                 });}
@@ -74,5 +86,5 @@ final class SpeechController {
         }catch(Throwable e){abandon();}
     }
     private void abandon(){if(focus!=null){audio.abandonAudioFocusRequest(focus);focus=null;}}
-    void stop(){generation++;handler.removeCallbacksAndMessages(null);if(stt!=null){try{stt.stop();stt.release();}catch(Throwable ignored){}stt=null;}if(tts!=null){try{tts.stop();tts.release();}catch(Throwable ignored){}tts=null;}abandon();event("speech-end","ended",true);}
+    void stop(){generation++;handler.removeCallbacksAndMessages(null);if(stt!=null){try{if(sttListener!=null)stt.removeListener(sttListener);stt.stop();stt.release();}catch(Throwable ignored){}stt=null;sttListener=null;}if(tts!=null){try{tts.stop();tts.release();}catch(Throwable ignored){}tts=null;}abandon();event("speech-end","ended",true);}
 }

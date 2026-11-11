@@ -1,0 +1,29 @@
+"""Upload authorized contest artifacts to this repository's GitHub Release.
+
+Uses the existing Git credential helper in memory. Never prints or saves tokens.
+"""
+import argparse,json,pathlib,subprocess,urllib.request,urllib.error,urllib.parse,os
+p=argparse.ArgumentParser();p.add_argument('--commit',required=True);p.add_argument('--draft',action='store_true');a=p.parse_args()
+ROOT=pathlib.Path(__file__).resolve().parents[2];repo='kjhk3082/pleorder';tag='contest-2026-11-12'
+env={**os.environ,'GIT_TERMINAL_PROMPT':'0'}
+r=subprocess.run(['git','credential','fill'],input='protocol=https\nhost=github.com\n\n',text=True,capture_output=True,check=True,env=env,cwd=ROOT)
+credential=dict(line.split('=',1) for line in r.stdout.splitlines() if '=' in line)
+token=credential.get('password');assert token,'Git credential unavailable'
+def request(url,method='GET',data=None,ctype='application/json'):
+    assert urllib.parse.urlparse(url).hostname in ('api.github.com','uploads.github.com')
+    body=json.dumps(data,ensure_ascii=False).encode() if isinstance(data,dict) else data
+    req=urllib.request.Request(url,data=body,method=method,headers={'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','Content-Type':ctype,'X-GitHub-Api-Version':'2022-11-28','User-Agent':'Pleorder-contest-publisher'})
+    with urllib.request.urlopen(req,timeout=180) as response:return json.load(response)
+base='https://api.github.com/repos/'+repo
+try:release=request(base+'/releases/tags/'+tag)
+except urllib.error.HTTPError as e:
+    if e.code!=404:raise SystemExit('GitHub release read failed: '+str(e.code))
+    release=request(base+'/releases','POST',{'tag_name':tag,'target_commitish':a.commit,'name':'플레오더 공모전 제출본 · 2026-11-12','draft':a.draft,'prerelease':True,'body':(ROOT/'산출물/04_제출안내/릴리스_설명.md').read_text(encoding='utf-8')})
+files=[ROOT/'apk/플레오더_플레오더_release.apk',ROOT/'산출물/02_시연영상/플레오더_전체기능시연.mp4',ROOT/'산출물/01_기획서/플레오더_기획서.pdf',ROOT/'산출물/03_검증자료/SHA256SUMS.txt']
+for f in files:
+    existing=next((x for x in release['assets'] if x['name']==f.name),None)
+    if existing:raise SystemExit('Existing release asset needs review before replacement: '+f.name)
+    url=release['upload_url'].split('{')[0]+'?'+urllib.parse.urlencode({'name':f.name})
+    result=request(url,'POST',f.read_bytes(),'application/octet-stream')
+    print('UPLOADED',result['name'],result['size'],flush=True)
+print('RELEASE_URL',release['html_url'],flush=True)

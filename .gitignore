@@ -8,6 +8,7 @@ local.properties
 *.aab
 *.keystore
 *.jks
+산출물/비공개_접수용/
 *.pcm
 output/playwright/
 .playwright-cli/

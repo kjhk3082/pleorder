@@ -77,7 +77,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface public String loadState(){return getSharedPreferences("MainActivity",MODE_PRIVATE).getString("simulation-v1","");}
         @JavascriptInterface public void saveState(String state){if(state!=null&&state.length()<200000){getSharedPreferences("MainActivity",MODE_PRIVATE).edit().putString("simulation-v1",state).commit();handler.post(()->{if(foreground)OrderTrackingService.ensure(MainActivity.this);});}}
         @JavascriptInterface public void ready(){handler.post(()->{ready=true;while(!pending.isEmpty())send(pending.remove());if(checkSelfPermission("pleos.car.permission.NAVI_ROUTE")==PackageManager.PERMISSION_GRANTED)navigation.readDestination();Log.i("Pleorder","UI_READY");});}
-        @JavascriptInterface public void startListening(){handler.post(()->{if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){if(drivingSurface())emitMessage("speech-error","주차 후 마이크 권한을 허용해 주세요. Gleo 음성 호출은 계속 이용할 수 있어요.");else requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},20);}else speech.listen(null);});}
+        @JavascriptInterface public void startListening(){handler.post(()->{if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){if(drivingSurface())emitMessage("speech-error","주차 후 마이크 권한을 허용해 주세요.");else requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},20);}else speech.listen(null);});}
         @JavascriptInterface public void startGleo(){handler.post(()->{
             speech.stop();
             boolean shown=false;

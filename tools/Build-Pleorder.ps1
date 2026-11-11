@@ -1,4 +1,4 @@
-param([switch]$Install)
+param([switch]$Install, [switch]$Release)
 $ErrorActionPreference='Stop'
 $env:JAVA_HOME=Join-Path $env:USERPROFILE 'Android\jdk21\jdk-21.0.13.0.2+1'
 $env:ANDROID_HOME=Join-Path $env:USERPROFILE 'Android\Sdk'
@@ -25,7 +25,7 @@ if(Test-Path -LiteralPath $mapConfig){
  $mapId=[string]((Get-Content -LiteralPath $mapConfig -Raw | ConvertFrom-Json).naverClientId)
  if($mapId -notmatch '^[a-zA-Z0-9_-]{5,80}$'){throw 'Invalid public Naver Maps ID'}
  $publicMap=@{naverClientId=$mapId}
- if(Test-Path -LiteralPath $localCertificate){
+ if((Test-Path -LiteralPath $localCertificate) -and !$Release){
   $publicMap.routeEndpoint='https://10.0.2.2:4174/api/directions'
   # Trust this local certificate only for the emulator's host, in debug builds.
   $debugRoot=Join-Path $buildRoot 'app\src\debug'
@@ -38,9 +38,16 @@ if(Test-Path -LiteralPath $mapConfig){
  [IO.File]::WriteAllText((Join-Path $buildRoot 'app\src\main\assets\web\map-config.json'),$publicConfig)
 }
 $gradle=Join-Path $env:USERPROFILE '.gradle\wrapper\dists\gradle-8.11.1-bin\bpt9gzteqjrbo1mjrsomdt32c\gradle-8.11.1\bin\gradle.bat'
-& $gradle -p $buildRoot :app:assembleDebug --no-daemon --console=plain
+$variant=if($Release){'release'}else{'debug'}
+$task=if($Release){':app:assembleRelease'}else{':app:assembleDebug'}
+& $gradle -p $buildRoot $task --no-daemon --console=plain
 if($LASTEXITCODE -ne 0){throw 'Pleorder build failed'}
-$apk=Join-Path $buildRoot 'app\build\outputs\apk\debug\app-debug.apk'
+$apk=Join-Path $buildRoot "app\build\outputs\apk\$variant\app-$variant.apk"
+if($Release){
+ $releasePath=Join-Path $sourceRoot 'apk\플레오더_플레오더_release.apk'
+ New-Item -ItemType Directory -Force -Path (Split-Path -Parent $releasePath)|Out-Null
+ Copy-Item -LiteralPath $apk -Destination $releasePath -Force
+}
 Write-Output "PLEORDER_APK=$apk"
 if($Install){
  $adb=Join-Path $env:ANDROID_HOME 'platform-tools\adb.exe'

@@ -5,6 +5,16 @@ android {
     defaultConfig { applicationId 'dev.pleorder.app'; minSdk 29; targetSdk 34; versionCode 1; versionName '0.1.0' }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     buildFeatures { buildConfig true }
+    // Contest release: public SpeechToText/TextToSpeech only. Existing Gleo
+    // contracts remain available in debug for research, not competition claims.
+    buildTypes {
+        debug { manifestPlaceholders = [gleoExperimentalEnabled: 'true'] }
+        release {
+            debuggable false
+            signingConfig signingConfigs.debug
+            manifestPlaceholders = [gleoExperimentalEnabled: 'false']
+        }
+    }
 }
 dependencies {
     implementation 'ai.pleos.playground:SpeechToText:3.3.1'

@@ -286,7 +286,7 @@ function setMode(mode) {
   render();
 }
 function openStore(menuId, recommended = false) {
-  if (uxPolicy.limitedContent) return toast("지금은 간단한 주문 현황만 표시해요. Gleo로 원하는 메뉴를 말씀해 주세요.");
+  if (uxPolicy.limitedContent) return toast("지금은 간단한 주문 현황만 표시해요. 마이크로 원하는 메뉴를 말씀해 주세요.");
   const sourceImage = document.querySelector(`[data-menu="${menuId}"] img`);
   focusedMenu = menuId;
   const m = repo.menu(menuId),
@@ -528,7 +528,7 @@ function syncVoicePlaceFields() {
   if (selected && pending?.places.some(p=>p.lat === selected.lat && p.lng === selected.lng)) $("placeDetail").value = pending.detail || "";
 }
 function startFieldVoice(id) {
-  if (!uxPolicy.transcription) return toast("현재 차량 정책에 따라 음성 내용을 화면에 입력할 수 없어요. Gleo 음성 주문을 이용해 주세요.");
+  if (!uxPolicy.transcription) return toast("현재 차량 정책에 따라 음성 내용을 화면에 입력할 수 없어요. 음성 주문을 이용해 주세요.");
   const field = $(id);
   if (!field) return;
   if (!window.Native) {
@@ -542,8 +542,9 @@ function startFieldVoice(id) {
     repo.destinationSearch = {places:[place], detail:place.detail || "", expiresAt:Date.now()+180000,homeFingerprint:JSON.stringify(repo.home)};
     save();
   }
-  toast(id === "placeQuery" ? "Gleo에게 ‘플레오더 배달받을 곳을 강남구청으로 찾아 줘’라고 말씀해 주세요." : "Gleo에게 ‘플레오더 상세주소는 101동 202호’라고 말씀해 주세요.");
-  Native.startGleo();
+  voiceTarget = { id, kind: modalKind };
+  toast(id === "placeQuery" ? "찾을 장소 이름을 말씀해 주세요." : "동·호수 등 상세주소를 말씀해 주세요.");
+  Native.startListening();
 }
 function applyUxControls() {
   const restrict = (selector, denied) => document.querySelectorAll(selector).forEach(el => {
@@ -740,7 +741,7 @@ $("micButton").onclick = () => {
   voiceTarget = null;
   if (!window.Native) return openText();
   if (listening) Native.stopSpeech();
-  else Native.startGleo();
+  else Native.startListening();
 };
 document.addEventListener("click", (e) => {
   const b = e.target.closest("button");
@@ -1137,7 +1138,7 @@ window.Pleorder = {
       if (uxPolicy.blockAll || (!uxPolicy.setup && (modalKind === "settings" || modalKind === "registration" || modalKind === "origin" || (modalKind === "place-picker" && placePurpose !== "destination") || (modalKind === "wallet" && walletContext !== "checkout"))) || (uxPolicy.limitedContent && modalKind === "store")) close();
       if (!uxPolicy.filtering) { searchQuery = ""; $("storeSearch").value = ""; }
       if (!uxPolicy.keyboard && document.activeElement?.matches("input,textarea")) document.activeElement.blur();
-      if (!uxPolicy.transcription) { voiceTarget = null; $("voiceStatus").textContent = "Gleo로 음성 주문을 이용해 보세요"; }
+      if (!uxPolicy.transcription) { voiceTarget = null; $("voiceStatus").textContent = "마이크로 음성 주문을 이용해 보세요"; }
       if (uxPolicy.reduceMotion) { document.getAnimations().forEach(a=>a.cancel()); map.map?.stop(); }
       render();
     }

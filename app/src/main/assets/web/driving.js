@@ -2,7 +2,7 @@
 PleorderRealCatalog.ready.then(()=>{
   const $=id=>document.getElementById(id);
   let raw;try{raw=window.Native?Native.loadState():localStorage.getItem('pleorder-v1');}catch{}
-  let session=new PleorderDriving.DrivingSession(raw),listening=false,pageActive=true,lastFeedback='Gleo에게 주문이나 배달받을 곳을 말씀해 주세요.';
+  let session=new PleorderDriving.DrivingSession(raw),listening=false,pageActive=true,lastFeedback='마이크를 누르고 주문이나 배달받을 곳을 말씀해 주세요.';
   const text=(id,value)=>{$(id).textContent=session.text(value);};
   const cash=n=>Number(n||0).toLocaleString('ko-KR')+'원';
   function save(){const s=session.save();try{if(window.Native)Native.saveState(s);else localStorage.setItem('pleorder-v1',s);}catch{}}
@@ -13,10 +13,10 @@ PleorderRealCatalog.ready.then(()=>{
     document.documentElement.dataset.theme=theme==='dark'||(theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
     $('policyCover').hidden=!p.blockAll;$('drivingShell').inert=p.blockAll;
     text('headline',listening?'듣고 있어요':d?'주문을 확인해 주세요':o?(o.stage==='held'?'예약 확인이 필요해요':o.stage==='reserved'?'도착에 맞춰 예약했어요':o.stage==='completed'?'맛있게 드세요':o.stage==='cancelled'?'주문이 취소됐어요':o.mode==='pickup'?(o.stage==='ready'?'음식이 준비됐어요':'픽업을 준비하고 있어요'):'한 끼가 오고 있어요'):'무엇을 주문할까요?');
-    text('micLabel',listening?'듣기 중지':'Gleo로 말하기');text('voiceHint',o?.stage==='held'?'“플레오더 예약 재개해 줘”':d?'승인하려면 “결제 승인”':o?'“플레오더 주문 상태 알려 줘”':'“플레오더에서 치킨 배달해 줘”');
+    text('micLabel',listening?'듣기 중지':'말로 주문하기');text('voiceHint',o?.stage==='held'?'“플레오더 예약 재개해 줘”':d?'승인하려면 “결제 승인”':o?'“플레오더 주문 상태 알려 줘”':'“플레오더에서 치킨 배달해 줘”');
     text('feedback',lastFeedback);text('summaryLabel',d?'결제 전 확인':o?'주문 현황':'배달받을 곳');
     text('summaryTitle',d?(r.store(d.storeId)?.name||'선택한 매장'):o?r.status().message:(r.home?.placeName||r.home?.name||'배송지를 먼저 설정해 주세요'));
-    text('summarySubtitle',d?d.items.map(i=>`${i.name} ${i.quantity}개`).join(', '):o?`${r.store(o.storeId)?.name} · ${o.mode==='pickup'?'픽업':'배달'}`:(r.home?.description||'Gleo에게 배달받을 곳을 말씀해 주세요.'));
+    text('summarySubtitle',d?d.items.map(i=>`${i.name} ${i.quantity}개`).join(', '):o?`${r.store(o.storeId)?.name} · ${o.mode==='pickup'?'픽업':'배달'}`:(r.home?.description||'배달받을 곳을 말씀해 주세요.'));
     text('amountLabel',d?'총 결제금액':o?'결제금액':'저장된 카드');
     text('amount',d?cash(d.total):o?cash(o.total):card?card.name:'없음');
     text('card',d?`${card?.name||'카드 등록 필요'} · ${card?.last4||''} / ${d.mode==='pickup'?'매장 픽업':d.address?.name||'선택한 배송지'}`:o?`${o.payment?.name||''} · ${o.payment?.last4||''}`:card?`${card.name} · ${card.last4}`:'');
@@ -27,7 +27,7 @@ PleorderRealCatalog.ready.then(()=>{
   function apply(r,voice=true){save();lastFeedback=r.message;render();if(voice)speak(r.voiceText||r.message);return r;}
   function runCommand(value){return apply(session.act(value));}
   $('micIcon').innerHTML=icon('mic');
-  $('driveMic').onclick=()=>{if(listening){Native.stopSpeech();}else if(window.Native){Native.startGleo();}else{lastFeedback='음성 입력은 차량 앱에서 이용해 주세요.';render();}};
+  $('driveMic').onclick=()=>{if(listening){Native.stopSpeech();}else if(window.Native){Native.startListening();}else{lastFeedback='음성 입력은 차량 앱에서 이용해 주세요.';render();}};
   $('driveStatus').onclick=()=>runCommand('주문 상태');
   $('driveCancel').onclick=()=>runCommand('주문 취소');
   window.Pleorder={suspend:save,runCommand,async receiveNative(e){
