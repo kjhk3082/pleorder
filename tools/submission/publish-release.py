@@ -2,7 +2,7 @@
 
 Uses the existing Git credential helper in memory. Never prints or saves tokens.
 """
-import argparse,json,pathlib,subprocess,urllib.request,urllib.error,urllib.parse,os
+import argparse,json,pathlib,subprocess,urllib.request,urllib.error,urllib.parse,os,hashlib,zipfile
 p=argparse.ArgumentParser();p.add_argument('--commit',required=True);p.add_argument('--draft',action='store_true');a=p.parse_args()
 ROOT=pathlib.Path(__file__).resolve().parents[2];repo='kjhk3082/pleorder';tag='contest-2026-11-12'
 env={**os.environ,'GIT_TERMINAL_PROMPT':'0'}
@@ -19,11 +19,22 @@ try:release=request(base+'/releases/tags/'+tag)
 except urllib.error.HTTPError as e:
     if e.code!=404:raise SystemExit('GitHub release read failed: '+str(e.code))
     release=request(base+'/releases','POST',{'tag_name':tag,'target_commitish':a.commit,'name':'플레오더 공모전 제출본 · 2026-11-12','draft':a.draft,'prerelease':True,'body':(ROOT/'산출물/04_제출안내/릴리스_설명.md').read_text(encoding='utf-8')})
-files=[ROOT/'apk/플레오더_플레오더_release.apk',ROOT/'산출물/02_시연영상/플레오더_전체기능시연.mp4',ROOT/'산출물/01_기획서/플레오더_기획서.pdf',ROOT/'산출물/03_검증자료/SHA256SUMS.txt']
-for f in files:
-    existing=next((x for x in release['assets'] if x['name']==f.name),None)
-    if existing:raise SystemExit('Existing release asset needs review before replacement: '+f.name)
-    url=release['upload_url'].split('{')[0]+'?'+urllib.parse.urlencode({'name':f.name})
+apk=ROOT/'apk/플레오더_플레오더_release.apk'
+bundle=ROOT/'.cache/submission/pleorder_release.zip';bundle.parent.mkdir(parents=True,exist_ok=True)
+with zipfile.ZipFile(bundle,'w',zipfile.ZIP_DEFLATED,compresslevel=1) as z:
+    z.write(apk,apk.name)
+files=[(apk,'pleorder_pleorder_release.apk'),(ROOT/'산출물/02_시연영상/플레오더_전체기능시연.mp4','pleorder_demo.mp4'),(ROOT/'산출물/01_기획서/플레오더_기획서.pdf','pleorder_proposal.pdf'),(ROOT/'산출물/03_검증자료/SHA256SUMS.txt','SHA256SUMS.txt'),(bundle,'pleorder_release.zip')]
+for f,remote_name in files:
+    digest='sha256:'+hashlib.sha256(f.read_bytes()).hexdigest()
+    existing=next((x for x in release['assets'] if x['name']==remote_name or x.get('label')==f.name),None)
+    if existing:
+        if existing.get('digest')!=digest:raise SystemExit('Existing release asset needs review before replacement: '+f.name)
+        result=request(base+'/releases/assets/'+str(existing['id']),'PATCH',{'name':remote_name,'label':f.name})
+        print('VERIFIED',result['name'],result['size'],flush=True)
+        continue
+    # GitHub normalizes Korean asset filenames; preserve the original in a ZIP.
+    url=release['upload_url'].split('{')[0]+'?'+urllib.parse.urlencode({'name':remote_name,'label':f.name})
     result=request(url,'POST',f.read_bytes(),'application/octet-stream')
+    if result.get('digest')!=digest:raise SystemExit('Uploaded asset checksum mismatch: '+f.name)
     print('UPLOADED',result['name'],result['size'],flush=True)
 print('RELEASE_URL',release['html_url'],flush=True)
