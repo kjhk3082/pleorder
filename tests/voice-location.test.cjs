@@ -6,6 +6,15 @@ const Location=require('../app/src/main/assets/web/location-search.js');
 const place={name:'테스트 숙소',description:'서울특별시 테스트로 100',lat:37.51,lng:127.09};
 const search='SEARCH_DELIVERY_DESTINATION',confirm='CONFIRM_DELIVERY_DESTINATION',detail='SET_DELIVERY_ADDRESS_DETAIL';
 const find=async()=>[{...place}];
+
+test('spoken room numbers are formatted without guessing ambiguous place words',()=>{
+ assert.equal(Location.normalizeDetail('구백구십구 동 구천구백구십구 호'),'999동 9999호');
+ assert.equal(Location.normalizeDetail('일공일 동 이공이 호'),'101동 202호');
+ assert.equal(Location.normalizeDetail('101 동 202 호실'),'101동 202호실');
+ assert.equal(Location.normalizeDetail('삼 층 로비에서 받아요'),'3층 로비에서 받아요');
+ assert.equal(Location.normalizeDetail('신관 로비, 안내 데스크'),'신관 로비, 안내 데스크');
+ assert.equal(Location.normalizeDetail('일동빌딩 로비'),'일동빌딩 로비');
+});
 test('spoken place is not saved until confirmed; room digits survive restart',async()=>{
  let r=new OrderRepository();const original=r.home;
  const result=await Voice.dispatch(r,search,{query:'테스트 숙소 101동 202호'},find);

@@ -6,7 +6,7 @@
 |---|---|
 | 실제 기능 시연 · 7분 16초 | [MP4](02_시연영상/플레오더_전체기능시연.mp4) · [자막](02_시연영상/플레오더_전체기능시연.srt) · [장면별 설명](02_시연영상/장면별_설명.md) |
 | 공개 기획서 · 6쪽 | [PDF](01_기획서/플레오더_기획서.pdf) · [DOCX](01_기획서/플레오더_기획서.docx) · [Markdown](01_기획서/플레오더_기획서.md) |
-| 실행 가능한 release APK | [Release 페이지](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-12) · [실행 안내](../apk/README.md) |
+| 실행 가능한 release APK | [Release 페이지](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-12-r2) · [실행 안내](../apk/README.md) |
 | 검증 | [결과와 한계](03_검증자료/검증결과.md) · [SHA-256](03_검증자료/SHA256SUMS.txt) |
 | 접수 요건 | [공식 요건 체크리스트](04_제출안내/공식요건_체크리스트.md) |
 

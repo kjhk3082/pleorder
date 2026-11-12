@@ -3,8 +3,9 @@
 Uses the existing Git credential helper in memory. Never prints or saves tokens.
 """
 import argparse,json,pathlib,subprocess,urllib.request,urllib.error,urllib.parse,os,hashlib,zipfile
-p=argparse.ArgumentParser();p.add_argument('--commit',required=True);p.add_argument('--draft',action='store_true');a=p.parse_args()
-ROOT=pathlib.Path(__file__).resolve().parents[2];repo='kjhk3082/pleorder';tag='contest-2026-11-12'
+p=argparse.ArgumentParser();p.add_argument('--commit',required=True);p.add_argument('--draft',action='store_true');p.add_argument('--tag',default='contest-2026-11-12');a=p.parse_args()
+ROOT=pathlib.Path(__file__).resolve().parents[2];repo='kjhk3082/pleorder';tag=a.tag
+assert all(c.isalnum() or c in '-._' for c in tag),'Invalid tag'
 env={**os.environ,'GIT_TERMINAL_PROMPT':'0'}
 r=subprocess.run(['git','credential','fill'],input='protocol=https\nhost=github.com\n\n',text=True,capture_output=True,check=True,env=env,cwd=ROOT)
 credential=dict(line.split('=',1) for line in r.stdout.splitlines() if '=' in line)
@@ -18,7 +19,7 @@ base='https://api.github.com/repos/'+repo
 try:release=request(base+'/releases/tags/'+tag)
 except urllib.error.HTTPError as e:
     if e.code!=404:raise SystemExit('GitHub release read failed: '+str(e.code))
-    release=request(base+'/releases','POST',{'tag_name':tag,'target_commitish':a.commit,'name':'플레오더 공모전 제출본 · 2026-11-12','draft':a.draft,'prerelease':True,'body':(ROOT/'산출물/04_제출안내/릴리스_설명.md').read_text(encoding='utf-8')})
+    release=request(base+'/releases','POST',{'tag_name':tag,'target_commitish':a.commit,'name':'플레오더 공모전 제출본 · '+tag.removeprefix('contest-'),'draft':a.draft,'prerelease':True,'body':(ROOT/'산출물/04_제출안내/릴리스_설명.md').read_text(encoding='utf-8')})
 apk=ROOT/'apk/플레오더_플레오더_release.apk'
 bundle=ROOT/'.cache/submission/pleorder_release.zip';bundle.parent.mkdir(parents=True,exist_ok=True)
 with zipfile.ZipFile(bundle,'w',zipfile.ZIP_DEFLATED,compresslevel=1) as z:

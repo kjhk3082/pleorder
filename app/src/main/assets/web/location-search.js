@@ -5,6 +5,21 @@
 })(globalThis, () => {
   'use strict';
   const clean = value => String(value || '').trim().replace(/\s+/g, ' ');
+  function normalizeDetail(value) {
+    const digits={영:0,공:0,일:1,이:2,삼:3,사:4,오:5,육:6,칠:7,팔:8,구:9};
+    const units={십:10,백:100,천:1000,만:10000};
+    return clean(value).replace(/([영공일이삼사오육칠팔구십백천만]+|\d+)\s*(동|호실|호|층)(?=$|\s|[,，]|\d|[영공일이삼사오육칠팔구십백천만]+(?:동|호|층))/gu,(_,word,unit)=>{
+      if(/^\d+$/.test(word))return word+unit;
+      if(!/[십백천만]/.test(word))return [...word].map(c=>digits[c]).join('')+unit;
+      let total=0,section=0,number=0;
+      for(const c of word){
+        if(c in digits)number=digits[c];
+        else if(c==='만'){total+=(section+number||1)*10000;section=0;number=0;}
+        else {section+=(number||1)*units[c];number=0;}
+      }
+      return (total+section+number)+unit;
+    });
+  }
   function splitQuery(value) {
     const text = clean(value);
     // Unit/room information belongs to the app, never the map provider.
@@ -79,5 +94,5 @@
     if(!response.ok)throw Error('주소 검색 연결을 확인해 주세요.');
     const first=(await response.json()).features?.[0];return first?normalize(first):null;
   }
-  return { clean, splitQuery, normalize, candidates, naverCandidates, naverReverse, search, reverse };
+  return { clean, splitQuery, normalizeDetail, normalize, candidates, naverCandidates, naverReverse, search, reverse };
 });

@@ -6,6 +6,8 @@
 |---|---|
 | `capture.cjs` | Node 22+, ADB, debug WebView CDP. 탐색·결제·예약·음성 장면 녹화. `ANDROID_SERIAL`, `SUBMISSION_PYTHON`으로 별도 시험 에뮬레이터 지정 |
 | `capture-driving.py` | Python, ADB, 공식 Virtual Console. 0/P → D → 30km/h → 0/P 전환 녹화 |
+| `release-voice-qa.py` | ADB 접근성 트리와 실제 가상 마이크를 이용한 release 시험. `ANDROID_SERIAL`과 `PLEORDER_EMULATOR_SERIAL`로 같은 시험 인스턴스 지정. SDK 준비를 기다려 음성을 보내며 전송 성공만으로 인식 성공을 판정하지 않음 |
+| `upload-readme-video.py` | 검토한 10 MB 미만 MP4를 GitHub 공식 사용자 첨부 경로로 업로드. 별도 이슈나 댓글을 생성하지 않음 |
 | `capture-audio.py` | Python, grpcio, protobuf. 공식 에뮬레이터 streamAudio로 실제 스피커 출력 기록 |
 | `New-VoiceFixtures.ps1` | Windows 한국어 Heami TTS로 시험용 WAV/PCM 생성 |
 | `New-Narration.ps1` | Windows 한국어 TTS로 영상 설명 음성 생성 |

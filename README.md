@@ -12,8 +12,10 @@ https://github.com/user-attachments/assets/0c0ab340-f5db-45e3-9ea2-515638212d8b
 
 - [실제 기능 시연 영상 · 7분 16초](산출물/02_시연영상/플레오더_전체기능시연.mp4) · [장면별 설명](산출물/02_시연영상/장면별_설명.md)
 - [기획서 PDF](산출물/01_기획서/플레오더_기획서.pdf) · [편집용 DOCX](산출물/01_기획서/플레오더_기획서.docx)
-- [실행 release APK · GitHub Releases](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-12) · [설치와 설정](apk/README.md)
+- [실행 release APK · GitHub Releases](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-12-r2) · [설치와 설정](apk/README.md)
 - [검증 결과와 한계](산출물/03_검증자료/검증결과.md) · [공식 제출 요건](산출물/04_제출안내/공식요건_체크리스트.md)
+
+최신 APK(r2)는 주소 음성 상태 표시·동호수 숫자 정리·결제창 마이크를 보완했습니다. 위 영상은 기존 검증 촬영본이며, r2의 전체 음성 흐름을 새로 촬영한 영상은 아닙니다. release 반복 음성 검증은 에뮬레이터 종료 문제로 미완료입니다.
 
 검증 환경은 Pleos `release_connect_v2.1.0`, Android API 34, x86_64, 2560 × 1440, density 160입니다. **출품 release는 공개 Pleos STT/TTS 3.3.1과 앱 내부 명령 처리를 사용**합니다. 공식 공지에 따라 실험용 Gleo Activity/Receiver를 release에서 비활성화했습니다. 기존 Gleo 연구 기록은 공모전 승인이나 현재 출품판의 지원 기능을 의미하지 않습니다.
 

@@ -10,7 +10,7 @@ if local_deps.is_dir():sys.path.insert(0,str(local_deps))
 import grpc
 from google.protobuf import descriptor_pb2, descriptor_pool, message_factory, empty_pb2
 
-p=argparse.ArgumentParser();p.add_argument('pcm');p.add_argument('--target',choices=['gleo','app','none'],default='gleo');p.add_argument('--tap',nargs=2);p.add_argument('--serial',default='emulator-5554');p.add_argument('--buffered',action='store_true');args=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('pcm');p.add_argument('--target',choices=['gleo','app','none'],default='gleo');p.add_argument('--tap',nargs=2);p.add_argument('--serial',default='emulator-5554');p.add_argument('--buffered',action='store_true');p.add_argument('--ready-file');args=p.parse_args()
 running=pathlib.Path(os.environ['LOCALAPPDATA'])/'Temp/avd/running'
 configs=[]
 for file in running.glob('pid_*.ini'):
@@ -28,6 +28,16 @@ pool=descriptor_pool.DescriptorPool();pool.Add(fd)
 Packet=message_factory.GetMessageClass(pool.FindMessageTypeByName('android.emulation.control.AudioPacket'))
 data=b'\0'*25600+pathlib.Path(args.pcm).read_bytes()+b'\0'*64000
 def packets():
+    # Optionally select the virtual microphone before AudioRecord starts.
+    # Silence continues until the UI harness observes SDK readiness.
+    if args.ready_file:
+        deadline=time.monotonic()+20
+        while not pathlib.Path(args.ready_file).exists() and time.monotonic()<deadline:
+            packet=Packet(audio=b'\0'*3200,timestamp=int(time.time()*1e6))
+            packet.format.samplingRate=16000;packet.format.format=1;packet.format.mode=1
+            yield packet
+            time.sleep(.1)
+        if not pathlib.Path(args.ready_file).exists():return
     for offset in range(0,len(data),3200):
         packet=Packet(audio=data[offset:offset+3200],timestamp=int(time.time()*1e6))
         packet.format.samplingRate=16000;packet.format.format=1;packet.format.mode=0 if args.buffered else 1
@@ -37,7 +47,7 @@ errors=[]
 with grpc.insecure_channel('127.0.0.1:'+config['grpc.port']) as channel:
     inject=channel.stream_unary('/android.emulation.control.EmulatorController/injectAudio',request_serializer=lambda p:p.SerializeToString(),response_deserializer=empty_pb2.Empty.FromString)
     def feed():
-        try:inject(packets(),metadata=metadata,timeout=20)
+        try:inject(packets(),metadata=metadata,timeout=40 if args.ready_file else 20)
         except grpc.RpcError as e:errors.append(e.code().name)
     thread=threading.Thread(target=feed);thread.start();time.sleep(.2)
     adb=str(pathlib.Path(os.environ['USERPROFILE'])/'Android/Sdk/platform-tools/adb.exe')

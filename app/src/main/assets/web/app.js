@@ -71,6 +71,12 @@ function modal(title, subtitle, body, kind = "") {
   $("modal").dataset.kind = kind;
   $("modalContent").innerHTML =
     `<header class="modal-head"><div><h2 id="dialogTitle">${safe(title)}</h2>${subtitle ? `<p>${safe(subtitle)}</p>` : ""}</div><button class="icon-button" data-action="close" aria-label="닫기">${icon("close")}</button></header><div class="modal-body">${body}</div>`;
+  if (["checkout", "conversation"].includes(kind)) {
+    const bar = document.createElement("div");
+    bar.className = "modal-voice";
+    bar.innerHTML = `<button class="button outlined" data-action="voice-command" aria-label="음성으로 답하기">${icon("mic",22)} 말로 답하기</button><span id="modalVoiceStatus" role="status">${kind === "checkout" ? "금액 확인 후 ‘결제 승인’ 또는 ‘취소’라고 말해 주세요." : "마이크를 누르고 번호나 메뉴를 말씀해 주세요."}</span>`;
+    $("modalContent").querySelector(".modal-head").after(bar);
+  }
   if (title) {
     $("modal").setAttribute("aria-labelledby", "dialogTitle");
     $("modal").removeAttribute("aria-label");
@@ -527,6 +533,21 @@ function syncVoicePlaceFields() {
   const selected = PleorderPlaces.selected(), pending = repo.destinationSearch;
   if (selected && pending?.places.some(p=>p.lat === selected.lat && p.lng === selected.lng)) $("placeDetail").value = pending.detail || "";
 }
+function fieldVoiceStatus(message, target = voiceTarget, active = false) {
+  if (!target || target.kind !== modalKind || !$(target.id)) return;
+  let status = $("fieldVoiceStatus");
+  if (!status) {
+    status = document.createElement("p");
+    status.id = "fieldVoiceStatus";
+    status.className = "field-voice-status";
+    status.setAttribute("role", "status");
+  }
+  const field = $(target.id);
+  const anchor = target.id === "placeQuery" ? $("placeSearch") : field.closest("label") || field;
+  anchor.after(status);
+  status.textContent = message;
+  $("modal").querySelectorAll('[data-action="voice-place"],[data-action="voice-detail"]').forEach(b => b.setAttribute("aria-pressed", String(active && b.dataset.action === (target.id === "placeQuery" ? "voice-place" : "voice-detail"))));
+}
 function startFieldVoice(id) {
   if (!uxPolicy.transcription) return toast("현재 차량 정책에 따라 음성 내용을 화면에 입력할 수 없어요. 음성 주문을 이용해 주세요.");
   const field = $(id);
@@ -543,7 +564,7 @@ function startFieldVoice(id) {
     save();
   }
   voiceTarget = { id, kind: modalKind };
-  toast(id === "placeQuery" ? "찾을 장소 이름을 말씀해 주세요." : "동·호수 등 상세주소를 말씀해 주세요.");
+  fieldVoiceStatus("마이크를 준비하고 있어요…", voiceTarget, true);
   Native.startListening();
 }
 function applyUxControls() {
@@ -833,6 +854,7 @@ document.addEventListener("click", (e) => {
     return close();
   }
   switch (b.dataset.action || b.dataset.command) {
+    case "voice-command": $("micButton").onclick(); break;
     case "more-stores": storeListLimit += 30; render(); break;
     case "origin": openOrigin(); break;
     case "pick-origin": pickOrigin(); break;
@@ -1080,6 +1102,7 @@ window.Pleorder = {
     }
     if (e.type === "external-state") {
       const previousHome = JSON.stringify(repo.home);
+      const previousSearch = JSON.stringify(repo.destinationSearch);
       repo = OrderRepository.restore(e.state);
       paused = repo.simulation?.paused ?? true;
       rate = repo.simulation?.rate || 10;
@@ -1087,16 +1110,27 @@ window.Pleorder = {
       lastWall = Date.now();
       render();
       if (previousHome !== JSON.stringify(repo.home) && ["place-picker", "address"].includes(modalKind)) { close(); map.focusHome(); }
-      else syncVoicePlaceFields();
+      else if (previousSearch !== JSON.stringify(repo.destinationSearch)) syncVoicePlaceFields();
+    }
+    if ($("modalVoiceStatus") && e.type.startsWith("speech-")) {
+      const messages = {"speech-preparing":"마이크를 준비하고 있어요…", "speech-ready":"듣고 있어요. 승인하거나 취소해 주세요.", "speech-error":e.message};
+      if (messages[e.type]) $("modalVoiceStatus").textContent=messages[e.type];
+      if (e.type === "speech-result" && uxPolicy.transcription) $("modalVoiceStatus").textContent=e.text;
+    }
+    if (e.type === "speech-preparing") {
+      $("voiceTitle").textContent = "마이크 준비 중";
+      fieldVoiceStatus("마이크를 준비하고 있어요…", voiceTarget, true);
     }
     if (e.type === "speech-ready") {
       listening = true;
       $("micButton").classList.add("listening");
       $("voiceTitle").textContent = "듣고 있어요";
       $("voiceStatus").textContent = "";
+      fieldVoiceStatus("듣고 있어요. " + (voiceTarget?.id === "placeQuery" ? "장소 이름을 말씀해 주세요." : "동·호수를 말씀해 주세요."), voiceTarget, true);
     }
     if (e.type === "speech-result") {
       $("voiceStatus").textContent = uxPolicy.transcription ? e.text : "음성 요청을 처리하고 있어요";
+      if (!e.final) fieldVoiceStatus("듣고 있어요 · " + e.text, voiceTarget, true);
       if (e.final) {
         listening = false;
         $("micButton").classList.remove("listening");
@@ -1104,10 +1138,13 @@ window.Pleorder = {
           const target = voiceTarget;
           voiceTarget = null;
           if (target.kind === modalKind && $(target.id)) {
-            $(target.id).value = e.text;
+            const value = target.id === "placeQuery" ? e.text.trim() : PleorderLocation.normalizeDetail(e.text);
+            if (value.length > $(target.id).maxLength) { fieldVoiceStatus("입력이 너무 길어요. 장소나 동·호수만 다시 말씀해 주세요.",target); return; }
+            $(target.id).value = value;
             $(target.id).dispatchEvent(new Event("input", { bubbles: true }));
-            if (target.id === "placeQuery") PleorderPlaces.search(e.text);
-            else toast("상세주소를 입력했어요. 내용을 확인해 주세요.");
+            fieldVoiceStatus(`“${value}”${target.id === "placeQuery" ? "로 검색해요. 결과에서 장소를 선택해 주세요." : " 입력했어요. 내용을 확인하고 저장해 주세요."}`, target);
+            if (target.id === "placeQuery") PleorderPlaces.search(value);
+            else if (target.id === "placeDetail" && repo.destinationSearch) { repo.destinationSearch.detail=value; save(); }
           }
           return;
         }
@@ -1119,6 +1156,7 @@ window.Pleorder = {
       $("micButton").classList.remove("listening");
     }
     if (e.type === "speech-error") {
+      fieldVoiceStatus(e.message, voiceTarget);
       voiceTarget = null;
       listening = false;
       $("micButton").classList.remove("listening");
