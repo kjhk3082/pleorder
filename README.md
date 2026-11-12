@@ -6,6 +6,10 @@
 
 ## 공모전 제출 자료 · 2026-11-12
 
+아래 플레이어에서 전체 시연을 바로 재생할 수 있습니다. 재생 시 음소거를 해제하면 설명과 실제 SDK 음성 응답을 들을 수 있습니다. README용은 720p이며 원본 1080p 영상은 아래 링크에서 내려받습니다.
+
+https://github.com/user-attachments/assets/0c0ab340-f5db-45e3-9ea2-515638212d8b
+
 - [실제 기능 시연 영상 · 7분 16초](산출물/02_시연영상/플레오더_전체기능시연.mp4) · [장면별 설명](산출물/02_시연영상/장면별_설명.md)
 - [기획서 PDF](산출물/01_기획서/플레오더_기획서.pdf) · [편집용 DOCX](산출물/01_기획서/플레오더_기획서.docx)
 - [실행 release APK · GitHub Releases](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-12) · [설치와 설정](apk/README.md)
