@@ -86,7 +86,7 @@ class JourneyMap {
       })
       .catch(error => {
         this.retryAfter.set(key, Date.now() + 30000);
-        this.notice(naverRoute?error.message:"경로를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.");
+        this.notice("경로 연결을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.");
       })
       .finally(() => this.pending.delete(key));
     return null;

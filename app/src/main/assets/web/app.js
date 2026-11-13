@@ -28,6 +28,8 @@ let category = "전체",
   lastVoiceAt = 0;
 let awaitingLocationCenter = false;
 let voiceTarget = null;
+let speechPreparing = false;
+const voiceFollowup = new PleorderVoiceTurn.Followup();
 let navigationDraft = null;
 let placePurpose = "destination";
 let uxPolicy = PleorderUx.fromEvent({requiresDo:false, activeRestrictions:0});
@@ -93,7 +95,8 @@ function modal(title, subtitle, body, kind = "") {
     );
 }
 function close() {
-  if (voiceTarget && window.Native) Native.stopSpeech();
+  voiceFollowup.cancel();
+  if ((voiceTarget || listening || speechPreparing) && window.Native) Native.stopSpeech();
   voiceTarget = null;
   window.PleorderPlaces?.destroy();
   modalKind = "";
@@ -603,7 +606,7 @@ function openSettings() {
   modal(
     "앱 설정",
     "플레오더를 편하게 맞춰보세요",
-    `<div class="settings-list"><section><h3>내 정보</h3><button class="settings-row" data-action="origin"><span>출발 위치</span><b>${safe(repo.preferences.locationSource === "manual" ? repo.origin.name : "차량 현재 위치")}</b>${icon("chevron", 17)}</button><button class="settings-row" data-action="address"><span>배달받을 곳</span><b>${safe(repo.home?.name || "등록하기")}</b>${icon("chevron", 17)}</button><button class="settings-row" data-action="wallet-settings"><span>결제 카드</span><b>${repo.payments.methods.filter((c) => c.registered).length}개</b>${icon("chevron", 17)}</button><button class="settings-row" data-action="read-destination"><span>차량 내비 연결</span><b>${repo.navigationDestination ? safe(repo.navigationDestination.name) : "목적지 불러오기"}</b>${icon("chevron", 17)}</button></section><section><h3>화면과 움직임</h3><label class="settings-row"><span>화면 테마</span><select class="field" data-setting="theme"><option value="light" ${!ui.theme || ui.theme === "light" ? "selected" : ""}>라이트</option><option value="dark" ${ui.theme === "dark" ? "selected" : ""}>다크</option><option value="system" ${ui.theme === "system" ? "selected" : ""}>시스템 설정</option></select></label><label class="settings-row"><span><strong>모션 줄이기</strong><small>전환과 장식 움직임을 최소화해요</small></span><input type="checkbox" class="settings-switch" data-setting="reduceMotion" ${ui.reduceMotion ? "checked" : ""}></label></section><section><h3>음성 안내</h3><label class="settings-row"><span><strong>주문 진행 음성 알림</strong><small>지연·취소·도착 소식을 읽어드려요</small></span><input type="checkbox" class="settings-switch" data-setting="autoAnnouncements" ${ui.autoAnnouncements !== false ? "checked" : ""}></label><label class="settings-row"><span><strong>음성 명령 예시</strong><small>5초마다 할 수 있는 말을 보여드려요</small></span><input type="checkbox" class="settings-switch" data-setting="voiceExamples" ${ui.voiceExamples !== false ? "checked" : ""}></label></section><section><h3>앱 정보</h3><div class="settings-row"><span>플레오더</span><b>제품 시뮬레이션 · 0.2</b></div><p class="settings-note">주문·결제는 실제로 접수되거나 청구되지 않습니다. 지도와 연결 서비스는 별도로 표시합니다.</p></section></div>`,
+    `<div class="settings-list"><section><h3>내 정보</h3><button class="settings-row" data-action="origin"><span>출발 위치</span><b>${safe(repo.preferences.locationSource === "manual" ? repo.origin.name : "차량 현재 위치")}</b>${icon("chevron", 17)}</button><button class="settings-row" data-action="address"><span>배달받을 곳</span><b>${safe(repo.home?.name || "등록하기")}</b>${icon("chevron", 17)}</button><button class="settings-row" data-action="wallet-settings"><span>결제 카드</span><b>${repo.payments.methods.filter((c) => c.registered).length}개</b>${icon("chevron", 17)}</button><button class="settings-row" data-action="read-destination"><span>차량 내비 연결</span><b>${repo.navigationDestination ? safe(repo.navigationDestination.name) : "목적지 불러오기"}</b>${icon("chevron", 17)}</button></section><section><h3>화면과 움직임</h3><label class="settings-row"><span>화면 테마</span><select class="field" data-setting="theme"><option value="light" ${!ui.theme || ui.theme === "light" ? "selected" : ""}>라이트</option><option value="dark" ${ui.theme === "dark" ? "selected" : ""}>다크</option><option value="system" ${ui.theme === "system" ? "selected" : ""}>시스템 설정</option></select></label><label class="settings-row"><span><strong>모션 줄이기</strong><small>전환과 장식 움직임을 최소화해요</small></span><input type="checkbox" class="settings-switch" data-setting="reduceMotion" ${ui.reduceMotion ? "checked" : ""}></label></section><section><h3>음성 안내</h3><label class="settings-row"><span><strong>주문 진행 음성 알림</strong><small>지연·취소·도착 소식을 읽어드려요</small></span><input type="checkbox" class="settings-switch" data-setting="autoAnnouncements" ${ui.autoAnnouncements !== false ? "checked" : ""}></label><label class="settings-row"><span><strong>음성 명령 예시</strong><small>5초마다 할 수 있는 말을 보여드려요</small></span><input type="checkbox" class="settings-switch" data-setting="voiceExamples" ${ui.voiceExamples !== false ? "checked" : ""}></label></section><section><h3>대화 방식</h3><label class="settings-row"><span><strong>음성 대화 이어가기</strong><small>주문 확인 안내가 끝나면 다시 누르지 않고 답할 수 있어요</small></span><input type="checkbox" class="settings-switch" data-setting="voiceFollowup" ${ui.voiceFollowup !== false ? "checked" : ""}></label></section><section><h3>앱 정보</h3><div class="settings-row"><span>플레오더</span><b>제품 시뮬레이션 · 0.2</b></div><p class="settings-note">주문·결제는 실제로 접수되거나 청구되지 않습니다. 지도와 연결 서비스는 별도로 표시합니다.</p></section></div>`,
     "settings",
   );
 }
@@ -687,6 +690,13 @@ function runCommand(text, voice = false) {
       r.order.payment?.status === "paid" &&
       !previousOrders.has(r.order.id),
   });
+  if (voice && repo.preferences.ui?.voiceFollowup !== false) {
+    voiceFollowup.arm(r);
+    if (r.draft || r.conversation) {
+      $("voiceTitle").textContent="안내가 끝나면 바로 말씀해 주세요";
+      if ($("modalVoiceStatus")) $("modalVoiceStatus").textContent="음성 안내 뒤에 이어서 말씀해 주세요. 승인 전에는 결제하지 않아요.";
+    }
+  }
 }
 function applyLocation(lat, lng) {
   if (
@@ -759,14 +769,16 @@ $("timingButton").onclick = () => {
   render();
 };
 $("micButton").onclick = () => {
+  voiceFollowup.cancel();
   voiceTarget = null;
   if (!window.Native) return openText();
-  if (listening) Native.stopSpeech();
-  else Native.startListening();
+  if (listening || speechPreparing) Native.stopSpeech();
+  else { speechPreparing=true; $("voiceTitle").textContent="마이크 준비 중"; Native.startListening(); }
 };
 document.addEventListener("click", (e) => {
   const b = e.target.closest("button");
   if (!b) return;
+  voiceFollowup.cancel();
   if (b.dataset.menu) return openStore(b.dataset.menu);
   if (b.dataset.reorder) return openStore(b.dataset.reorder, true);
   if (b.dataset.category) {
@@ -1085,9 +1097,16 @@ window.Pleorder = {
   runCommand,
   suspend() { save(); },
   async receiveNative(e) {
-    if (e.type === "visibility") { if (!e.visible) save(); pageActive = e.visible; }
+    if (e.type === "visibility") {
+      if (!e.visible) voiceFollowup.cancel(); if (!e.visible) save(); pageActive = e.visible; }
     if (e.type === "vehicle-destination") {
+      const counts = new Map(repo.orders.map(o=>[o.id,o.events.length]));
       if (repo.updateVehicleDestination(e.destination)) {
+        const changed=repo.orders.find(o=>o.events.length>(counts.get(o.id)||0)&&o.events.at(-1)?.kind==='reservation_retimed');
+        if(changed){
+          toast(changed.events.at(-1).message);
+          if(window.Native&&!listening&&!speechPreparing&&repo.preferences.ui?.autoAnnouncements!==false&&!voiceFollowup.expiresAt)speak(repo.reservationSummary(changed));
+        }
         repo.navigationStatus = "ready";
         save();
         render();
@@ -1117,11 +1136,16 @@ window.Pleorder = {
       if (messages[e.type]) $("modalVoiceStatus").textContent=messages[e.type];
       if (e.type === "speech-result" && uxPolicy.transcription) $("modalVoiceStatus").textContent=e.text;
     }
+    if (e.type === "tts-done" && voiceFollowup.consume({active:pageActive && $("modal").open && ["checkout","conversation"].includes(modalKind),blocked:uxPolicy.blockAll,listening:listening || speechPreparing})) {
+      if(window.Native) Native.startListening();
+    }
     if (e.type === "speech-preparing") {
+      speechPreparing=true;
       $("voiceTitle").textContent = "마이크 준비 중";
       fieldVoiceStatus("마이크를 준비하고 있어요…", voiceTarget, true);
     }
     if (e.type === "speech-ready") {
+      speechPreparing=false;
       listening = true;
       $("micButton").classList.add("listening");
       $("voiceTitle").textContent = "듣고 있어요";
@@ -1152,10 +1176,12 @@ window.Pleorder = {
       }
     }
     if (e.type === "speech-end") {
+      speechPreparing=false;
       listening = false;
       $("micButton").classList.remove("listening");
     }
     if (e.type === "speech-error") {
+      voiceFollowup.cancel(); speechPreparing=false;
       fieldVoiceStatus(e.message, voiceTarget);
       voiceTarget = null;
       listening = false;

@@ -109,3 +109,28 @@ test('reserved merchant cancellation and refund timing begin after dispatch, not
  assert.equal(o.events.find(e=>e.kind==='merchant_cancelled').at,r.clock);r.update();assert.equal(o.payment.status,'refund_pending');
  r.advance(3);assert.equal(o.payment.status,'refunded');
 });
+
+
+test('traffic pushes unsent delivery later without another payment or early merchant dispatch',()=>{
+ const r=make();r.homeMinutes=60;r.updateVehicleDestination({...DATA.home,remainingSeconds:3600,measuredAt:Date.now()-1000});
+ const o=paid(r,'bibimbap','arrival'),original=o.startAt;
+ r.updateVehicleDestination({...DATA.home,remainingSeconds:4500,measuredAt:Date.now()});
+ assert.ok(o.startAt>=original+14*60000);assert.equal(o.reservation.adjustment.delayed,true);
+ assert.match(r.describe(o),/아직 매장에 보내지 않았어요/);assert.match(r.describe(o),/추가 결제는 없어요/);
+ assert.equal(r.payments.transactions.length,1);r.advance(37);assert.equal(o.stage,'reserved');assert.equal(o.submittedAt,null);
+ r.advance(15);assert.equal(o.stage,'accepted');assert.equal(o.events.filter(e=>e.kind==='submitted').length,1);
+ r.update();assert.equal(r.payments.transactions.length,1);
+});
+test('once submitted, traffic cannot rewind preparation or silently postpone the merchant',()=>{
+ const r=make();r.updateVehicleDestination({...DATA.home,remainingSeconds:600});const o=paid(r),start=o.startAt;
+ r.updateVehicleDestination({...DATA.home,remainingSeconds:7200,measuredAt:Date.now()+1});
+ assert.equal(o.startAt,start);assert.equal(o.stage,'accepted');assert.equal(o.events.filter(e=>e.kind==='reservation_retimed').length,0);
+});
+test('expired vehicle ETA holds an unsent reservation and a fresh sample allows explicit resume',()=>{
+ const r=make();r.homeMinutes=60;r.updateVehicleDestination({...DATA.home,remainingSeconds:3600});const o=paid(r,'bibimbap','arrival');
+ r.navigationSample.measuredAt=Date.now()-91000;r.advance(40);
+ assert.equal(o.stage,'held');assert.equal(o.submittedAt,null);assert.match(r.describe(o),/보류/);
+ assert.equal(r.resumeReservation(o).status,'asking');assert.equal(o.stage,'held');assert.equal(o.submittedAt,null);
+ r.updateVehicleDestination({...DATA.home,remainingSeconds:1800});r.resumeReservation(o);
+ assert.equal(o.stage,'reserved');assert.equal(r.payments.transactions.length,1);
+});

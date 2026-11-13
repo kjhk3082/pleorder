@@ -55,8 +55,8 @@ for index,c in enumerate(plan):
         with wave.open(str(audio),'rb') as w:duration=w.getnframes()/w.getframerate()
         pace=max(1,duration/(c['seconds']-1))
     else:audio=None
-    captions=c['captions'];sub=assfile(c['id'],c['title'],c['seconds'],captions)
-    dest=EDIT/(c['id']+'.mp4');encode(CACHE/'recordings'/(c['id']+'.mp4'),dest,c['seconds'],sub,audio,pace=pace);parts.append(dest)
+    captions=c['captions'];sub=assfile(c['id'],c.get('cardTitle',c['title']),c['seconds'],captions,c.get('concept',False))
+    dest=EDIT/(c['id']+'.mp4');encode(CACHE/'recordings'/(c['id']+'.mp4'),dest,c['seconds'],sub,audio,pace=pace,card=c.get('concept',False));parts.append(dest)
     chapters.append((f'{offset//60:02}:{offset%60:02}',c['title']))
     all_captions += [(a+offset,b+offset,t) for a,b,t in captions]
     offset+=c['seconds'];print('Rendered',c['id'],flush=True)
@@ -65,5 +65,5 @@ manifest=EDIT/'concat.txt';manifest.write_text(''.join("file '"+p.as_posix()+"'\
 final=OUT/'플레오더_전체기능시연.mp4'
 run(['-f','concat','-safe','0','-i',manifest,'-c','copy','-movflags','+faststart',final])
 (OUT/'플레오더_전체기능시연.srt').write_text('\n\n'.join(f'{i}\n{tc(a)} --> {tc(b)}\n{t}' for i,(a,b,t) in enumerate(all_captions,1))+'\n',encoding='utf-8-sig')
-(OUT/'장면별_설명.md').write_text('# 실제 기능 시연 영상\n\n'+f'길이: 약 {(offset+8)//60}분 {(offset+8)%60}초 · 1920×1080 · 30fps\n\n'+'\n'.join(f'- {t} {name}' for t,name in chapters)+'\n\n## 녹화와 편집 범위\n\n실제 Pleos 에뮬레이터를 ADB로 녹화했습니다. 설명 자막과 Windows 한국어 합성 내레이션을 추가했습니다. 음성 SDK 장면은 가상 마이크에 주입한 합성 시험 음성과 실제 에뮬레이터 스피커의 TTS 응답을 함께 담았습니다. 사람 목소리·실차 테스트가 아닙니다. 시간 가속과 목적지 상태 이벤트 주입을 해당 장면에 표시했습니다. 내비게이션 장면은 전송 확인창까지입니다. 주문·결제·라이더·문 앞 사진은 시뮬레이션입니다.\n\n메뉴·설정 장면은 주차 상태이며, 주행 제한과 Gleo 승인 범위는 검증 문서를 참고하세요. 모든 예외 상황이 영상에 포함되어 있지는 않습니다. 예외·개인화·다중 주문 등은 회귀 검사와 별도 검증 문서에서 확인할 수 있습니다.\n\n## 내레이션\n\n'+'\n\n'.join('### '+c['title']+'\n\n'+(c['narration'] or '별도 내레이션 없이 시험 입력과 실제 SDK 음성 응답을 재생합니다.') for c in plan)+'\n',encoding='utf-8')
+(OUT/'장면별_설명.md').write_text('# 실제 기능 시연 영상\n\n'+f'길이: 약 {(offset+8)//60}분 {(offset+8)%60}초 · 1920×1080 · 30fps\n\n'+'\n'.join(f'- {t} {name}' for t,name in chapters)+'\n\n## 녹화와 편집 범위\n\n실제 Pleos 에뮬레이터를 ADB로 녹화했습니다. 설명 자막과 Windows 한국어 합성 내레이션을 추가했습니다. 음성 SDK 장면은 가상 마이크에 주입한 합성 시험 음성과 실제 에뮬레이터 스피커의 TTS 응답을 함께 담았습니다. 사람 목소리·실차 테스트가 아닙니다. 시간 가속과 목적지 상태 이벤트 주입을 해당 장면에 표시했습니다. 내비게이션 장면은 전송 확인창까지입니다. 정체 장면은 독립된 도착정보 시험 입력과 시계 가속을 사용합니다. Gleo 연결 카드는 향후 기획이며 실제 연동 화면이 아닙니다. 음성 장면은 11월 12일 debug 기록이며 새 release의 반복 검증을 의미하지 않습니다. 주문·결제·라이더·문 앞 사진은 시뮬레이션입니다.\n\n메뉴·설정 장면은 주차 상태이며, 주행 제한과 Gleo 승인 범위는 검증 문서를 참고하세요. 모든 예외 상황이 영상에 포함되어 있지는 않습니다. 예외·개인화·다중 주문 등은 회귀 검사와 별도 검증 문서에서 확인할 수 있습니다.\n\n## 내레이션\n\n'+'\n\n'.join('### '+c['title']+'\n\n'+(c['narration'] or '별도 내레이션 없이 시험 입력과 실제 SDK 음성 응답을 재생합니다.') for c in plan)+'\n',encoding='utf-8')
 print('VIDEO_READY',final.stat().st_size,'bytes',offset+8,'seconds',flush=True)

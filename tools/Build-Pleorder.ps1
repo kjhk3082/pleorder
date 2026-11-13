@@ -1,4 +1,4 @@
-param([switch]$Install, [switch]$Release)
+﻿param([switch]$Install, [switch]$Release)
 $ErrorActionPreference='Stop'
 $env:JAVA_HOME=Join-Path $env:USERPROFILE 'Android\jdk21\jdk-21.0.13.0.2+1'
 $env:ANDROID_HOME=Join-Path $env:USERPROFILE 'Android\Sdk'

@@ -25,7 +25,7 @@ try:
         time.sleep(4)
     api('/vehicle/controls?speed=0&accelerator=0&brake=0&steering=0','PUT');api('/vehicle/gear?gear=Park','PUT')
     recorder.wait(timeout=35)
-    ad('pull','/sdcard/pleorder-driving.mp4',str(out/'recordings/12-driving.mp4'))
+    ad('pull','/sdcard/pleorder-driving.mp4',str(out/'recordings/16-driving.mp4'))
     ad('shell','rm','/sdcard/pleorder-driving.mp4')
     print('RELEASE_DRIVING_CAPTURED',flush=True)
 finally:

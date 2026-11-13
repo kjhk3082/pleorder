@@ -60,11 +60,26 @@
       const sendAt=Math.max(this.clock,sample.etaAt-(prep+(o.mode==='delivery'?10+rider:1))*MINUTE);
       const delta=sendAt-o.startAt;
       o.startAt=sendAt;o.readyAt+=delta;o.dispatchAt+=delta;o.deliveryAt+=delta;
-      if(o.reservation)o.reservation.etaMeasuredAt=sample.measuredAt||sample.queriedAt;
+      if(o.reservation){
+        o.reservation.etaMeasuredAt=sample.measuredAt||sample.queriedAt;
+        if(Math.abs(delta)>=2*MINUTE){
+          const minutes=Math.round(Math.abs(delta)/MINUTE);
+          o.reservation.adjustment={minutes,delayed:delta>0,at:this.clock,sendAt,etaAt:sample.etaAt,source:sample.source||'route'};
+          o.events.push({kind:'reservation_retimed',message:`도착 예상이 달라져 매장 전송을 ${minutes}분 ${delta>0?'늦췄어요':'앞당겼어요'}. 추가 결제는 없어요.`,at:this.clock});
+        }
+      }
+    };
+    p.reservationSummary=function(o){
+      if(o?.stage==='held')return o.holdReason+' 매장 전송은 보류 중이에요.';
+      if(o?.stage!=='reserved')return '';
+      const minutes=Math.max(0,Math.ceil((o.startAt-this.clock)/MINUTE)),a=o.reservation?.adjustment;
+      const change=a?`도착 예상 변경으로 전송을 ${a.minutes}분 ${a.delayed?'늦췄어요':'앞당겼어요'}. `:'';
+      return change+`아직 매장에 보내지 않았어요. 약 ${minutes}분 뒤 전송할 예정이며 추가 결제는 없어요.`;
     };
     p.resumeReservation=function(o){
       if(!o||o.stage!=='held')return {status:'asking',message:'재개할 예약이 없어요.'};
       if(o.reservation?.destination&&this.navigationSample?.status!=='known')return {status:'asking',message:'차량 목적지를 아직 확인하지 못했어요. 안내가 다시 연결된 뒤 예약을 재개해 주세요.'};
+      if(o.reservation?.destination&&(!this.navigationSample?.measuredAt||Date.now()-this.navigationSample.measuredAt>=90000||this.navigationSample.measuredAt>Date.now()))return {status:'asking',message:'최신 도착 시간을 확인한 뒤 다시 재개해 주세요. 아직 매장에는 보내지 않았어요.'};
       // Explicit resume keeps the already-approved delivery address and amount.
       o.stage='reserved';o.holdReason=null;
       o.reservation.destination=this.navigationDestination?{...this.navigationDestination}:null;
@@ -85,6 +100,9 @@
       if(o.stage!=='reserved')return true;
       if(o.reservation?.destination&&this.navigationSample?.status!=='known'){
         this.holdReservation(o,'차량 경로를 확인하지 못해 전송을 멈췄어요.');return false;
+      }
+      if(o.reservation?.destination&&(!this.navigationSample?.measuredAt||Date.now()-this.navigationSample.measuredAt>=90000||this.navigationSample.measuredAt>Date.now())){
+        this.holdReservation(o,'차량 도착 시간 정보가 오래되어 전송을 보류했어요.');return false;
       }
       if(this.clock<o.startAt)return false;
       if(o.submittedAt!==null&&o.submittedAt!==undefined)return false;

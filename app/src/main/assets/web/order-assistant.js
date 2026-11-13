@@ -163,7 +163,7 @@
     p.describe=function(o){
       if(o?.stage==='reserved'||o?.stage==='held'){
         const card=o.payment,paid=`${card?.name||'등록 카드'} 끝번호 ${card?.last4||''}로 ${o.total.toLocaleString('ko-KR')}원 모의 결제됐어요.`;
-        return `${this.store(o.storeId).name}, ${o.items.map(i=>`${i.name} ${i.quantity}개`).join(', ')}. ${paid} ${o.stage==='held'?`예약을 보류했어요. ${o.holdReason} 아직 매장에 보내지 않았어요. 기존 수령 장소로 계속하려면 “예약 재개”, 그만두려면 “주문 취소”라고 해 주세요.`:`도착 시각에 맞춰 약 ${Math.max(0,Math.ceil((o.startAt-this.clock)/MINUTE))}분 뒤 매장에 보낼 예정이에요. 아직 조리 전이며 취소할 수 있어요.`}`;
+        return `${this.store(o.storeId).name}, ${o.items.map(i=>`${i.name} ${i.quantity}개`).join(', ')}. ${paid} ${o.stage==='held'?`예약을 보류했어요. ${o.holdReason} 아직 매장에 보내지 않았어요. 기존 수령 장소로 계속하려면 “예약 재개”, 그만두려면 “주문 취소”라고 해 주세요.`:this.reservationSummary(o)}`;
       }
       return oldDescribe.call(this,o);
     };

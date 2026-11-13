@@ -911,7 +911,7 @@
       const progress = {
         accepted: `매장의 주문 확인을 기다리고 있어요. ${o.mode === "delivery" ? "집까지 배달" : "픽업 준비"} 예상 시간은 ${remain}분이에요.`,
         cooking: `매장에서 조리 중이에요.${o.delayMinutes ? ` 조리가 ${o.delayMinutes}분 늦어져 예상 시간을 조정했어요.` : ""} ${o.mode === "delivery" ? "배달 도착" : "픽업 준비"}까지 약 ${remain}분 남았어요.`,
-        ready: `음식이 준비됐어요. ${this.store(o.storeId).name}에서 직접 수령해 주세요. 수령 뒤 픽업 완료를 눌러 주세요.`,
+        ready: `음식이 준비됐어요. ${this.store(o.storeId).name}에서 직접 수령해 주세요. 수령 뒤 “픽업 완료”라고 말씀해 주세요.`,
         waiting_rider: `음식은 준비됐지만 ${this.scenario.reassigned ? "새 라이더를 다시 배정" : "아직 라이더를 배정"}하고 있어요. 배달은 아직 시작하지 않았고 도착 예상까지 ${remain}분이에요.`,
         delivering: `가상 라이더가 집으로 이동 중이에요. 도착까지 약 ${remain}분이에요.`,
         contact_needed:

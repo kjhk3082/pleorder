@@ -3,6 +3,8 @@ PleorderRealCatalog.ready.then(()=>{
   const $=id=>document.getElementById(id);
   let raw;try{raw=window.Native?Native.loadState():localStorage.getItem('pleorder-v1');}catch{}
   let session=new PleorderDriving.DrivingSession(raw),listening=false,pageActive=true,lastFeedback='마이크를 누르고 주문이나 배달받을 곳을 말씀해 주세요.';
+  let preparing=false;
+  const followup=new PleorderVoiceTurn.Followup();
   const text=(id,value)=>{$(id).textContent=session.text(value);};
   const cash=n=>Number(n||0).toLocaleString('ko-KR')+'원';
   function save(){const s=session.save();try{if(window.Native)Native.saveState(s);else localStorage.setItem('pleorder-v1',s);}catch{}}
@@ -12,8 +14,8 @@ PleorderRealCatalog.ready.then(()=>{
     const theme=r.preferences.ui?.theme;
     document.documentElement.dataset.theme=theme==='dark'||(theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
     $('policyCover').hidden=!p.blockAll;$('drivingShell').inert=p.blockAll;
-    text('headline',listening?'듣고 있어요':d?'주문을 확인해 주세요':o?(o.stage==='held'?'예약 확인이 필요해요':o.stage==='reserved'?'도착에 맞춰 예약했어요':o.stage==='completed'?'맛있게 드세요':o.stage==='cancelled'?'주문이 취소됐어요':o.mode==='pickup'?(o.stage==='ready'?'음식이 준비됐어요':'픽업을 준비하고 있어요'):'한 끼가 오고 있어요'):'무엇을 주문할까요?');
-    text('micLabel',listening?'듣기 중지':'말로 주문하기');text('voiceHint',o?.stage==='held'?'“플레오더 예약 재개해 줘”':d?'승인하려면 “결제 승인”':o?'“플레오더 주문 상태 알려 줘”':'“플레오더에서 치킨 배달해 줘”');
+    text('headline',preparing?'마이크 준비 중':listening?'듣고 있어요':d?'주문을 확인해 주세요':o?(o.stage==='held'?'예약 확인이 필요해요':o.stage==='reserved'?(o.reservation?.adjustment?'전송 시간을 조정했어요':'도착에 맞춰 예약했어요'):o.stage==='completed'?'맛있게 드세요':o.stage==='cancelled'?'주문이 취소됐어요':o.mode==='pickup'?(o.stage==='ready'?'음식이 준비됐어요':'픽업을 준비하고 있어요'):'한 끼가 오고 있어요'):'무엇을 주문할까요?');
+    text('micLabel',preparing?'준비 취소':listening?'듣기 중지':'말로 주문하기');text('voiceHint',followup.expiresAt?'안내가 끝나면 바로 말씀해 주세요':o?.stage==='held'?'“플레오더 예약 재개해 줘”':d?'승인하려면 “결제 승인”':o?'“플레오더 주문 상태 알려 줘”':'“플레오더에서 치킨 배달해 줘”');
     text('feedback',lastFeedback);text('summaryLabel',d?'결제 전 확인':o?'주문 현황':'배달받을 곳');
     text('summaryTitle',d?(r.store(d.storeId)?.name||'선택한 매장'):o?r.status().message:(r.home?.placeName||r.home?.name||'배송지를 먼저 설정해 주세요'));
     text('summarySubtitle',d?d.items.map(i=>`${i.name} ${i.quantity}개`).join(', '):o?`${r.store(o.storeId)?.name} · ${o.mode==='pickup'?'픽업':'배달'}`:(r.home?.description||'배달받을 곳을 말씀해 주세요.'));
@@ -21,21 +23,28 @@ PleorderRealCatalog.ready.then(()=>{
     text('amount',d?cash(d.total):o?cash(o.total):card?card.name:'없음');
     text('card',d?`${card?.name||'카드 등록 필요'} · ${card?.last4||''} / ${d.mode==='pickup'?'매장 픽업':d.address?.name||'선택한 배송지'}`:o?`${o.payment?.name||''} · ${o.payment?.last4||''}`:card?`${card.name} · ${card.last4}`:'');
     const remain=o?Math.max(0,Math.ceil(((o.mode==='delivery'?o.deliveryAt:o.readyAt)-r.clock)/60000)):0;
-    text('approvalHint',d?'금액과 카드를 확인한 뒤 음성으로 승인해 주세요.':o?(o.stage==='held'?'예약 확인이 필요해요':o.stage==='reserved'?'도착에 맞춰 예약했어요':o.stage==='completed'?'맛있게 드세요':o.stage==='cancelled'?'환불 상태는 “현황 듣기”로 확인해 주세요':`${o.mode==='delivery'?'배달 도착':'픽업 준비'}까지 약 ${remain}분`):'주문 내용 확인 후에만 결제합니다.');
+    text('approvalHint',d?'금액과 카드를 확인한 뒤 음성으로 승인해 주세요.':o?(o.stage==='held'?'예약 확인이 필요해요':o.stage==='reserved'?(o.reservation?.adjustment?'전송 시간을 조정했어요':'도착에 맞춰 예약했어요'):o.stage==='completed'?'맛있게 드세요':o.stage==='cancelled'?'환불 상태는 “현황 듣기”로 확인해 주세요':`${o.mode==='delivery'?'배달 도착':'픽업 준비'}까지 약 ${remain}분`):'주문 내용 확인 후에만 결제합니다.');
     $('driveCancel').hidden=!d&&!['reserved','held','accepted'].includes(o?.stage);
   }
   function apply(r,voice=true){save();lastFeedback=r.message;render();if(voice)speak(r.voiceText||r.message);return r;}
-  function runCommand(value){return apply(session.act(value));}
+  function runCommand(value){
+    const result=apply(session.act(value));
+    if(session.repo.preferences.ui?.voiceFollowup!==false)followup.arm(result);
+    render();
+    return result;
+  }
   $('micIcon').innerHTML=icon('mic');
-  $('driveMic').onclick=()=>{if(listening){Native.stopSpeech();}else if(window.Native){Native.startListening();}else{lastFeedback='음성 입력은 차량 앱에서 이용해 주세요.';render();}};
-  $('driveStatus').onclick=()=>runCommand('주문 상태');
-  $('driveCancel').onclick=()=>runCommand('주문 취소');
+  $('driveMic').onclick=()=>{followup.cancel();if(listening||preparing){Native.stopSpeech();}else if(window.Native){preparing=true;lastFeedback='마이크를 준비하고 있어요.';render();Native.startListening();}else{lastFeedback='음성 입력은 차량 앱에서 이용해 주세요.';render();}};
+  $('driveStatus').onclick=()=>{followup.cancel();return runCommand('주문 상태');};
+  $('driveCancel').onclick=()=>{followup.cancel();return runCommand('주문 취소');};
   window.Pleorder={suspend:save,runCommand,async receiveNative(e){
-    if(e.type==='visibility'){if(!e.visible)save();pageActive=e.visible;}
+    if(e.type==='visibility'){if(!e.visible){followup.cancel();save();}pageActive=e.visible;}
     if(e.type==='restriction'){session.setPolicy(e);render();}
-    if(e.type==='speech-ready'){listening=true;lastFeedback='말씀해 주세요.';render();}
-    if(e.type==='speech-end'){listening=false;render();}
-    if(e.type==='speech-error'){listening=false;lastFeedback=e.message;render();}
+    if(e.type==='speech-preparing'){preparing=true;lastFeedback='마이크를 준비하고 있어요.';render();}
+    if(e.type==='tts-done'&&followup.consume({active:pageActive,blocked:session.policy.blockAll,listening:listening||preparing})){Native.startListening();}
+    if(e.type==='speech-ready'){preparing=false;listening=true;lastFeedback='말씀해 주세요.';render();}
+    if(e.type==='speech-end'){preparing=false;listening=false;render();}
+    if(e.type==='speech-error'){followup.cancel();preparing=false;listening=false;lastFeedback=e.message;render();}
     if(e.type==='speech-result'){
       if(session.policy.transcription){lastFeedback=e.text;render();}
       if(e.final){listening=false;runCommand(e.text);}
@@ -43,7 +52,13 @@ PleorderRealCatalog.ready.then(()=>{
     if(e.type==='external-state'){const policy=session.policy;session=new PleorderDriving.DrivingSession(e.state);session.policy=policy;render();}
     if(e.type==='gleo-action'){const previous=session.repo.orders.length;const r=await PleorderVoice.dispatch(session.repo,e.name,e.params);if(session.repo.orders.length>previous)session.repo.simulation={paused:false,rate:session.repo.simulation?.rate||10,savedWall:Date.now()};apply(r,false);Native.replyAction(JSON.stringify(session.callback(e.name,r)));}
     if(e.type==='destination-state'){session.repo.observeNavigation(e);save();render();}
-    if(e.type==='vehicle-destination'){session.repo.updateVehicleDestination(e.destination);save();}
+    if(e.type==='vehicle-destination'){
+      const counts=new Map(session.repo.orders.map(o=>[o.id,o.events.length]));
+      session.repo.updateVehicleDestination(e.destination);
+      const changed=session.repo.orders.find(o=>o.events.length>(counts.get(o.id)||0)&&o.events.at(-1)?.kind==='reservation_retimed');
+      if(changed){lastFeedback=changed.events.at(-1).message;if(!listening&&!preparing&&!followup.expiresAt&&session.repo.preferences.ui?.autoAnnouncements!==false)speak(session.repo.reservationSummary(changed));}
+      save();render();
+    }
     if(e.type==='location'){session.repo.receiveVehicleLocation(e);save();}
   }};
   render();if(window.Native)Native.ready();else{session.setPolicy({requiresDo:true,activeRestrictions:0x50});render();}

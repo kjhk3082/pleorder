@@ -47,9 +47,9 @@ def table(d,heads,rows,widths):
     t.rows[0]._tr.get_or_add_trPr().append(OxmlElement('w:tblHeader'))
     d.add_paragraph()
     return t
-def pic(d,name,caption):
+def pic(d,name,caption,width=6.65):
     path=CACHE/(name+'.png')
-    if path.exists():d.add_picture(str(path),width=Inches(6.65));para(d,caption,9)
+    if path.exists():d.add_picture(str(path),width=Inches(width));para(d,caption,9)
 
 public=Document();meta(public)
 s=public.sections[0];s.page_width=Inches(8.2677);s.page_height=Inches(11.6929);s.top_margin=Inches(.72);s.bottom_margin=Inches(.7);s.left_margin=s.right_margin=Inches(.8)
@@ -65,7 +65,7 @@ for st in public.styles:
     for border in list(st._element.xpath('.//w:pBdr')):border.getparent().remove(border)
 public.add_paragraph('플레오더 기획서',style='Title')
 para(public,'현대자동차그룹 차량용 앱 개발 공모전 심사 자료',11)
-para(public,'공개 심사용  |  2026년 11월 12일  |  주문과 결제는 시뮬레이션',10)
+para(public,'공개 심사용  |  2026년 11월 13일  |  주문과 결제는 시뮬레이션',10)
 section(public,0)
 pic(public,'home','그림 1  실제 에뮬레이터의 주차 화면  ·  가상 매장 예시와 네이버 지도')
 public.add_heading('2 기획 배경',1)
@@ -74,25 +74,26 @@ section(public,2,True)
 table(public,['고객 상황','차량 맥락','앱의 대응'],[
  ('퇴근 후 식사','도착 예상 시각','전송 시점 조절과 예약 보류'),('가는 길 픽업','현재 위치와 목적지 경로','경유 추가 거리와 시간'),('숙소 배달','차량의 새 목적지','배송지 확인과 주변 매장 추천'),('운전 중 주문','실제 UX 제한 비트','DO 화면에서 음성 확인')],[1.35,1.8,3.5])
 para(public,'차별점은 배달 목록 자체가 아니라 목적지와 주문 시점을 연결하는 흐름입니다. 추천 결과, 주문 내용, 결제 승인을 분리해 잘못 인식한 말이 곧바로 결제로 이어지지 않게 합니다.')
-section(public,3,True);pic(public,'checkout','그림 2  결제 전 배송지와 메뉴 구성 및 총액 확인  ·  실제 청구 없는 테스트')
+section(public,3,True);pic(public,'traffic-retimed','그림 2  시험 ETA 지연에 따른 예약 전송 조정  ·  추가 모의 결제 없음',4.15)
 section(public,4,True)
-table(public,['구성','연결 대상','출품본의 경계'],[
- ('음성','Pleos STT / TTS 3.3.1','온디바이스 인식·합성, 로컬 명령 해석'),('차량 위치','FusedLocation 1.1.3','에뮬레이터 위치 콜백'),('내비게이션','NaviHelper 3.0.5','사용자 확인 후 경유 요청'),('지도와 경로','Naver / 대체 도로 경로','지도는 실제, 차량·라이더 이동은 모의'),('주문과 결제','교체 가능한 저장소·어댑터','실제 매장·카드사 접수 없음')],[1.2,2.1,3.35])
 section(public,5,True)
 table(public,['검증 가설','초기 목표','측정 방식'],[
  ('월 활성 이용자','MAU 1,000명','20,000 × 10% × 50% 가정'),('30일 후 재사용','D30 25%','첫 사용 후 30일 코호트'),('반복 사용','월 2회 이상 30%','완료 주문 사용자 중 비율'),('잘못된 승인','중복 결제 0건 목표','거래 키와 승인 이벤트 대조')],[1.8,1.7,3.15])
 para(public,'위 수치는 제품 출시 이후 검증할 가정이며 현재 실적이나 시장점유율 전망이 아닙니다. 음성으로 주문하는 편의가 실제로 재사용으로 이어지는지 먼저 확인합니다.',10)
-section(public,6,True);section(public,7)
+public.add_heading('7 참고자료',1).paragraph_format.page_break_before=True
+para(public,'소스·APK·영상: https://github.com/kjhk3082/pleorder\n저장소 README에 재생 영상과 최신 release를 연결했습니다. 산출물 폴더에는 기획서, 자막, 검증 결과와 제출 기준을 함께 제공합니다.')
+para(public,'영상은 실제 에뮬레이터 화면과 합성 음성 내레이션으로 구성했습니다. 정체 장면은 시험 ETA와 시간 가속, Gleo 연결은 향후 계획입니다. 11월 12일 debug 음성 기록과 최신 release 검증 범위를 구분하며, 실차·실결제 검증을 의미하지 않습니다.')
+section(public,7)
 public.add_heading('검증과 출처',1)
 para(public,'검증 결과와 재현 범위는 산출물/03_검증자료/검증결과.md에 정리했습니다. 단위·회귀 검사, 실제 에뮬레이터 확인, 기존 연구 기록을 구분합니다. 영상에서 확인하지 않은 모든 예외 상황을 촬영 완료했다고 주장하지 않습니다.')
-for label,url in [('제출 기준','https://appdevchallenge.auto-hmg.io/guide/submission'),('심사 기준','https://appdevchallenge.auto-hmg.io/guide/judging-awards'),('공개 SDK 개발 범위','https://appdevchallenge.auto-hmg.io/notice/c0a1a000-2026-4923-8000-000000000008'),('추가 접수 안내','https://appdevchallenge.auto-hmg.io/notice/c0a1a000-2026-4923-8000-000000000007')]:
-    para(public,label+'\n'+url,9)
+for label,url in [('제출 기준','https://appdevchallenge.auto-hmg.io/guide/submission'),('심사 기준','https://appdevchallenge.auto-hmg.io/guide/judging-awards'),('공개 SDK 개발 범위','https://appdevchallenge.auto-hmg.io/notice/c0a1a000-2026-4923-8000-000000000008'),('Pleos UI 가이드','https://document.pleos.ai/docs/connect/guide/docs-design/Introduction/intro'),('운전자 주의분산 가이드','https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/driver-distraction-guideline')]:
+    p=para(public,label+'  '+url,8.5);p.paragraph_format.space_after=Pt(5)
 public_path=OUT/'01_기획서/플레오더_기획서.docx';public.save(public_path)
 
 private=Document(CACHE/'official/contest-application-consent.docx');meta(private)
 roster=json.loads((CACHE/'roster.json').read_text(encoding='utf-8-sig'))
 ps=private.paragraphs
-replacement={9:'참가 단위: □ 개인           ☑ 팀',10:'참가 부문: ☑ 대학(원)생    □ 일반(스타트업 포함)',11:'팀명(개인 참가 시 성명): 플레오더',12:'앱명 / 프로젝트명: 플레오더',13:f'대표자 성명: {roster[0]}   역할: 대표자',17:'참가 인원: 5명',18:'작성일: 2026년 11월 12일',28:'앱명 / 프로젝트명: 플레오더',66:'앱명 / 프로젝트명: 플레오더',67:'팀명(팀 참가 시): 플레오더'}
+replacement={9:'참가 단위: □ 개인           ☑ 팀',10:'참가 부문: ☑ 대학(원)생    □ 일반(스타트업 포함)',11:'팀명(개인 참가 시 성명): 플레오더',12:'앱명 / 프로젝트명: 플레오더',13:f'대표자 성명: {roster[0]}   역할: 대표자',17:'참가 인원: 5명',18:'작성일: 2026년 11월 13일',28:'앱명 / 프로젝트명: 플레오더',66:'앱명 / 프로젝트명: 플레오더',67:'팀명(팀 참가 시): 플레오더'}
 for i,text in replacement.items():
     ps[i].text=text
     for r in ps[i].runs:font(r,10)
@@ -113,5 +114,5 @@ for i,item in enumerate(sections,1):
     for tr in private.tables[i].rows:
         for h in list(tr._tr.xpath('./w:trPr/w:trHeight')):h.getparent().remove(h)
 private.save(OUT/'비공개_접수용/플레오더_공식접수양식_서명전.docx')
-(OUT/'01_기획서/플레오더_기획서.md').write_text('# 플레오더 기획서\n\n공개 심사용 · 2026-11-12\n\n'+'\n\n'.join('## '+str(i+1)+' '+x['title']+'\n\n'+x['text'] for i,x in enumerate(sections))+'\n',encoding='utf-8')
+(OUT/'01_기획서/플레오더_기획서.md').write_text('# 플레오더 기획서\n\n공개 심사용 · 2026-11-13\n\n'+'\n\n'.join('## '+str(i+1)+' '+x['title']+'\n\n'+x['text'] for i,x in enumerate(sections))+'\n',encoding='utf-8')
 print('Created anonymous proposal and private unsigned application.')
