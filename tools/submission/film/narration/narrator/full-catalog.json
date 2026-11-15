@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "7ea72c4735074c18f79c49a02f86211789d8bf14a07fdd9cc6d1530d57459591",
+  "cues": [
+    {
+      "text": "서울의 실제 매장 위치를 지도에서 찾습니다.",
+      "startMs": 0,
+      "endMs": 2926,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "브랜드가 공개한 메뉴와 가격에는 출처가 표시됩니다. 이 주문은 시뮬레이션이에요.",
+      "startMs": 3123,
+      "endMs": 9102,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

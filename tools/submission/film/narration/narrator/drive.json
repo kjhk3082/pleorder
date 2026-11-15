@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "ef64f93711b0fa3c0ebe6c8ef1c4a554e13ffd7526c67000ee69cc83e8527a19",
+  "cues": [
+    {
+      "text": "차가 움직이면, 복잡한 메뉴는 접힙니다.",
+      "startMs": 0,
+      "endMs": 2612,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "목적지와 음성 버튼만 크게. 주문 현황은 말로 물으세요.",
+      "startMs": 2647,
+      "endMs": 7198,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

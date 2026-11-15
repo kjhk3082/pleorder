@@ -1,0 +1,13 @@
+{
+  "voice": "Korean Male Narrator",
+  "sourceHash": "964502449c1a91cc3e33fa4c8369d03dd19cc87b77dc1c8124cc393f47e2f5b1",
+  "cues": [
+    {
+      "text": "플레오더에서 치킨 한 마리를 강남구청으로 배달해 줘.",
+      "startMs": 0,
+      "endMs": 3251,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

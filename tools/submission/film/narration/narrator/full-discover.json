@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "e86102c75fafe1495cc9703bee36f730e11e48cd36509c52e455fe3ba69a25d3",
+  "cues": [
+    {
+      "text": "집 주변에선 배달을, 가는 길에선 픽업을 찾아보세요.",
+      "startMs": 0,
+      "endMs": 3135,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "매장까지의 거리와 경유 시간을 보고 출발지도 바꿀 수 있어요.",
+      "startMs": 3367,
+      "endMs": 7384,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

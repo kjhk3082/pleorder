@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "ed5a261a1d36125c5d7872591ee6be945ac9260f80d580e94bc515e0c48e1159",
+  "cues": [
+    {
+      "text": "집으로 배달받을까요? 가는 길에 픽업할까요?",
+      "startMs": 0,
+      "endMs": 2577,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "경유하면 몇 분 더 걸리는지 보고 고르세요.",
+      "startMs": 2740,
+      "endMs": 5526,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "f5411b0a6ebbfe0b0f0be1c3a5ee536c8c25190b598be53be04cdedfd7c6da36",
+  "cues": [
+    {
+      "text": "도착이 십오 분 늦어졌습니다.",
+      "startMs": 0,
+      "endMs": 2009,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "매장으로 보내기 전인 예약은 새 도착 시각에 맞춰 미룹니다. 결제는 한 번입니다.",
+      "startMs": 2276,
+      "endMs": 7755,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

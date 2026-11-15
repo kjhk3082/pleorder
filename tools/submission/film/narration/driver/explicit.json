@@ -1,0 +1,13 @@
+{
+  "voice": "Korean Male Narrator",
+  "sourceHash": "d411dc8b79a126f52f3a2cc7867c27c29c1e7872aa4838ef5b65b7684d53e486",
+  "cues": [
+    {
+      "text": "플레오더에서 방금 담은 주문을 결제해 줘. 결제를 승인합니다.",
+      "startMs": 0,
+      "endMs": 3808,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

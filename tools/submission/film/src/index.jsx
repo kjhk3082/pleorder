@@ -1,27 +1,18 @@
 import React from "react";
-import {AbsoluteFill, Composition, Html5Audio, registerRoot, Sequence, staticFile} from "remotion";
-import timeline from "../public/cut.json";
-import {Intro, Outro} from "./BrandScenes";
-import {Decline, Door, Driving, Explore, Pickup, Traffic} from "./ProductScenes";
-import {VoiceScene} from "./VoiceScene";
+import {Composition, registerRoot, staticFile, Still} from "remotion";
+import {Cover, StudioFilm} from "./StudioFilm";
 
-const sections=Object.fromEntries(timeline.scenes.map(scene=>[scene.id,scene]));
-function Part({scene,children:Scene}){
-  return <Sequence name={scene.title} from={scene.from} durationInFrames={scene.frames}><Scene scene={scene}/></Sequence>;
+async function metadata({props}){
+  const response=await fetch(staticFile("editions.json"));
+  if(!response.ok)throw new Error("Generate the editorial timelines with edition.py first.");
+  const cut=(await response.json())[props.edition];
+  return {durationInFrames:cut.frames,props:{...props,cut}};
 }
-function Film(){
-  return <AbsoluteFill style={{background:"#08283B"}}>
-    <Part scene={sections.intro}>{Intro}</Part>
-    <Part scene={sections.explore}>{Explore}</Part>
-    <Part scene={sections.voice}>{VoiceScene}</Part>
-    <Part scene={sections.decline}>{Decline}</Part>
-    <Part scene={sections.traffic}>{Traffic}</Part>
-    <Part scene={sections.door}>{Door}</Part>
-    <Part scene={sections.pickup}>{Pickup}</Part>
-    <Part scene={sections.drive}>{Driving}</Part>
-    <Part scene={sections.outro}>{Outro}</Part>
-    <Html5Audio src={staticFile("master.m4a")}/>
-  </AbsoluteFill>;
+function Root(){
+  return <>
+    <Still id="Cover" width={1600} height={560} component={Cover}/>
+    {["Film","Gleo","Full"].map(id=><Composition key={id} id={id} fps={30} width={1920} height={1080}
+      durationInFrames={1} calculateMetadata={metadata} component={StudioFilm} defaultProps={{edition:id,cut:null}}/>)}
+  </>;
 }
-const Root=()=> <Composition id="Pleorder" component={Film} durationInFrames={timeline.frames} fps={timeline.fps} width={1920} height={1080}/>;
 registerRoot(Root);

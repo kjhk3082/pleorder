@@ -1,0 +1,13 @@
+{
+  "voice": "Korean Male Narrator",
+  "sourceHash": "155fe160cc6e55ce0757de828b2a2ce248218ed78937486efc45caec28f0c7a7",
+  "cues": [
+    {
+      "text": "플레오더. 방금 담은 치킨 주문, 현대카드로 결제를 승인합니다.",
+      "startMs": 0,
+      "endMs": 4412,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

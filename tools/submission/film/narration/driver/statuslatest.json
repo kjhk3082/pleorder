@@ -1,0 +1,13 @@
+{
+  "voice": "Korean Male Narrator",
+  "sourceHash": "b7144663c9c058ccd941f9a029b0407557f7bb55cf26eba13e6ca1d2d62d3a4a",
+  "cues": [
+    {
+      "text": "플레오더에서 가장 최근 주문 상태를 알려 주세요.",
+      "startMs": 0,
+      "endMs": 2926,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

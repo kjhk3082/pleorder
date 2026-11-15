@@ -1,0 +1,13 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "eae667854e7335aae81bd0f98424cb78a70d8277c449b5c8abf6f3e86d1a21cf",
+  "cues": [
+    {
+      "text": "오늘 저녁은 집에서, 또는 가는 길에. 플레오더.",
+      "startMs": 0,
+      "endMs": 2926,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

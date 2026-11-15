@@ -1,0 +1,13 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "7bb4d0d1a31781fac9c05103e19b70ce56d7b1b193362d8ed95edc85cbef4dab",
+  "cues": [
+    {
+      "text": "이번엔 주행 중입니다. 운전자가 금액을 확인하고 말로 승인합니다.",
+      "startMs": 0,
+      "endMs": 4226,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

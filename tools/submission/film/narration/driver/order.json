@@ -1,0 +1,13 @@
+{
+  "voice": "Korean Male Narrator",
+  "sourceHash": "8c94de41e2075df4d9341113cc1a32ee10a1d7f5035e7e0b75563e93705af7be",
+  "cues": [
+    {
+      "text": "플레오더에서 치킨 한 마리를 우리 집으로 배달해 주세요.",
+      "startMs": 0,
+      "endMs": 2972,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

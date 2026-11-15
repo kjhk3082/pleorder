@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "f03fc290dc1130319281b0473422e23862968b1ad6cebf17ac71e2ac62caab8d",
+  "cues": [
+    {
+      "text": "도착 예정 시각을 기준으로 식사를 예약합니다.",
+      "startMs": 0,
+      "endMs": 3053,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "전송 대기와 매장 접수를 주문 내역에서 구분해 볼 수 있어요.",
+      "startMs": 3286,
+      "endMs": 7477,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

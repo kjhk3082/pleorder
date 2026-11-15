@@ -1,0 +1,13 @@
+{
+  "voice": "Korean Male Narrator",
+  "sourceHash": "7eaea1813bc09552c071a9e8e0e2267bec85ee4dc56892a27e3bdb3d8acd9709",
+  "cues": [
+    {
+      "text": "플레오더. 새 주문이야. 치킨 한 마리, 집으로 배달해 줘.",
+      "startMs": 0,
+      "endMs": 4412,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

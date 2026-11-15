@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "2e8023b18c156933f0c15a29dbf84f914cd24ede34303a46dd3d42d84cf4de42",
+  "cues": [
+    {
+      "text": "최근 주문, 즐겨찾기와 음성 설정을 관리할 수 있어요.",
+      "startMs": 0,
+      "endMs": 3564,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "데모를 초기화하면 첫 주문부터 다시 시작합니다.",
+      "startMs": 3866,
+      "endMs": 7245,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

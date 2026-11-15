@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "a34bdcf7a6be1a6f27aed741815e5d25dc9999318ec17066980d6f83f8fd0fe8",
+  "cues": [
+    {
+      "text": "저녁이 도착했어요.",
+      "startMs": 0,
+      "endMs": 1068,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "문 앞에 놓인 사진과 배달 완료 시각을 함께 확인하세요.",
+      "startMs": 1115,
+      "endMs": 4598,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

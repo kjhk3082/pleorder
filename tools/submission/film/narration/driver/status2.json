@@ -1,0 +1,13 @@
+{
+  "voice": "Korean Male Narrator",
+  "sourceHash": "d38b90a2fb0760ae45618dab8df79406968cc0a9f5adff881383b054e2ab28a4",
+  "cues": [
+    {
+      "text": "플레오더. 방금 주문한 치킨, 지금 조리 중인지 알려 줘.",
+      "startMs": 0,
+      "endMs": 4180,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

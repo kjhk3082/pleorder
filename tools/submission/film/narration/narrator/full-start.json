@@ -1,0 +1,13 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "7c44c9d2fa882a9d040071f9aa48e176640e6505fb5a26237b06e316061209ff",
+  "cues": [
+    {
+      "text": "오늘 저녁은 어디서 받을까요? 플레오더. 퇴근길 주문을 시작합니다.",
+      "startMs": 0,
+      "endMs": 4458,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

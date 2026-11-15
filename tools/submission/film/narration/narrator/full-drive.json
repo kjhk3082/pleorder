@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "1086eb3078d4f719f2987ef881d9db4adf34b484a8307df3efa146f9ee0a18b6",
+  "cues": [
+    {
+      "text": "주행 제한이 활성화됐습니다.",
+      "startMs": 0,
+      "endMs": 1834,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "복잡한 목록 대신 큰 음성 버튼과 주문 요약을 보여 줍니다.",
+      "startMs": 1997,
+      "endMs": 6130,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

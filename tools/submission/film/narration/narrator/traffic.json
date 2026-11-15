@@ -1,0 +1,27 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "062dd433dfa4948def929b0c8bfc7c185d00eb6c9172fe81fce4a45b51bde3ee",
+  "cues": [
+    {
+      "text": "길이 막혔습니다. 집까지 한 시간에서 한 시간 십오 분.",
+      "startMs": 0,
+      "endMs": 3704,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "아직 매장에 보내기 전이라면, 주문 전송도 십오 분 늦춥니다.",
+      "startMs": 4005,
+      "endMs": 8371,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "결제는 한 번이면 됩니다.",
+      "startMs": 8568,
+      "endMs": 10542,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "bad1456551351feb33bf84af4742dcbe5d75120712fcd11429c353650237fe82",
+  "cues": [
+    {
+      "text": "오늘은 치킨을 찾아갈까요?",
+      "startMs": 0,
+      "endMs": 1474,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "매장을 경유지로 보낼지 먼저 확인합니다.",
+      "startMs": 1521,
+      "endMs": 4005,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "준비가 끝나면 매장에서 받아 가세요.",
+      "startMs": 4168,
+      "endMs": 6641,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

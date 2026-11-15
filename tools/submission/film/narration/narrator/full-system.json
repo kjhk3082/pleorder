@@ -1,0 +1,13 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "07bb55eb62bb6bb62f5fb109f85678b8666857c544689b790ec4f5fc6038a89f",
+  "cues": [
+    {
+      "text": "차량 설정에서도 주문을 시작할 수 있습니다. 운전자가 시스템 음성 비서에게 말을 겁니다.",
+      "startMs": 0,
+      "endMs": 5712,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

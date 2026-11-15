@@ -3,7 +3,7 @@
 Uses the existing Git credential helper in memory. Never prints or saves tokens.
 """
 import argparse,json,pathlib,subprocess,urllib.request,urllib.error,urllib.parse,os,hashlib,zipfile
-p=argparse.ArgumentParser();p.add_argument('--commit',required=True);p.add_argument('--draft',action='store_true');p.add_argument('--include-films',action='store_true');p.add_argument('--tag',default='contest-2026-11-12');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--commit',required=True);p.add_argument('--draft',action='store_true');p.add_argument('--include-films',action='store_true');p.add_argument('--latest',action='store_true');p.add_argument('--tag',default='contest-2026-11-12');a=p.parse_args()
 ROOT=pathlib.Path(__file__).resolve().parents[2];repo='kjhk3082/pleorder';tag=a.tag
 assert all(c.isalnum() or c in '-._' for c in tag),'Invalid tag'
 env={**os.environ,'GIT_TERMINAL_PROMPT':'0'}
@@ -19,7 +19,12 @@ base='https://api.github.com/repos/'+repo
 try:release=request(base+'/releases/tags/'+tag)
 except urllib.error.HTTPError as e:
     if e.code!=404:raise SystemExit('GitHub release read failed: '+str(e.code))
-    release=request(base+'/releases','POST',{'tag_name':tag,'target_commitish':a.commit,'name':'플레오더 공모전 제출본 · '+tag.removeprefix('contest-'),'draft':a.draft,'prerelease':True,'body':(ROOT/'산출물/04_제출안내/릴리스_설명.md').read_text(encoding='utf-8')})
+    pending=request(base+'/releases?per_page=100')
+    release=next((item for item in pending if item['tag_name']==tag and item['draft']),None)
+    if release is None:
+        release=request(base+'/releases','POST',{'tag_name':tag,'target_commitish':a.commit,'name':'플레오더 공모전 제출본 · '+tag.removeprefix('contest-'),'draft':a.draft or a.latest,'prerelease':not a.latest,'body':(ROOT/'산출물/04_제출안내/릴리스_설명.md').read_text(encoding='utf-8')})
+if release['draft'] and release['target_commitish']!=a.commit:
+    raise SystemExit('Staged release points at a different commit.')
 apk=ROOT/'apk/플레오더_플레오더_release.apk'
 bundle=ROOT/'.cache/submission/pleorder_release.zip';bundle.parent.mkdir(parents=True,exist_ok=True)
 with zipfile.ZipFile(bundle,'w',zipfile.ZIP_DEFLATED,compresslevel=1) as z:
@@ -42,4 +47,6 @@ for f,remote_name in files:
     result=request(url,'POST',f.read_bytes(),'application/octet-stream')
     if result.get('digest')!=digest:raise SystemExit('Uploaded asset checksum mismatch: '+f.name)
     print('UPLOADED',result['name'],result['size'],flush=True)
+if a.latest and not a.draft:
+    release=request(base+'/releases/'+str(release['id']),'PATCH',{'draft':False,'prerelease':False,'make_latest':'true'})
 print('RELEASE_URL',release['html_url'],flush=True)

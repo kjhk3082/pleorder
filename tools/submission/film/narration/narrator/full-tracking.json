@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "7ee15d899808f7d5402491fb9eeb9c5c5a739e8f99dabc32e2b43d503bdf7c67",
+  "cues": [
+    {
+      "text": "조리를 시작한 뒤 라이더가 어디까지 왔는지 지도에서 확인하세요.",
+      "startMs": 0,
+      "endMs": 4354,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "도착하면 문 앞 사진과 완료 시각이 함께 남습니다.",
+      "startMs": 4586,
+      "endMs": 8313,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

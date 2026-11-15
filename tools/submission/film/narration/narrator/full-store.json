@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "f3057bda23a4665eb4b0e78209c7498455725d4b5b5adadf263e3f7fc36eafc0",
+  "cues": [
+    {
+      "text": "같은 매장에서 메뉴와 수량을 고릅니다.",
+      "startMs": 0,
+      "endMs": 2624,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "배달팁을 더한 총액과 배송지를 확인하세요.",
+      "startMs": 2786,
+      "endMs": 5712,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

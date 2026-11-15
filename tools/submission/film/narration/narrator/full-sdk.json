@@ -1,0 +1,13 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "4c1286db841e55d7f065356896de0d68ea3f9db687857a420f78965d118a0824",
+  "cues": [
+    {
+      "text": "공개 음성 에스디케이로 주문을 확인한 장면입니다. 차량 스피커 응답을 들어 보세요.",
+      "startMs": 0,
+      "endMs": 5619,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

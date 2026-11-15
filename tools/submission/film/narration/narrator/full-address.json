@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "d2671eacddc151d29250dbedbe6a58d43c22ecb96eb8625388ec906af9b4d278",
+  "cues": [
+    {
+      "text": "여행 중이라면 호텔을, 퇴근길이라면 집을 찾아보세요.",
+      "startMs": 0,
+      "endMs": 3495,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "지도에서 위치를 확인하고 상세주소와 함께 저장합니다.",
+      "startMs": 3727,
+      "endMs": 7709,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

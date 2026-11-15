@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "ed44b68abbb86e7fc67a7cb7ccae346f2460e8761294f8766e23d4b318cd8166",
+  "cues": [
+    {
+      "text": "가는 길의 매장을 골라 픽업을 주문합니다.",
+      "startMs": 0,
+      "endMs": 2450,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "경유지 전송 여부를 먼저 확인하고, 준비가 끝나면 음식을 받아요.",
+      "startMs": 2612,
+      "endMs": 6966,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

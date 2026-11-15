@@ -70,7 +70,7 @@ powershell.exe -NoProfile -File .\tools\New-SpeechFixtures.ps1
 - 설정 앱을 전면에 두고 `BACKGROUND_CALLBACK`에서 처리됨을 확인했다. 상세 재현은 [Gleo 음성 검증](gleo-voice-e2e.md)에 기록했다.
 - DO 별도 Activity와 태스크 재생성 후 **D단 정차·콜드 실행·27km/h에서 실제 시스템 화면 표시를 확인했다**. 일반 CarPackageManager는 false지만 Pleos HomeScreen은 새 태스크를 DO=true로 판정한다. 일반 API false를 차단의 직접 원인으로 단정했던 중간 판단을 정정한다. [진단 근거](korea-driving-policy.md).
 - 앱 마이크 버튼은 `showAssist()`로 Gleo를 연다. 실제 버튼 클릭→합성 음성 인식→Gleo 현황 콜백을 확인했다.
-- 원본 참조 P PNG를 웹/Android에 공통 적용하고 같은 크기의 비교 이미지를 확인했다. 원본과 픽셀 동일한 추출물은 아니다.
+- 이 회차에서는 참조 시트를 보고 재현한 P PNG를 웹·Android에 적용했다. 11월 15일 출품 APK(versionCode 5)에서는 사용자가 선택한 컬러 원본에서 P와 민트 점을 직접 추출했다. [출품본 로고 출처](../design/asset-provenance.md)
 
 ## Gleo 주소 입력 후속 검증 · 2026-11-09
 

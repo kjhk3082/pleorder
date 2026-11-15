@@ -1,0 +1,27 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "50c1aaef239af60c274e6688ce3676cc74d9008f22cfd6d25088b30dab0638f4",
+  "cues": [
+    {
+      "text": "카드 한도가 부족하네요.",
+      "startMs": 0,
+      "endMs": 1498,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "다른 카드를 고르고 총액을 다시 확인합니다.",
+      "startMs": 1533,
+      "endMs": 4133,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "승인해야 주문이 들어가요.",
+      "startMs": 4400,
+      "endMs": 6130,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

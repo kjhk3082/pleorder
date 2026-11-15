@@ -1,0 +1,20 @@
+{
+  "voice": "Sujin",
+  "sourceHash": "ac8f0be23b97b0fd34451209bb5b3134affd613b844984a63d44c96406351e10",
+  "cues": [
+    {
+      "text": "한도가 부족한 카드는 결제가 거절됩니다.",
+      "startMs": 0,
+      "endMs": 2844,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "다른 카드를 선택하고 밀어서 승인하면, 모의 영수증이 나옵니다.",
+      "startMs": 2984,
+      "endMs": 7384,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}
