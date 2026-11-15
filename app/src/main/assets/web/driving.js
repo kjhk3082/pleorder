@@ -2,12 +2,23 @@
 PleorderRealCatalog.ready.then(()=>{
   const $=id=>document.getElementById(id);
   let raw;try{raw=window.Native?Native.loadState():localStorage.getItem('pleorder-v1');}catch{}
-  let session=new PleorderDriving.DrivingSession(raw),listening=false,pageActive=true,lastFeedback='마이크를 누르고 주문이나 배달받을 곳을 말씀해 주세요.';
+  let session=new PleorderDriving.DrivingSession(raw),listening=false,pageActive=true,lastFeedback='차량 음성 버튼으로도 플레오더를 부를 수 있어요.';
   let preparing=false;
   const followup=new PleorderVoiceTurn.Followup();
   const text=(id,value)=>{$(id).textContent=session.text(value);};
   const cash=n=>Number(n||0).toLocaleString('ko-KR')+'원';
-  function save(){const s=session.save();try{if(window.Native)Native.saveState(s);else localStorage.setItem('pleorder-v1',s);}catch{}}
+  function save() {
+    const next=session.save();
+    try {
+      if(window.Native && Native.saveState(next,raw||'')===false) {
+        window.Pleorder?.receiveNative({type:'external-state'});
+        return false;
+      }
+      if(!window.Native)localStorage.setItem('pleorder-v1',next);
+      raw=next;
+      return true;
+    }catch{return false;}
+  }
   function speak(message){if(window.Native)Native.speak(message);}
   function render(){
     const r=session.repo,d=r.draft,o=r.activeOrder()||r.orders[0],card=r.payments.method(),p=session.policy;
@@ -15,7 +26,7 @@ PleorderRealCatalog.ready.then(()=>{
     document.documentElement.dataset.theme=theme==='dark'||(theme==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
     $('policyCover').hidden=!p.blockAll;$('drivingShell').inert=p.blockAll;
     text('headline',preparing?'마이크 준비 중':listening?'듣고 있어요':d?'주문을 확인해 주세요':o?(o.stage==='held'?'예약 확인이 필요해요':o.stage==='reserved'?(o.reservation?.adjustment?'전송 시간을 조정했어요':'도착에 맞춰 예약했어요'):o.stage==='completed'?'맛있게 드세요':o.stage==='cancelled'?'주문이 취소됐어요':o.mode==='pickup'?(o.stage==='ready'?'음식이 준비됐어요':'픽업을 준비하고 있어요'):'한 끼가 오고 있어요'):'무엇을 주문할까요?');
-    text('micLabel',preparing?'준비 취소':listening?'듣기 중지':'말로 주문하기');text('voiceHint',followup.expiresAt?'안내가 끝나면 바로 말씀해 주세요':o?.stage==='held'?'“플레오더 예약 재개해 줘”':d?'승인하려면 “결제 승인”':o?'“플레오더 주문 상태 알려 줘”':'“플레오더에서 치킨 배달해 줘”');
+    text('micLabel',preparing?'준비 취소':listening?'듣기 중지':'Gleo로 말하기');text('voiceHint',followup.expiresAt?'안내가 끝나면 바로 말씀해 주세요':o?.stage==='held'?'“플레오더 예약 재개해 줘”':d?'승인하려면 “결제 승인”':o?'“플레오더 주문 상태 알려 줘”':'“플레오더에서 치킨 배달해 줘”');
     text('feedback',lastFeedback);text('summaryLabel',d?'결제 전 확인':o?'주문 현황':'배달받을 곳');
     text('summaryTitle',d?(r.store(d.storeId)?.name||'선택한 매장'):o?r.status().message:(r.home?.placeName||r.home?.name||'배송지를 먼저 설정해 주세요'));
     text('summarySubtitle',d?d.items.map(i=>`${i.name} ${i.quantity}개`).join(', '):o?`${r.store(o.storeId)?.name} · ${o.mode==='pickup'?'픽업':'배달'}`:(r.home?.description||'배달받을 곳을 말씀해 주세요.'));
@@ -26,7 +37,7 @@ PleorderRealCatalog.ready.then(()=>{
     text('approvalHint',d?'금액과 카드를 확인한 뒤 음성으로 승인해 주세요.':o?(o.stage==='held'?'예약 확인이 필요해요':o.stage==='reserved'?(o.reservation?.adjustment?'전송 시간을 조정했어요':'도착에 맞춰 예약했어요'):o.stage==='completed'?'맛있게 드세요':o.stage==='cancelled'?'환불 상태는 “현황 듣기”로 확인해 주세요':`${o.mode==='delivery'?'배달 도착':'픽업 준비'}까지 약 ${remain}분`):'주문 내용 확인 후에만 결제합니다.');
     $('driveCancel').hidden=!d&&!['reserved','held','accepted'].includes(o?.stage);
   }
-  function apply(r,voice=true){save();lastFeedback=r.message;render();if(voice)speak(r.voiceText||r.message);return r;}
+  function apply(r,voice=true){if(!save())return {status:'fail',message:'주문 상태가 바뀌었어요. 현재 주문을 다시 확인해 주세요.'};lastFeedback=r.message;render();if(voice)speak(r.voiceText||r.message);return r;}
   function runCommand(value){
     const result=apply(session.act(value));
     if(session.repo.preferences.ui?.voiceFollowup!==false)followup.arm(result);
@@ -34,12 +45,13 @@ PleorderRealCatalog.ready.then(()=>{
     return result;
   }
   $('micIcon').innerHTML=icon('mic');
-  $('driveMic').onclick=()=>{followup.cancel();if(listening||preparing){Native.stopSpeech();}else if(window.Native){preparing=true;lastFeedback='마이크를 준비하고 있어요.';render();Native.startListening();}else{lastFeedback='음성 입력은 차량 앱에서 이용해 주세요.';render();}};
+  $('driveMic').onclick=()=>{followup.cancel();if(listening||preparing){Native.stopSpeech();}else if(window.Native){lastFeedback='Gleo에 연결하고 있어요.';render();Native.startGleo();}else{lastFeedback='음성 입력은 차량 앱에서 이용해 주세요.';render();}};
   $('driveStatus').onclick=()=>{followup.cancel();return runCommand('주문 상태');};
   $('driveCancel').onclick=()=>{followup.cancel();return runCommand('주문 취소');};
   window.Pleorder={suspend:save,runCommand,async receiveNative(e){
-    if(e.type==='visibility'){if(!e.visible){followup.cancel();save();}pageActive=e.visible;}
+    if(e.type==='visibility'){if(!e.visible){followup.cancel();save();}else if(lastFeedback==='Gleo에 연결하고 있어요.'){lastFeedback='차량 음성 버튼으로도 플레오더를 부를 수 있어요.';render();}pageActive=e.visible;}
     if(e.type==='restriction'){session.setPolicy(e);render();}
+    if(e.type==='gleo-unavailable'){Native.startListening();return;}
     if(e.type==='speech-preparing'){preparing=true;lastFeedback='마이크를 준비하고 있어요.';render();}
     if(e.type==='tts-done'&&followup.consume({active:pageActive,blocked:session.policy.blockAll,listening:listening||preparing})){Native.startListening();}
     if(e.type==='speech-ready'){preparing=false;listening=true;lastFeedback='말씀해 주세요.';render();}
@@ -49,8 +61,8 @@ PleorderRealCatalog.ready.then(()=>{
       if(session.policy.transcription){lastFeedback=e.text;render();}
       if(e.final){listening=false;runCommand(e.text);}
     }
-    if(e.type==='external-state'){const policy=session.policy;session=new PleorderDriving.DrivingSession(e.state);session.policy=policy;render();}
-    if(e.type==='gleo-action'){const previous=session.repo.orders.length;const r=await PleorderVoice.dispatch(session.repo,e.name,e.params);if(session.repo.orders.length>previous)session.repo.simulation={paused:false,rate:session.repo.simulation?.rate||10,savedWall:Date.now()};apply(r,false);Native.replyAction(JSON.stringify(session.callback(e.name,r)));}
+    if(e.type==='external-state'){const latest=window.Native?Native.loadState():e.state;if(raw===latest)return;raw=latest;const policy=session.policy;session=new PleorderDriving.DrivingSession(latest);session.policy=policy;render();}
+    if(e.type==='gleo-action'){const previous=session.repo.orders.length;const r=await PleorderVoice.dispatch(session.repo,e.name,e.params);if(session.repo.orders.length>previous)session.repo.simulation={paused:false,rate:session.repo.simulation?.rate||10,savedWall:Date.now()};const committed=apply(r,false);Native.replyAction(JSON.stringify(session.callback(e.name,committed)));}
     if(e.type==='destination-state'){session.repo.observeNavigation(e);save();render();}
     if(e.type==='vehicle-destination'){
       const counts=new Map(session.repo.orders.map(o=>[o.id,o.events.length]));

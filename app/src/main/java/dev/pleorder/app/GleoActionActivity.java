@@ -1,26 +1,51 @@
 package dev.pleorder.app;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 
-/** Gleo's activity entry grants a normal visible lifecycle to start tracking.
- * Transparent, no UI/input, no route changes. Work stays in the shared engine. */
+/** Routes the user-initiated App Schema activity. A status question preserves the previous screen. */
 public final class GleoActionActivity extends Activity {
-    private boolean delivered;
-    @Override public void onCreate(Bundle state){super.onCreate(state);getWindow().setDimAmount(0);}
-    @Override public void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);delivered=false;}
-    @Override public void onResume(){super.onResume();
-        if(delivered)return;delivered=true;
-        final String action=GleoActions.normalize(getIntent().getAction());
-        if(action==null){finish();return;}
-        new Handler(getMainLooper()).postDelayed(()->{
-            if(isFinishing())return;
-            try{startForegroundService(new Intent(this,OrderTrackingService.class));}catch(RuntimeException ignored){}
-            Intent request=new Intent(getIntent()).setAction(action);
-            finish();overridePendingTransition(0,0);
-            new Handler(getMainLooper()).postDelayed(()->{if(!MainActivity.deliverGleo(request))GleoReceiver.enqueue(getApplicationContext(),request,null);},200);
-        },150);
+    @Override public void onCreate(Bundle state) {
+        super.onCreate(state);
+        getWindow().setDimAmount(0);
+        if (state == null) dispatch(getIntent());
+        finish();
+    }
+
+    @Override public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        dispatch(intent);
+        finish();
+    }
+
+    private void dispatch(Intent intent) {
+        String action = GleoActions.normalize(intent.getAction());
+        if (action == null) return;
+        Intent request = new Intent(action);
+        try {
+            request.putExtra("ACTION_PARAM", GleoActions.parameters(intent).toString());
+        } catch (Exception invalid) {
+            GleoReceiver.respond(this, action, "fail", "요청 내용을 다시 말씀해 주세요.", "[]");
+            return;
+        }
+        if (GleoActions.opensOrder(action)) {
+            // Enter through the DO launcher. The vehicle policy selects the final surface.
+            request.setClass(this, DrivingActivity.class)
+                   .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(request);
+        } else {
+            try { startForegroundService(new Intent(this, OrderTrackingService.class)); }
+            catch (RuntimeException unavailable) { /* Scheduling is retried after the action commits. */ }
+            // A translucent assistant entry pauses the underlying Activity. Let it resume
+            // before selecting the UI engine, so the checkout keeps ownership of its quote.
+            Context context = getApplicationContext();
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (!MainActivity.deliverGleo(request)) GleoReceiver.enqueue(context, request, null);
+            }, 250);
+        }
     }
 }

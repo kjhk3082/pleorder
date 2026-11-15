@@ -6,3 +6,9 @@
 #feedback{min-height:90px} .facts strong{font-size:34px;font-variant-numeric:tabular-nums}
 #driveMic{font-size:26px} #drivingShell *{animation:none!important;scroll-behavior:auto!important;transition:none!important}
 @media(max-height:680px){#feedback{min-height:60px;font-size:18px;-webkit-line-clamp:2}}
+
+/* Keep secondary information readable against the night surface. */
+html[data-theme=dark] :is(#voiceHint,#feedback,#summarySubtitle,.summary-label,.eyebrow){color:#c6d9df}
+html[data-theme=dark] #approvalHint{color:#8fdfce}
+html[data-theme=dark] button:focus-visible{outline-color:#8fdfce}
+html[data-theme=dark] :is(.brand,#policyCover) img{background:#e7f2f1;border-radius:14px;padding:4px}

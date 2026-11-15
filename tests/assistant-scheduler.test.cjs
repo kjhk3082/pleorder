@@ -134,3 +134,20 @@ test('expired vehicle ETA holds an unsent reservation and a fresh sample allows 
  r.updateVehicleDestination({...DATA.home,remainingSeconds:1800});r.resumeReservation(o);
  assert.equal(o.stage,'reserved');assert.equal(r.payments.transactions.length,1);
 });
+
+test('a spoken menu identifies a single order for status, never for cancellation',()=>{
+ const r=make(),order=paid(r);
+ assert.equal(r.handleAction('GET_FOOD_ORDER_STATUS',{target:'비빔밥'}).order.id,order.id);
+ assert.equal(r.manageOrder({action:'cancel',target:'비빔밥'}).status,'asking');
+ paid(r);
+ assert.equal(r.handleAction('GET_FOOD_ORDER_STATUS',{target:'비빔밥'}).status,'asking');
+ assert.equal(r.payments.transactions.length,2);
+});
+
+test('the latest spoken order is read by recency even with two matching meals',()=>{
+ const r=make(),first=paid(r),last=paid(r);
+ for(const target of ['latest','방금 주문한 비빔밥'])
+  assert.equal(r.handleAction('GET_FOOD_ORDER_STATUS',{target}).order.id,last.id);
+ assert.equal(r.handleAction('GET_FOOD_ORDER_STATUS',{target:first.id}).order.id,first.id);
+ assert.equal(r.manageOrder({action:'cancel',target:'latest'}).status,'asking');
+});

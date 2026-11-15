@@ -1,4 +1,4 @@
-$ErrorActionPreference='Stop'
+﻿$ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Speech
 $root=Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $destination=Join-Path $root '.cache\submission\narration'
@@ -9,7 +9,7 @@ $speaker.SelectVoice('Microsoft Heami Desktop');$speaker.Rate=0
 $format=New-Object System.Speech.AudioFormat.SpeechAudioFormatInfo(24000,[System.Speech.AudioFormat.AudioBitsPerSample]::Sixteen,[System.Speech.AudioFormat.AudioChannel]::Mono)
 try {
  foreach($chapter in $plan){
-  if(!$chapter.narration){continue}
+  if(!$chapter.narration -or $chapter.recordedAudio){continue}
   $speaker.SetOutputToWaveFile((Join-Path $destination ($chapter.id+'.wav')),$format)
   $speaker.Speak($chapter.narration);$speaker.SetOutputToNull()
  }

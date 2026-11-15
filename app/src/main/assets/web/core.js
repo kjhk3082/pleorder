@@ -424,6 +424,7 @@
       this.routeMetrics = null;
       this.gleoQuote = null;
       this.destinationSearch = null;
+      this.spokenDetail = null;
       this.draft = null;
       let rebuilt;
       if (previous) rebuilt = this.prepare({items:previous.items,mode:previous.mode,timing:previous.timing,handoff:previous.handoff,request:previous.request});
@@ -450,7 +451,35 @@
       if(r.status === "success") r.message=`${this.home.name}의 상세주소를 ${this.home.detail ? this.home.detail+"(으)로 저장했어요." : "지웠어요."} ${this.draft ? "결제 전 새 주소를 다시 확인해 주세요." : ""}`;
       return r;
     }
+    setSpokenDeliveryDetail({detail, confirmation, clear} = {}) {
+      const blocked = this.addressChangeIssue();
+      if (blocked) return blocked;
+      const value = typeof detail === "string" ? detail.trim() : "";
+      if (this.destinationSearch)
+        return value || clear === true ? this.setDeliveryDetail(clear === true ? "" : value) : result("asking","검색한 장소의 번호를 말씀해 주세요.");
+      if (!this.home) return result("asking","먼저 배달받을 곳을 선택해 주세요.");
+      if (confirmation === false) {
+        this.spokenDetail = null;
+        return result("success","상세주소 수정을 취소했어요. 기존 주소를 유지할게요.");
+      }
+      const home = JSON.stringify(this.home);
+      const pending = this.spokenDetail;
+      if (pending && (pending.expiresAt <= Date.now() || pending.home !== home)) this.spokenDetail = null;
+      if (this.spokenDetail && confirmation === true && (!value || value === this.spokenDetail.value) &&
+          (clear !== true || this.spokenDetail.value === "")) {
+        return this.setDeliveryDetail(this.spokenDetail.value);
+      }
+      if ((detail != null && (typeof detail !== "string" || detail.length > 80)) ||
+          (!value && clear !== true && !this.spokenDetail))
+        return result("asking","저장할 동·호수나 수령할 층을 다시 말씀해 주세요.");
+      if (value || clear === true) this.spokenDetail = {value:clear === true ? "" : value, home, expiresAt:Date.now()+180000};
+      const unit = this.spokenDetail.value;
+      const proposal = unit ? `${this.home.name}의 상세주소를 ${unit}(으)로 들었어요.` : `${this.home.name}의 상세주소를 지울까요?`;
+      return result("asking", proposal + " 맞으면 ‘1번 주소로 저장해 줘’, 다르면 동·호수를 다시 말씀해 주세요.");
+    }
     confirmDeliveryDestination(params) {
+      if (!this.destinationSearch && this.spokenDetail && (params.selection === undefined || params.selection === 1))
+        return this.setSpokenDeliveryDetail({confirmation:params.confirmation});
       if(params.confirmation === false) { this.destinationSearch=null; return result("success","장소 선택을 취소했어요. 기존 배송지를 유지할게요."); }
       const pending=this.destinationSearch;
       if(!pending || pending.expiresAt<Date.now() || pending.homeFingerprint!==JSON.stringify(this.home)) {
@@ -648,7 +677,7 @@
           startAt + (prepMinutes + riderDelay + travelMinutes) * MINUTE,
       };
     }
-    confirm(id, confirmation) {
+    confirm(id, confirmation, voiceQuote = null) {
       const existing = this.orders.find((o) => o.draftId === id);
       if (existing)
         return result("success", "이미 접수된 주문이에요.", {
@@ -660,6 +689,8 @@
         return result("fail", "주문 내용이 바뀌었어요. 다시 확인해 주세요.");
       if (
         this.clock - this.draft.createdAt > 10 * MINUTE &&
+        !(voiceQuote && voiceQuote.draftId === id && voiceQuote.expiresAt > Date.now() &&
+          voiceQuote.fingerprint === this.gleoQuoteFingerprint()) &&
         !this.payments.transactions.some(
           (p) => p.key === id && ["pending", "paid"].includes(p.status),
         )
@@ -908,12 +939,13 @@
             MINUTE,
         ),
       );
+      const destination = o.address?.name || "배송지";
       const progress = {
-        accepted: `매장의 주문 확인을 기다리고 있어요. ${o.mode === "delivery" ? "집까지 배달" : "픽업 준비"} 예상 시간은 ${remain}분이에요.`,
+        accepted: `매장의 주문 확인을 기다리고 있어요. ${o.mode === "delivery" ? destination+"까지 배달" : "픽업 준비"} 예상 시간은 ${remain}분이에요.`,
         cooking: `매장에서 조리 중이에요.${o.delayMinutes ? ` 조리가 ${o.delayMinutes}분 늦어져 예상 시간을 조정했어요.` : ""} ${o.mode === "delivery" ? "배달 도착" : "픽업 준비"}까지 약 ${remain}분 남았어요.`,
         ready: `음식이 준비됐어요. ${this.store(o.storeId).name}에서 직접 수령해 주세요. 수령 뒤 “픽업 완료”라고 말씀해 주세요.`,
         waiting_rider: `음식은 준비됐지만 ${this.scenario.reassigned ? "새 라이더를 다시 배정" : "아직 라이더를 배정"}하고 있어요. 배달은 아직 시작하지 않았고 도착 예상까지 ${remain}분이에요.`,
-        delivering: `가상 라이더가 집으로 이동 중이에요. 도착까지 약 ${remain}분이에요.`,
+        delivering: `가상 라이더가 배달 중이에요. ${destination}까지 약 ${remain}분 남았어요.`,
         contact_needed:
           "라이더가 도착했지만 수령 확인이 되지 않았어요. 배달 완료로 처리하지 않았어요. 수령 가능 여부를 알려 주세요.",
         completed:
@@ -1066,8 +1098,12 @@
           "장소 검색 결과에서 정확한 위치를 선택해 주세요.",
           { open: "place-search", query: destinationQuery[1] },
         );
+      if (/^상세\s*주소\s*(확인|저장)(해\s*줘|해주세요)?[.!]?$/u.test(t))
+        return this.setSpokenDeliveryDetail({confirmation:true});
+      if (/^상세\s*주소\s*취소(해\s*줘|해주세요)?[.!]?$/u.test(t))
+        return this.setSpokenDeliveryDetail({confirmation:false});
       const addressDetail = t.match(/^상세\s*주소(?:는|를)?\s+(.+)$/);
-      if (addressDetail) return this.setDeliveryDetail(addressDetail[1]);
+      if (addressDetail) return this.setSpokenDeliveryDetail({detail:addressDetail[1]});
       if (
         /못\s*받|안\s*받|받을\s*수\s*없|완료.*(안|못)|결제.*(하지\s*마|안\s*할|아니)/.test(
           t,
@@ -1252,7 +1288,7 @@
       if (!params || typeof params !== "object" || Array.isArray(params))
         return result("fail", "올바르지 않은 요청이에요.");
       if (name === "CONFIRM_DELIVERY_DESTINATION") return this.confirmDeliveryDestination(params);
-      if (name === "SET_DELIVERY_ADDRESS_DETAIL") return this.setDeliveryDetail(params.detail);
+      if (name === "SET_DELIVERY_ADDRESS_DETAIL") return this.setSpokenDeliveryDetail(params);
       if (name === "GET_FOOD_ORDER_STATUS") return this.draft ? this.quoteForGleo() : this.status();
       if (name === "CONFIRM_FOOD_ORDER") {
         // Gleo may not retain opaque IDs between turns. Resolve only the quote
@@ -1280,7 +1316,10 @@
           this.gleoQuote = null;
           return this.cancel();
         }
-        return this.confirm(draftId, params.confirmation);
+        const quote = this.gleoQuote;
+        if (quote?.draftId === draftId && (quote.expiresAt <= Date.now() || quote.fingerprint !== this.gleoQuoteFingerprint()))
+          return this.quoteForGleo();
+        return this.confirm(draftId, params.confirmation, quote);
       }
       if (name !== "PREPARE_FOOD_ORDER")
         return result("fail", "지원하지 않는 요청이에요.");

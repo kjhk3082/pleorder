@@ -2,7 +2,7 @@
   "packageName": "dev.pleorder.app",
   "appDescription": "Pleorder prepares food delivery and pickup orders using public restaurant data. Orders and payments are simulated and require explicit confirmation.",
   "invokeWord": "플레오더",
-  "version": "0.5.1",
+  "version": "0.5.4",
   "actionCalls": [
     {
       "type": "function",
@@ -253,7 +253,7 @@
           "properties": {
             "target": {
               "type": "string",
-              "description": "Optional order ID or restaurant name when several orders exist."
+              "description": "Omit target for a general status question. Use latest when the user asks about the most recent order. Otherwise use the order ID, restaurant or menu name the user actually said."
             }
           },
           "required": []
@@ -285,7 +285,7 @@
       "function": {
         "component": "activity",
         "name": "CONFIRM_DELIVERY_DESTINATION",
-        "description": "Confirm or reject a previously searched Pleorder delivery destination. Call only after the user selects a numbered result or explicitly confirms the single result. Never invent coordinates.",
+        "description": "Confirm or reject the delivery address previously read back by Pleorder, including a room number. If the app has just proposed a room or unit and the user says '1번 주소로 저장해 줘' or '상세주소 확인', send selection 1 and confirmation true. For place search use the user's numbered candidate. Never invent coordinates.",
         "parameters": {
           "type": "object",
           "properties": {
@@ -309,18 +309,24 @@
       "function": {
         "component": "activity",
         "name": "SET_DELIVERY_ADDRESS_DETAIL",
-        "description": "Save or correct the building unit, room number, floor or lobby for the Pleorder delivery destination. Read the saved detail back. If destination selection is pending, attach it to the pending selection. Do not change vehicle navigation.",
+        "description": "Propose or correct the room, building unit or floor. Read back the app's exact digits. To accept a previous readback use CONFIRM_DELIVERY_DESTINATION with selection 1 and confirmation true, or this action with confirmation true. A correction starts a new readback. Only explicitly clearing a unit sets clear=true.",
         "parameters": {
           "type": "object",
           "properties": {
             "detail": {
               "type": "string",
-              "description": "Only the address detail spoken by the user. Preserve all building and room digits exactly. Maximum 80 characters. Use an empty string only when the user explicitly asks to clear the address detail."
+              "description": "Address detail as spoken; preserve every digit. Omit on confirmation. An empty or missing value never means deletion."
+            },
+            "confirmation": {
+              "type": "boolean",
+              "description": "True only when the driver confirms the app's previous address readback. Omit when initially proposing or correcting the digits. False cancels the pending proposal."
+            },
+            "clear": {
+              "type": "boolean",
+              "description": "True only if the user specifically asks to remove their existing address detail. Omit otherwise."
             }
           },
-          "required": [
-            "detail"
-          ]
+          "required": []
         }
       }
     }

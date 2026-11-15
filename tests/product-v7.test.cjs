@@ -261,7 +261,20 @@ test("voice destination searches ask for a place without changing the address", 
   assert.equal(r.home, home);
   r.prepare({ items: [{ menuId: "bibimbap", quantity: 1 }] });
   const id = r.draft.id;
-  r.handleCommand("상세주소는 101동 1002호");
+  assert.equal(r.handleCommand("상세주소는 101동 1002호").status, "asking");
+  assert.equal(r.draft.id, id);
+  r.handleCommand("상세주소 확인");
   assert.equal(r.draft.address.detail, "101동 1002호");
   assert.notEqual(r.draft.id, id);
+});
+
+test("delivery narration keeps the destination saved on the order", () => {
+  const r = new OrderRepository();
+  r.setDeliveryPlace({ ...r.home, id: "hotel", name: "테스트 호텔" });
+  r.prepare({ items: [{ menuId: "bibimbap", quantity: 1 }], mode: "delivery" });
+  r.confirm(r.draft.id, true);
+  const order = r.orders[0];
+  assert.match(r.describe(order), /테스트 호텔까지 배달/);
+  order.stage = "delivering";
+  assert.match(r.describe(order), /테스트 호텔까지/);
 });

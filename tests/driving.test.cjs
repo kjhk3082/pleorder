@@ -80,3 +80,20 @@ test('Gleo shipped schema uses supported property types without examples and eig
  assert.equal(schema.actionCalls.length,8);
  for(const {function:f} of schema.actionCalls){assert.equal(f.component,'activity');for(const p of Object.values(f.parameters.properties)){assert.ok(['string','number','boolean','array'].includes(p.type));assert.doesNotMatch(p.description,/such as|for example/i);}}
 });
+
+test('simulated traffic time cannot expire a freshly read Gleo quote',()=>{
+ const s=session();
+ s.act('PREPARE_FOOD_ORDER',{query:'비빔밥',fulfillment:'delivery'},1000);
+ const id=s.repo.draft.id;
+ s.repo.advance(15);
+ const approved=s.act('CONFIRM_FOOD_ORDER',{draftId:id,confirmation:true},1000);
+ assert.equal(approved.status,'success');assert.equal(approved.order.total,12500);
+ assert.equal(s.repo.payments.transactions.length,1);
+});
+test('an explicitly supplied draft ID still requires a new quote after wall-clock expiry',()=>{
+ const s=session();
+ s.act('PREPARE_FOOD_ORDER',{query:'비빔밥',fulfillment:'delivery'},1000);
+ const id=s.repo.draft.id;s.repo.gleoQuote.expiresAt=Date.now()-1;
+ assert.equal(s.act('CONFIRM_FOOD_ORDER',{draftId:id,confirmation:true},1000).status,'asking');
+ assert.equal(s.repo.payments.transactions.length,0);
+});

@@ -6,6 +6,8 @@
   const actions = ['SEARCH_DELIVERY_DESTINATION', 'CONFIRM_DELIVERY_DESTINATION', 'SET_DELIVERY_ADDRESS_DETAIL'];
   const requests = new WeakMap();
   async function dispatch(repo, name, params = {}, search = Location.search) {
+    if (name === actions[2] && typeof params?.detail === 'string' && params.detail.length <= 80)
+      return repo.handleAction(name, {...params, detail:Location.normalizeDetail(params.detail)});
     if (name !== actions[0]) return repo.handleAction(name, params);
     if (!params || typeof params.query !== 'string' || params.query.length > 240) return {status:'asking',message:'배달받을 장소 이름이나 도로명주소를 알려 주세요.'};
     const blocked = repo.addressChangeIssue();
@@ -13,6 +15,7 @@
     const {query, detail} = Location.splitQuery(params.query);
     if (query.length < 2) return {status:'asking',message:'먼저 장소 이름을 알려 주세요. 동·호수는 상세주소로 입력할 수 있어요.'};
     repo.destinationSearch = null;
+    repo.spokenDetail = null;
     const fingerprint = JSON.stringify(repo.home);
     const request = {}; requests.set(repo, request);
     try {
@@ -22,7 +25,8 @@
       const issue = repo.addressChangeIssue(); if (issue) return issue;
       if (!places.length) return {status:'asking',message:'일치하는 수령 장소를 찾지 못했어요. 지역과 건물명 또는 도로명주소를 다시 알려 주세요.'};
       repo.destinationSearch = {places,detail:detail.slice(0,80),expiresAt:Date.now()+180000,homeFingerprint:fingerprint};
-      return {status:'asking',message:places.map((p,i)=>`${i+1}번 ${p.name}, ${p.description}`).join('. ')+'. 배달받을 곳이 맞으면 번호와 함께 선택해 주세요. 아직 배송지를 변경하지 않았어요.',candidates:places.map((p,i)=>({number:i+1,name:p.name,address:p.description}))};
+      const unit = detail ? ` 상세주소는 ${detail}(으)로 들었어요.` : '';
+      return {status:'asking',message:places.map((p,i)=>`${i+1}번 ${p.name}, ${p.description}`).join('. ')+'.'+unit+' 배달받을 곳이 맞으면 번호와 함께 선택해 주세요. 아직 배송지를 변경하지 않았어요.',candidates:places.map((p,i)=>({number:i+1,name:p.name,address:p.description}))};
     } catch { return {status:'fail',message:'장소 검색에 연결하지 못했어요. 배송지는 유지했어요. 잠시 후 다시 말씀해 주세요.'}; }
     finally { if(requests.get(repo) === request) requests.delete(repo); }
   }

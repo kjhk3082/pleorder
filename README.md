@@ -1,119 +1,91 @@
 # 플레오더 · Pleorder
 
-차에서 고르는 한 끼. 집으로 배달받거나, 귀가 중 매장에 들러 픽업하는 **Pleos Connect용 주문 시뮬레이터**입니다.
+![플레오더. 서울의 퇴근길에서 음성으로 주문해 집으로 배달받거나, 가는 길에 픽업하는 차량용 앱.](docs/design/pleorder-cover.jpg)
 
-## 대표 시연 · 도착에 맞춘 한 끼
+**플레오더는 목적지와 도착 시각에 맞춰 식사를 주문하는 Pleos Connect 앱입니다.** 운전자가 Gleo에 메뉴를 말하면 견적을 내고, 금액과 카드를 확인한 뒤 승인하면 배달이나 픽업을 진행합니다. 매장 접수와 결제는 공모전용 시뮬레이션입니다.
 
-2분 1초 동안 퇴근길 주문부터 수령까지 따라갑니다. **0:24**에서 실제 Pleos 음성 응답을 듣고, **0:59**에서 정체로 매장 전송이 15분 늦춰지는 장면을 볼 수 있습니다.
+[**차량 Gleo 실기**](#차량-gleo에서-주문-시작하기)　·　[**APK 다운로드**](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-gleo/pleorder_release.zip)　·　[**기획서 PDF**](산출물/01_기획서/플레오더_기획서.pdf)　·　[**실행 방법**](#실행-방법)　·　[**기기 검증**](docs/testing/gleo-release-2026-11-15.md)
+
+## 퇴근길 한 번으로 보는 플레오더
 
 https://github.com/user-attachments/assets/e328a0f6-d18b-4107-b16d-60b8a778237b
 
-[1080p 원본 내려받기](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-13/pleorder_film_1080p.mp4) · [한국어 자막](산출물/02_시연영상/플레오더_대표시연.srt) · [장면별 시간과 촬영 범위](산출물/02_시연영상/대표시연_설명.md)
+**2분 1초**　[1080p 원본](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-gleo/pleorder_film_1080p.mp4) · [한국어 자막](산출물/02_시연영상/플레오더_대표시연.srt)
+
+| 시간 | 장면 | 화면에서 확인할 수 있는 것 |
+| --- | --- | --- |
+| 0:24 | 음성 주문과 승인 | 비빔밥 한 개, 총 12,500원. 결제 승인 뒤 조리 현황을 읽어 준다. |
+| 0:47 | 카드 한도 부족 | 거절 이유를 듣고 다른 카드로 바꾼 뒤 다시 승인한다. |
+| 0:59 | 퇴근길 정체 | 차량 ETA가 60분에서 75분으로 늘자 매장 전송을 15분 늦춘다. |
+| 1:17 | 문 앞 배달 | 배송 완료 시각과 문 앞에 놓인 음식 사진을 확인한다. |
+| 1:26 | 매장 픽업 | 가는 길의 매장을 고르고 내비 경유지 전송 여부를 확인한 뒤 수령을 마친다. |
+| 1:42 | 주행 화면 | D단 정차와 시속 30km에서 음성과 주문 요약을 표시한다. |
+
+0:24의 음성은 공개 Pleos STT/TTS를 사용한 11월 12일 debug 촬영입니다. 정체 장면에는 시험용 ETA와 시뮬레이션 시계를 사용했습니다. 픽업 내비는 전송 확인창까지 촬영했습니다. [장면별 촬영 범위](산출물/02_시연영상/대표시연_설명.md)
+
+## 차량 Gleo에서 주문 시작하기
+
+> “플레오더에서 치킨 한 마리 집으로 배달해 줘.”
+
+차량 설정을 보고 있어도 음성 버튼으로 Gleo를 부를 수 있습니다. **0.2.2**에서 Gleo는 이 요청을 플레오더의 App Schema로 전달합니다. 주차 중에는 주문 확인창, 주행 제한이 활성화되면 간결한 음성 화면을 엽니다. 현황을 물으면 열어 둔 앱에서 답을 들을 수 있습니다.
+
+https://github.com/user-attachments/assets/bd2a4a6c-377f-4fdc-904c-9abce7602202
+
+**1분 52초 실기**　0:00 차량 설정에서 주문 · 0:29 현대카드 M 21,000원 모의 승인 · 0:56 같은 주문의 조리 현황 · 1:18 D단에서 강남구청 배달 26,000원 승인. [원본 MP4](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-gleo/pleorder_gleo.mp4) · [한국어 장면 자막](산출물/02_시연영상/플레오더_Gleo_실기시연.srt)
+
+[11월 15일 release 시험 기록](docs/testing/gleo-release-2026-11-15.md) · [Gleo 동작 8개](app/src/main/assets/schema.json) · [참가팀의 App Schema 사용 안내](https://appdevchallenge.auto-hmg.io/notice/c0a1a000-2026-4923-8000-000000000008)
 
 <details>
-<summary>기능별 전체 시연 · 8분 44초</summary>
+<summary><strong>기능별 전체 시연 · 8분 44초</strong></summary>
 
-https://github.com/user-attachments/assets/992d6922-261e-42a5-86c5-9a1ea6232a64
+https://github.com/user-attachments/assets/5009070b-35eb-4df8-9866-301175d5d446
 
-[전체 시연 원본](산출물/02_시연영상/플레오더_전체기능시연.mp4) · [장면별 설명](산출물/02_시연영상/장면별_설명.md)
+[전체 시연 1080p](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-gleo/pleorder_demo.mp4) · [전체 자막](산출물/02_시연영상/플레오더_전체기능시연.srt) · [전체 차례](산출물/02_시연영상/장면별_설명.md)
 
 </details>
 
-## 공모전 제출 자료
+## 배달과 픽업이 갈라지는 순간
 
-- [기획서 PDF](산출물/01_기획서/플레오더_기획서.pdf) · [편집용 DOCX](산출물/01_기획서/플레오더_기획서.docx)
-- [실행 release APK · GitHub Releases](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-13) · [설치와 설정](apk/README.md)
-- [검증 결과와 한계](산출물/03_검증자료/검증결과.md) · [공식 제출 요건](산출물/04_제출안내/공식요건_체크리스트.md)
+| 집이나 숙소로 배달 | 운전 경로에서 픽업 |
+| --- | --- |
+| 선택한 배송지 주변 매장을 찾는다. 호텔이 새 목적지로 들어오면 배송지 변경을 먼저 확인한다. | 현재 위치에서 매장까지의 거리·시간과 경유 때문에 더 걸리는 시간을 보고 고른다. |
+| 도착에 맞춰 예약하고, 교통 정체가 생기면 아직 매장에 보내지 않은 주문의 전송 시각을 조정한다. | 매장을 차량 내비 경유지로 보내기 전에 사용자에게 묻는다. 음식 준비와 수령은 별도로 추적한다. |
+| 배정 지연·매장 취소·환불을 안내한다. 완료 시각과 문 앞 샘플 사진을 남긴다. | 픽업 지연과 수령 대기를 안내하고, 사용자가 수령을 확인하면 주문을 완료한다. |
 
-최신 APK는 **0.2.1**입니다. 음성 확인 뒤 응답을 듣는 연속 대화, 정체에 따른 미전송 예약 조정, 오래된 ETA의 전송 보류와 재개 안내를 보완했습니다. 영상에는 픽업 수령 완료·정체 대응·새 설정·최신 release의 D단 정차/30km/h 화면을 추가했습니다. **DT 주문은 1차 범위에서 제외**합니다. [팀 피드백 반영과 디자인 QA](docs/testing/team-feedback-2026-11-13.md)
+**음성 배송지.** “강남구청으로 배달해 줘”라고 말하면 장소 후보를 읽어 준다. 동·호수는 한 번 더 읽고, 운전자가 확인하면 저장한다. [실제 주소 확인 기록](docs/testing/gleo-release-2026-11-15.md)
 
-Gleo → 플레오더 카드는 **향후 승인 후 연동 계획**입니다. 음성 장면은 11월 12일 debug 성공 기록을 명시해 유지했습니다. 11월 13일 release 음성 재시험은 오디오 전송 뒤 에뮬레이터가 종료돼, 주소부터 승인·조회까지 완료된 반복은 여전히 0회입니다. 새 연속 대화의 실제 음성 안정성도 완료로 주장하지 않습니다.
+**가격과 카드.** 금액·배송지·결제수단을 견적에 묶는다. 카드가 바뀌면 다시 확인한다. 승인·거절·재시도·환불을 모의 거래로 기록한다. [결제 처리](app/src/main/assets/web/payments.js)
 
-검증 환경은 Pleos `release_connect_v2.1.0`, Android API 34, x86_64, 2560 × 1440, density 160입니다. **출품 release는 공개 Pleos STT/TTS 3.3.1과 앱 내부 명령 처리를 사용**합니다. 공식 공지에 따라 실험용 Gleo Activity/Receiver를 release에서 비활성화했습니다. 기존 Gleo 연구 기록은 공모전 승인이나 현재 출품판의 지원 기능을 의미하지 않습니다.
+**매장과 개인화.** 서울의 공개 음식점·카페 데이터 45,488곳을 검색한다. 출처가 확인된 브랜드 메뉴와 예시 메뉴를 구별한다. 완료한 주문 이력으로 최근 메뉴와 자주 먹는 구성을 추천한다. 실제 영업 상태와 배달 가능 권역은 제휴 전까지 확인할 수 없다. [데이터와 이미지 출처](docs/design/asset-provenance.md)
 
-서울 OpenStreetMap 공개 데이터의 음식점·카페 45,488곳을 검색하고, 주문·결제·차량 이동·라이더는 시뮬레이션합니다. 교촌 브랜드의 공식 메뉴 83개와 권장가를 수집했으며 지점별 판매 여부·실제 배달 가능 여부는 확인되지 않았습니다. 메뉴판이 없는 매장에는 임의의 실제 메뉴·리뷰를 만들지 않고, 별도 테스트 메뉴를 제공합니다. 외부 지도에 가짜 영업점을 등록하지 않습니다.
+**운전 중 조작.** 한국을 대상으로 차량이 보내는 `CarUxRestrictions`를 적용한다. 주행 화면에는 음성, 총액, 카드, 주문 상태를 남긴다. 메뉴 탐색과 설정은 주차 화면에서 이용한다. [주행 정책 검증](docs/testing/korea-driving-policy.md) · [현대자동차그룹 UI 가이드](https://document.pleos.ai/docs/connect/guide/docs-design/Introduction/intro)
 
-## 구현 범위
+## 실행 방법
 
-- 배달 / 픽업, 수량·같은 매장 메뉴 추가, 귀가 시점에 맞춘 배달, 주문 확인·취소·내역 복원
-- 실제 OSM 매장 검색·정보·공식 메뉴와 별도 테스트 메뉴, 도로 경유 거리/시간, 차량·라이더 이동
-- 테스트 카드 등록·해제·기본 수단, 슬라이드/명시적 음성 승인, A/B/C 카드별 승인·한도 부족·결과 확인, 중복 결제 방지·환불
-- 매장 거절·취소, 조리 지연, 라이더 배정 지연·재배정, 수령인 부재, 픽업 지연, 누락 문의
-- 주문·결제 수단·금액·문제 상황을 설명하는 공개 Pleos STT/TTS 음성 흐름
-- 공용 백그라운드 주문 엔진, debug 전용 Gleo Activity/Callback 연구 계약
-- 가게 → 메뉴 → 옵션의 여러 턴 대화, 완료 이력 기반 최근/평소 주문, 최대 3건 동시 주문과 대상별 조회
-- 도착 맞춤 예약의 대기·전송·보류·재개, 경로 변경과 추적 공백 처리, 백그라운드 추적 서비스
-- 완료 시간·문 앞 샘플 사진, 지역·최근 주문 추천, 주소 관리, 앱 재시작 복원
-- 장소 검색·지도 핀 선택·상세주소 음성 입력, 차량 내비 목적지 조회와 숙소 주변 추천 제안
-- 유리 질감 화면, 라이트/다크 테마, 모션 줄이기, 주문 음성 알림 설정
-- 개발자 API에 28개 회귀 시나리오를 유지하며 일반 사용자 화면에서는 시나리오 선택기를 제거
+**차량 에뮬레이터**　Pleos Connect `release_connect_v2.1.0` · Android 14/API 34 · x86_64 · 2560 × 1440 · density 160. 공모전 release는 0.2.2, versionCode 4다. [설치 파일과 체크섬](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-15-gleo)
 
-## 실행
+1. APK ZIP을 풀어 `apk/`에 놓고 에뮬레이터를 실행한다.
+2. 아래 명령으로 설치한다. P단에서 필요한 마이크·위치·내비 권한을 허용한다.
+3. 차량의 기본 음성 비서를 Gleo로 설정한 환경에서 차량 음성 버튼을 누르고 “플레오더에서 치킨 배달해 줘”라고 말한다. 화면 상단 **DEMO**를 누르면 주문·모의 거래를 초기화해 다시 시도할 수 있다.
 
-Node.js가 있으면 별도 npm 의존성 설치 없이 미리볼 수 있습니다.
+```sh
+adb install -r "apk/플레오더_플레오더_release.apk"
+adb shell am start -n dev.pleorder.app/.DrivingActivity
+```
 
-```powershell
+**브라우저 미리보기**　Node.js에서 주문 화면과 시뮬레이션을 열 수 있다. `npm run preview` 실행 후 [로컬 미리보기](http://127.0.0.1:4173)를 연다. 차량 Gleo·위치·내비 SDK 시험에는 위 에뮬레이터를 사용한다.
+
+```sh
 npm test
 npm run preview
 ```
 
-브라우저에서 <http://127.0.0.1:4173>을 엽니다. 브라우저의 문장 입력은 로컬 규칙 기반 테스트이며 Gleo LLM이라고 표시하지 않습니다.
+<details>
+<summary><strong>빌드·지도·시뮬레이션 구성</strong></summary>
 
-Android Studio에서 이 폴더를 열거나, JDK 21과 Android SDK 34 환경에서 빌드합니다.
+- JDK 21과 Android SDK 34로 `.\gradlew.bat :app:assembleRelease`를 실행한다. 출품 APK는 공모전 테스트용 개발 인증서로 서명했다. [빌드와 지도 인증 설정](apk/README.md)
+- 지도는 네이버 지도 또는 OSM을 표시한다. 차량 좌표는 FusedLocation, 내비 목적지·경유 요청은 NaviHelper로 처리한다. 개발용 Directions 5 프록시는 별도 설정이 필요하며 배포 APK는 대체 경로 제공자를 사용할 수 있다.
+- 주문 엔진은 주차 화면·주행 화면·백그라운드에서 공유한다. 승인 회귀, 여러 주문의 조회, 예약 보류와 재개를 테스트한다. [구조](docs/architecture.md) · [회귀 시나리오](docs/testing/scenario-matrix.md)
+- [기획서 DOCX](산출물/01_기획서/플레오더_기획서.docx) · [버전별 검증](산출물/03_검증자료/검증결과.md) · [제출 안내](산출물/04_제출안내/공식요건_체크리스트.md)
 
-```powershell
-.\gradlew.bat :app:assembleDebug
-adb install -r app\build\outputs\apk\debug\app-debug.apk
-adb shell am start -n dev.pleorder.app/.DrivingActivity
-```
-
-현재 작업 컴퓨터에서는 Windows 한글 경로 문제를 피하는 아래 스크립트도 사용할 수 있습니다. 이 스크립트의 JDK/SDK 경로는 현재 컴퓨터 기준입니다.
-
-```powershell
-.\tools\Build-Pleorder.ps1 -Install
-```
-
-Pleos Emulator에서 전체 탐색·설정은 **주차 상태**, 간결한 음성·주문 요약은 **주행 상태**로 테스트합니다. 앱은 플랫폼의 주행 제한을 우회하지 않습니다.
-
-한국 출시를 대상으로 합니다. 지역별 제한은 국가명이나 D/P 기어를 하드코딩하지 않고 차량의 `CarUxRestrictions` 비트마스크를 적용합니다. 현재 에뮬레이터는 정차 D와 주행 D에서 `0x50`(동영상·설정 제한)을 반환합니다. DO를 선언한 별도 `DrivingActivity`와 주차용 `MainActivity`를 자동 전환합니다. 설치 후 기존 태스크를 종료하고 새 주행용 태스크로 실행하여 **D단 정차·콜드 실행·27km/h 에뮬레이터 주행 중 화면 표시**를 확인했습니다. 제품 심사나 실차 검증 완료를 의미하지 않습니다. [판정 차이와 검증](docs/testing/korea-driving-policy.md)을 참고하세요.
-
-## 구성
-
-| 위치 | 역할 |
-|---|---|
-| `app/src/main/assets/web/core.js` | 주문 상태, 확인, 취소, 매장·배달 이벤트, 한국어 명령 |
-| `app/src/main/assets/web/payments.js` | 모의 거래, 멱등성, 승인 결과 확인, 환불 |
-| `app/src/main/assets/web/order-assistant.js` | 여러 턴 대화, 옵션·수량 수정, 완료 주문 개인화 |
-| `app/src/main/assets/web/order-scheduler.js` | ETA 기반 예약, 경로 변경 보류, 재개·전송 |
-| `app/src/main/assets/web/map.js` | 지도, 도로 경로, 가상 차량·라이더 |
-| `app/src/main/assets/web/app.js` | 화면 상호작용과 Android 브리지 |
-| `app/src/main/java/dev/pleorder/app` | 실제 Pleos 음성·위치·내비게이션 어댑터 및 Gleo 백그라운드 수신 |
-| `app/src/main/assets/schema.json` | Gleo 대화·주문·배송지 기능 여덟 개 등록 계약 |
-| `tests` | 주문·결제·이벤트의 회귀 검사 |
-
-![플레오더 앱 화면](docs/testing/pleorder-final-home.png)
-
-## 공개 음성 SDK와 Gleo 연구의 경계
-
-출품판에서는 마이크를 누르고 “비빔밥 한 개 배달해 줘” → 견적 확인 → “결제 승인” → “주문 상태 알려 줘”로 진행합니다. 음성 대화 이어가기를 켜면 견적 안내 뒤 다시 누르지 않고 답할 수 있도록 마이크를 엽니다. 명시적 승인 없이 결제하지 않으며 화면 종료·백그라운드·오류 때 응답 대기를 취소합니다. 음식 인식과 상품·수량·총액 확인은 구분됩니다. “평소에 자주 먹던 메뉴로 담아 줘”는 완료한 동일 구성 주문이 3회 이상 있어야 합니다. “집 도착 시간에 맞춰 주문 예약해 줘”로 예약하고, 보류된 예약은 “예약 재개” 또는 “주문 취소”로 처리합니다.
-
-Gleo는 앱이 임의 프롬프트로 호출하는 공개 챗봇 API와 다릅니다. [공식 개발 범위 공지](https://appdevchallenge.auto-hmg.io/notice/c0a1a000-2026-4923-8000-000000000008)에 따르면 참가팀은 Gleo Interface(App Schema) 검토·승인을 신청할 수 없으며, 공개되지 않은 SDK와 Pleos LLM SDK도 제공되지 않습니다. 과거 에뮬레이터 연구는 [2026-11-09 기록](docs/testing/gleo-voice-e2e.md)으로 보존하되, 출품판의 승인된 Gleo 기능으로 제시하지 않습니다.
-
-2026-11-12 공개 STT/TTS `3.3.1` ON_DEVICE 경로에서 합성 한국어 음성을 가상 마이크로 입력해 주문 준비 → 명시적 승인 → 현황 조회를 확인했습니다. 주문과 성공 거래는 각각 1건, 총액은 12,500원이었습니다. 실제 TTS 응답을 영상에 녹음했습니다. 일부 발화 오인식과 에뮬레이터 종료·연결 불안정이 재현되어 사람 목소리·반복 안정성·주소 음성 입력의 현재 실기 검증 완료를 주장하지 않습니다. 서버 키나 내부 모델을 APK에 넣지 않습니다.
-
-FusedLocation은 실제 차량 좌표를 표시할 수 있습니다. 설정된 환경에서는 Naver 지도·주소 검색과 서버 프록시의 Directions 5 자동차 경로를 사용하며, 대체 제공자로 OSM/OSRM/Photon도 유지합니다. 현재 좌표와 일치하는 경로가 없으면 도착 맞춤 결제를 기다립니다. NaviHelper 목적지·남은 시간과 지도 경로를 구분해 사용합니다. 공개 주소 데이터는 불완전할 수 있어 사용자가 장소·주소·상세주소를 확인한 후 저장합니다. 경로 API의 계산 결과, 데모 경로, 직선 거리를 구분해 표시합니다.
-
-내비게이션은 사용자가 경유 요청을 확인한 후 NaviHelper를 호출합니다. 이전 에뮬레이터 연구에서는 안내 시작 Callback과 Gleo 백그라운드 계약의 준비·확정·중복 확정·조회를 확인했습니다. 이 기록은 현재 출품판의 Gleo 승인 또는 이번 영상의 실제 내비 경로 반영 증거를 뜻하지 않습니다. 이번 영상에서 내비 전송은 확인창까지이며, 별도로 음식 준비와 수령 완료 상태까지 보여 줍니다.
-
-## 검증과 자료
-
-- [팀원 소스 통합·대화·예약·실제 Gleo 검증](docs/testing/team-integration-2026-11-09.md)
-- [제품 빈틈과 다음 설계](docs/product/2026-11-09-product-gap-review.md)
-- [실제 검증 범위](docs/testing/verification.md)
-- [28개 시나리오](docs/testing/scenario-matrix.md)
-- [설계와 실제 서비스 전환](docs/architecture.md)
-- [이미지·폰트·지도 출처](docs/design/asset-provenance.md)
-
-OSM 공개 타일·OSRM·Photon 데모 서버는 소규모 개발 확인에 사용합니다. 운영 트래픽은 별도 제공자 또는 자체 서버로 전환해야 합니다. 타일을 일괄 다운로드하지 않습니다. 매장 데이터는 ODbL 출처·원본 링크를 표시하며, 도시 내 모든 영업점의 최신 상태를 보장하지 않습니다.
-
-목적지·동호수 Gleo 입력: [검증 및 동작](docs/testing/voice-addresses.md). 개발 도구 위치: [로컬 환경](docs/testing/local-toolchain.md).
+</details>

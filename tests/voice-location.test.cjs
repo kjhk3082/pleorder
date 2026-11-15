@@ -22,7 +22,9 @@ test('spoken place is not saved until confirmed; room digits survive restart',as
  r=OrderRepository.restore(r.serialize());
  assert.equal((await Voice.dispatch(r,confirm,{confirmation:true})).status,'success');
  assert.equal(r.home.name,place.name);assert.equal(r.preferences.addressDetail,'101동 202호');
- await Voice.dispatch(r,detail,{detail:'102동 1002호'});
+ assert.equal((await Voice.dispatch(r,detail,{detail:'102동 1002호'})).status,'asking');
+ assert.equal(r.home.detail,'101동 202호');
+ await Voice.dispatch(r,detail,{confirmation:true});
  assert.equal(r.home.detail,'102동 1002호');assert.equal(r.savedPlaces.find(p=>p.id===r.home.id).detail,'102동 1002호');
 });
 test('room details never leave in a map query',async()=>{
@@ -96,6 +98,40 @@ test('expired pending destination cannot redirect a room edit to the previous ho
 
 test('explicitly clearing a detail preserves the selected place',async()=>{
  const r=new OrderRepository();r.setDeliveryDetail('101동 202호');const name=r.home.name;
- assert.equal((await Voice.dispatch(r,detail,{detail:''})).status,'success');
+ assert.equal((await Voice.dispatch(r,detail,{detail:'',clear:true})).status,'asking');
+ assert.equal(r.home.detail,'101동 202호');
+ assert.equal((await Voice.dispatch(r,detail,{confirmation:true})).status,'success');
  assert.equal(r.home.detail,'');assert.equal(r.home.name,name);assert.equal(r.preferences.addressDetail,'');
+});
+
+test('misheard room digits can be corrected after readback and survive a restart before confirmation',async()=>{
+ let r=new OrderRepository();r.setDeliveryDetail('9층');
+ const wrong=await Voice.dispatch(r,detail,{detail:'101동 201호',confirmation:true});
+ assert.match(wrong.message,/201호/);assert.equal(r.home.detail,'9층');
+ const corrected=await Voice.dispatch(r,detail,{detail:'일공일 동 이공이 호',confirmation:true});
+ assert.match(corrected.message,/101동 202호/);assert.equal(r.home.detail,'9층');
+ r=OrderRepository.restore(r.serialize());
+ const empty=await Voice.dispatch(r,detail,{detail:''});
+ assert.match(empty.message,/101동 202호/);assert.equal(r.home.detail,'9층');
+ assert.equal((await Voice.dispatch(r,confirm,{selection:1,confirmation:true})).status,'success');
+ assert.equal(r.home.detail,'101동 202호');assert.equal(r.orders.length,0);
+});
+
+test('a rejected, expired or different-location room proposal cannot overwrite a saved unit',async()=>{
+ const r=new OrderRepository();r.setDeliveryDetail('3층');
+ await Voice.dispatch(r,detail,{detail:'7층'});await Voice.dispatch(r,detail,{confirmation:false});
+ assert.equal((await Voice.dispatch(r,detail,{confirmation:true})).status,'asking');
+ await Voice.dispatch(r,detail,{detail:'9층'});r.spokenDetail.expiresAt=0;
+ assert.equal((await Voice.dispatch(r,detail,{confirmation:true})).status,'asking');assert.equal(r.home.detail,'3층');
+ await Voice.dispatch(r,detail,{detail:'2층'});r.setDeliveryPlace({...place, id:'different', detail:'1층'});
+ await Voice.dispatch(r,detail,{confirmation:true});assert.equal(r.home.detail,'1층');
+});
+
+test('Gleo confirmation with an empty optional detail saves the proposed digits and never clears by omission',async()=>{
+ const r=new OrderRepository();r.setDeliveryDetail('2층');
+ await Voice.dispatch(r,detail,{detail:'101동 202호'});
+ const yes=await Voice.dispatch(r,detail,{detail:'',confirmation:true});
+ assert.equal(yes.status,'success');assert.equal(r.home.detail,'101동 202호');
+ assert.equal((await Voice.dispatch(r,detail,{detail:''})).status,'asking');
+ assert.equal(r.home.detail,'101동 202호');
 });

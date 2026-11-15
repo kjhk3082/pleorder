@@ -61,3 +61,7 @@ area["ISO3166-2"="KR-11"]->.seoul;
 nwr(area.seoul)["amenity"~"^(restaurant|fast_food|cafe)$"]["name"];
 out center tags;
 ```
+
+## 저장소 표지
+
+[README 표지](pleorder-cover.jpg)는 팀의 [대표 영상용 서울 퇴근길 이미지](../../tools/submission/film/art/drive-home.jpg)에서 만들었습니다. 흰색 P 심벌은 앱 원본의 외곽선과 민트색 점을 유지하고 어두운 사진에 맞춰 명도를 조정했습니다. 표지의 도로 사진은 생성 이미지이며 차량 에뮬레이터 녹화는 본문의 영상에 있습니다.

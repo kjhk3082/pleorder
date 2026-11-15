@@ -2,7 +2,7 @@
 
 파일: **플레오더_플레오더_release.apk**
 
-[GitHub Releases에서 APK 내려받기](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-13). 약 137 MiB로 GitHub 일반 파일 한도를 넘어 공식 제출 안내에 허용된 Releases에 보관합니다. 다운로드한 APK를 이 폴더에 두면 아래 설치 명령을 사용할 수 있습니다. 체크섬은 `산출물/03_검증자료/SHA256SUMS.txt`에 있습니다.
+[GitHub Releases에서 APK 내려받기](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-15-gleo). 약 137 MiB로 GitHub 일반 파일 한도를 넘어 공식 제출 안내에 허용된 Releases에 보관합니다. 다운로드한 APK를 이 폴더에 두면 아래 설치 명령을 사용할 수 있습니다. 체크섬은 `산출물/03_검증자료/SHA256SUMS.txt`에 있습니다.
 
 GitHub가 한글 첨부 파일명을 자동 변환하므로 **`pleorder_release.zip`을 풀면 공식 이름 `플레오더_플레오더_release.apk`가 그대로 나옵니다.** 바로 설치할 때는 `pleorder_pleorder_release.apk`도 같은 파일입니다. 아래 명령을 쓰려면 ZIP에서 나온 한글 파일을 사용하거나 내려받은 APK 이름을 변경하세요.
 
@@ -39,4 +39,4 @@ release variant이며 `debuggable=false`입니다. 공모전 테스트용으로 
 4. 마이크로 “비빔밥 한 개 배달해 줘”, “결제 승인”, “주문 상태”.
 5. 픽업 주문의 내비 전송 확인, 주문 내역과 설정, DEMO 초기화.
 
-모든 주문·결제·라이더 이동·배달 사진은 테스트입니다. 실제 매장 배달권역과 주문 접수는 연동하지 않았습니다. 공개 매장 정보와 테스트 메뉴 표시는 구분합니다. release에서는 실험용 Gleo Activity/Receiver가 비활성화됩니다.
+모든 주문·결제·라이더 이동·배달 사진은 테스트입니다. 실제 매장 배달권역과 주문 접수는 연동하지 않았습니다. 공개 매장 정보와 테스트 메뉴 표시는 구분합니다. 0.2.2에서 Gleo App Schema의 Activity와 호환 Receiver가 활성화됩니다. 에뮬레이터 기본 비서가 Gleo인 상태에서 차량 음성 버튼을 열고 “플레오더에서 치킨 배달해 줘”라고 말하면 주문을 시작합니다. [기기 검증](../docs/testing/gleo-release-2026-11-15.md)

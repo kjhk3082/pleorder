@@ -2,17 +2,13 @@ plugins { id 'com.android.application' }
 android {
     namespace 'dev.pleorder.app'
     compileSdk 34
-    defaultConfig { applicationId 'dev.pleorder.app'; minSdk 29; targetSdk 34; versionCode 3; versionName '0.2.1' }
+    defaultConfig { applicationId 'dev.pleorder.app'; minSdk 29; targetSdk 34; versionCode 4; versionName '0.2.2' }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     buildFeatures { buildConfig true }
-    // Contest release: public SpeechToText/TextToSpeech only. Existing Gleo
-    // contracts remain available in debug for research, not competition claims.
     buildTypes {
-        debug { manifestPlaceholders = [gleoExperimentalEnabled: 'true'] }
         release {
             debuggable false
             signingConfig signingConfigs.debug
-            manifestPlaceholders = [gleoExperimentalEnabled: 'false']
         }
     }
 }

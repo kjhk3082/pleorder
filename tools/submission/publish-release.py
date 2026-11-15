@@ -3,7 +3,7 @@
 Uses the existing Git credential helper in memory. Never prints or saves tokens.
 """
 import argparse,json,pathlib,subprocess,urllib.request,urllib.error,urllib.parse,os,hashlib,zipfile
-p=argparse.ArgumentParser();p.add_argument('--commit',required=True);p.add_argument('--draft',action='store_true');p.add_argument('--tag',default='contest-2026-11-12');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--commit',required=True);p.add_argument('--draft',action='store_true');p.add_argument('--include-films',action='store_true');p.add_argument('--tag',default='contest-2026-11-12');a=p.parse_args()
 ROOT=pathlib.Path(__file__).resolve().parents[2];repo='kjhk3082/pleorder';tag=a.tag
 assert all(c.isalnum() or c in '-._' for c in tag),'Invalid tag'
 env={**os.environ,'GIT_TERMINAL_PROMPT':'0'}
@@ -25,6 +25,10 @@ bundle=ROOT/'.cache/submission/pleorder_release.zip';bundle.parent.mkdir(parents
 with zipfile.ZipFile(bundle,'w',zipfile.ZIP_DEFLATED,compresslevel=1) as z:
     z.write(apk,apk.name)
 files=[(apk,'pleorder_pleorder_release.apk'),(ROOT/'산출물/02_시연영상/플레오더_전체기능시연.mp4','pleorder_demo.mp4'),(ROOT/'산출물/01_기획서/플레오더_기획서.pdf','pleorder_proposal.pdf'),(ROOT/'산출물/03_검증자료/SHA256SUMS.txt','SHA256SUMS.txt'),(bundle,'pleorder_release.zip')]
+if a.include_films:
+    films=ROOT/'산출물/02_시연영상'
+    files.extend([(films/'플레오더_대표시연.mp4','pleorder_film_1080p.mp4'),
+                  (films/'플레오더_Gleo_실기시연.mp4','pleorder_gleo.mp4')])
 for f,remote_name in files:
     digest='sha256:'+hashlib.sha256(f.read_bytes()).hexdigest()
     existing=next((x for x in release['assets'] if x['name']==remote_name or x.get('label')==f.name),None)

@@ -65,7 +65,7 @@ for st in public.styles:
     for border in list(st._element.xpath('.//w:pBdr')):border.getparent().remove(border)
 public.add_paragraph('플레오더 기획서',style='Title')
 para(public,'현대자동차그룹 차량용 앱 개발 공모전 심사 자료',11)
-para(public,'공개 심사용  |  2026년 11월 13일  |  주문과 결제는 시뮬레이션',10)
+para(public,'공개 심사용  |  2026년 11월 15일  |  주문과 결제는 시뮬레이션',10)
 section(public,0)
 pic(public,'home','그림 1  실제 에뮬레이터의 주차 화면  ·  가상 매장 예시와 네이버 지도')
 public.add_heading('2 기획 배경',1)
@@ -82,7 +82,7 @@ table(public,['검증 가설','초기 목표','측정 방식'],[
 para(public,'위 수치는 제품 출시 이후 검증할 가정이며 현재 실적이나 시장점유율 전망이 아닙니다. 음성으로 주문하는 편의가 실제로 재사용으로 이어지는지 먼저 확인합니다.',10)
 public.add_heading('7 참고자료',1).paragraph_format.page_break_before=True
 para(public,'소스·APK·영상: https://github.com/kjhk3082/pleorder\n저장소 README에 재생 영상과 최신 release를 연결했습니다. 산출물 폴더에는 기획서, 자막, 검증 결과와 제출 기준을 함께 제공합니다.')
-para(public,'영상은 실제 에뮬레이터 화면과 합성 음성 내레이션으로 구성했습니다. 정체 장면은 시험 ETA와 시간 가속, Gleo 연결은 향후 계획입니다. 11월 12일 debug 음성 기록과 최신 release 검증 범위를 구분하며, 실차·실결제 검증을 의미하지 않습니다.')
+para(public,'영상은 실제 에뮬레이터 화면과 합성 음성 내레이션으로 구성했습니다. 정체 장면에는 시험 ETA와 시간 가속을 사용했습니다. Gleo 연결 장면은 11월 15일 에뮬레이터의 release 0.2.2 화면입니다. 11월 12일 debug 음성 기록과 최신 release 검증 범위를 구분하며, 실차·실결제 검증을 의미하지 않습니다.')
 section(public,7)
 public.add_heading('검증과 출처',1)
 para(public,'검증 결과와 재현 범위는 산출물/03_검증자료/검증결과.md에 정리했습니다. 단위·회귀 검사, 실제 에뮬레이터 확인, 기존 연구 기록을 구분합니다. 영상에서 확인하지 않은 모든 예외 상황을 촬영 완료했다고 주장하지 않습니다.')
@@ -93,7 +93,7 @@ public_path=OUT/'01_기획서/플레오더_기획서.docx';public.save(public_pa
 private=Document(CACHE/'official/contest-application-consent.docx');meta(private)
 roster=json.loads((CACHE/'roster.json').read_text(encoding='utf-8-sig'))
 ps=private.paragraphs
-replacement={9:'참가 단위: □ 개인           ☑ 팀',10:'참가 부문: ☑ 대학(원)생    □ 일반(스타트업 포함)',11:'팀명(개인 참가 시 성명): 플레오더',12:'앱명 / 프로젝트명: 플레오더',13:f'대표자 성명: {roster[0]}   역할: 대표자',17:'참가 인원: 5명',18:'작성일: 2026년 11월 13일',28:'앱명 / 프로젝트명: 플레오더',66:'앱명 / 프로젝트명: 플레오더',67:'팀명(팀 참가 시): 플레오더'}
+replacement={9:'참가 단위: □ 개인           ☑ 팀',10:'참가 부문: ☑ 대학(원)생    □ 일반(스타트업 포함)',11:'팀명(개인 참가 시 성명): 플레오더',12:'앱명 / 프로젝트명: 플레오더',13:f'대표자 성명: {roster[0]}   역할: 대표자',17:'참가 인원: 5명',18:'작성일: 2026년 11월 15일',28:'앱명 / 프로젝트명: 플레오더',66:'앱명 / 프로젝트명: 플레오더',67:'팀명(팀 참가 시): 플레오더'}
 for i,text in replacement.items():
     ps[i].text=text
     for r in ps[i].runs:font(r,10)
@@ -114,5 +114,5 @@ for i,item in enumerate(sections,1):
     for tr in private.tables[i].rows:
         for h in list(tr._tr.xpath('./w:trPr/w:trHeight')):h.getparent().remove(h)
 private.save(OUT/'비공개_접수용/플레오더_공식접수양식_서명전.docx')
-(OUT/'01_기획서/플레오더_기획서.md').write_text('# 플레오더 기획서\n\n공개 심사용 · 2026-11-13\n\n'+'\n\n'.join('## '+str(i+1)+' '+x['title']+'\n\n'+x['text'] for i,x in enumerate(sections))+'\n',encoding='utf-8')
+(OUT/'01_기획서/플레오더_기획서.md').write_text('# 플레오더 기획서\n\n공개 심사용 · 2026-11-15\n\n'+'\n\n'.join('## '+str(i+1)+' '+x['title']+'\n\n'+x['text'] for i,x in enumerate(sections))+'\n',encoding='utf-8')
 print('Created anonymous proposal and private unsigned application.')

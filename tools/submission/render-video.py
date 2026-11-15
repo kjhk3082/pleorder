@@ -31,7 +31,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     for start,end,text in captions:lines.append(f'Dialogue: 0,{tc(start,True)},{tc(end,True)},Caption,,0,0,0,,{text}')
     p=EDIT/(name+'.ass');p.write_text(header+'\n'.join(lines)+'\n',encoding='utf-8-sig');return p.relative_to(ROOT).as_posix()
 def encode(source,dest,seconds,subtitles,audio=None,card=False,pace=1):
-    if '--reuse' in sys.argv and pathlib.Path(dest).exists():return
+    if '--reuse' in sys.argv and pathlib.Path(dest).exists() and '--refresh='+pathlib.Path(dest).stem not in sys.argv:return
     ins=['-f','lavfi','-i',f'color=c=0x102e43:s=1920x1080:r=30:d={seconds}'] if card else ['-i',source]
     ins+=['-i',audio] if audio else ['-f','lavfi','-i','anullsrc=r=48000:cl=stereo']
     vf='' if card else 'scale=1664:936:flags=lanczos,pad=1920:1080:128:70:color=0x102e43,'
@@ -43,7 +43,10 @@ intro=EDIT/'intro.mp4'
 encode(None,intro,6,assfile('intro','플레오더\\N가는 길에 준비하는 한 끼',6,[[0,6,'Pleos Connect · 배달과 픽업 · 실제 에뮬레이터 시연']],True),card=True);parts.append(intro)
 for index,c in enumerate(plan):
     audio=CACHE/'narration'/(c['id']+'.wav');pace=1
-    if c['id']=='09-speech':
+    if c.get('recordedAudio'):
+        audio=CACHE/'recordings'/(c['id']+'.wav')
+        if not audio.is_file():raise FileNotFoundError(audio)
+    elif c['id']=='09-speech':
         inputs=json.loads((CACHE/'recordings/09-inputs.json').read_text())
         args=['-i',CACHE/'recordings/09-speech.wav'];filters=['[0:a]volume=1[speaker]'];names=['[speaker]']
         for i,item in enumerate(inputs,1):
@@ -56,7 +59,7 @@ for index,c in enumerate(plan):
         pace=max(1,duration/(c['seconds']-1))
     else:audio=None
     captions=c['captions'];sub=assfile(c['id'],c.get('cardTitle',c['title']),c['seconds'],captions,c.get('concept',False))
-    dest=EDIT/(c['id']+'.mp4');encode(CACHE/'recordings'/(c['id']+'.mp4'),dest,c['seconds'],sub,audio,pace=pace,card=c.get('concept',False));parts.append(dest)
+    dest=EDIT/(c['id']+'.mp4');encode(CACHE/'recordings'/(c.get('source',c['id'])+'.mp4'),dest,c['seconds'],sub,audio,pace=pace,card=c.get('concept',False));parts.append(dest)
     chapters.append((f'{offset//60:02}:{offset%60:02}',c['title']))
     all_captions += [(a+offset,b+offset,t) for a,b,t in captions]
     offset+=c['seconds'];print('Rendered',c['id'],flush=True)
@@ -65,5 +68,5 @@ manifest=EDIT/'concat.txt';manifest.write_text(''.join("file '"+p.as_posix()+"'\
 final=OUT/'플레오더_전체기능시연.mp4'
 run(['-f','concat','-safe','0','-i',manifest,'-c','copy','-movflags','+faststart',final])
 (OUT/'플레오더_전체기능시연.srt').write_text('\n\n'.join(f'{i}\n{tc(a)} --> {tc(b)}\n{t}' for i,(a,b,t) in enumerate(all_captions,1))+'\n',encoding='utf-8-sig')
-(OUT/'장면별_설명.md').write_text('# 실제 기능 시연 영상\n\n'+f'길이: 약 {(offset+8)//60}분 {(offset+8)%60}초 · 1920×1080 · 30fps\n\n'+'\n'.join(f'- {t} {name}' for t,name in chapters)+'\n\n## 녹화와 편집 범위\n\n실제 Pleos 에뮬레이터를 ADB로 녹화했습니다. 설명 자막과 Windows 한국어 합성 내레이션을 추가했습니다. 음성 SDK 장면은 가상 마이크에 주입한 합성 시험 음성과 실제 에뮬레이터 스피커의 TTS 응답을 함께 담았습니다. 사람 목소리·실차 테스트가 아닙니다. 시간 가속과 목적지 상태 이벤트 주입을 해당 장면에 표시했습니다. 내비게이션 장면은 전송 확인창까지입니다. 정체 장면은 독립된 도착정보 시험 입력과 시계 가속을 사용합니다. Gleo 연결 카드는 향후 기획이며 실제 연동 화면이 아닙니다. 음성 장면은 11월 12일 debug 기록이며 새 release의 반복 검증을 의미하지 않습니다. 주문·결제·라이더·문 앞 사진은 시뮬레이션입니다.\n\n메뉴·설정 장면은 주차 상태이며, 주행 제한과 Gleo 승인 범위는 검증 문서를 참고하세요. 모든 예외 상황이 영상에 포함되어 있지는 않습니다. 예외·개인화·다중 주문 등은 회귀 검사와 별도 검증 문서에서 확인할 수 있습니다.\n\n## 내레이션\n\n'+'\n\n'.join('### '+c['title']+'\n\n'+(c['narration'] or '별도 내레이션 없이 시험 입력과 실제 SDK 음성 응답을 재생합니다.') for c in plan)+'\n',encoding='utf-8')
+(OUT/'장면별_설명.md').write_text('# 실제 기능 시연 영상\n\n'+f'길이: 약 {(offset+8)//60}분 {(offset+8)%60}초 · 1920×1080 · 30fps\n\n'+'\n'.join(f'- {t} {name}' for t,name in chapters)+'\n\n## 녹화와 편집 범위\n\n실제 Pleos 에뮬레이터를 ADB로 녹화했습니다. 설명 자막과 Windows 한국어 합성 내레이션을 추가했습니다. 음성 SDK 장면은 가상 마이크에 주입한 합성 시험 음성과 실제 에뮬레이터 스피커의 TTS 응답을 함께 담았습니다. 사람 목소리·실차 테스트가 아닙니다. 시간 가속과 목적지 상태 이벤트 주입을 해당 장면에 표시했습니다. 내비게이션 장면은 전송 확인창까지입니다. 정체 장면은 독립된 도착정보 시험 입력과 시계 가속을 사용합니다. 7:08부터는 11월 15일 release 0.2.2에서 차량 설정 → 시스템 Gleo → 플레오더 주문 확인창을 녹화한 장면입니다. 가상 마이크 입력과 에뮬레이터 스피커 응답을 함께 담고, 앱 시작 시 대기 구간 일부를 잘랐습니다. 5:56의 공개 STT/TTS 장면은 11월 12일 debug, 8:06의 주행 영상은 11월 13일 release 0.2.1에서 촬영했습니다. 주문·결제·라이더·문 앞 사진은 시뮬레이션입니다.\n\n메뉴·설정 장면은 주차 상태이며, 주행 제한과 Gleo 기기 검증 범위는 검증 문서를 참고하세요. 모든 예외 상황이 영상에 포함되어 있지는 않습니다. 예외·개인화·다중 주문 등은 회귀 검사와 별도 검증 문서에서 확인할 수 있습니다.\n\n## 내레이션\n\n'+'\n\n'.join('### '+c['title']+'\n\n'+(c['narration'] or '별도 내레이션 없이 시험 입력과 실제 SDK 음성 응답을 재생합니다.') for c in plan)+'\n',encoding='utf-8')
 print('VIDEO_READY',final.stat().st_size,'bytes',offset+8,'seconds',flush=True)

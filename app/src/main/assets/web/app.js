@@ -55,10 +55,14 @@ function save() {
   repo.simulation = { paused, rate, savedWall: Date.now() };
   const s = repo.serialize();
   try {
-    window.Native
-      ? Native.saveState(s)
-      : localStorage.setItem("pleorder-v1", s);
-  } catch {}
+    if (window.Native && Native.saveState(s, saved || "") === false) {
+      window.Pleorder?.receiveNative({type:"external-state"});
+      return false;
+    }
+    if (!window.Native) localStorage.setItem("pleorder-v1", s);
+    saved = s;
+    return true;
+  } catch { return false; }
 }
 function toast(message) {
   $("toast").textContent = message;
@@ -115,6 +119,9 @@ function startClock(r) {
     lastWall = Date.now();
   }
 }
+function showConversation(r) {
+  modal(r.conversation.stage === "stores" ? "어느 가게로 할까요?" : r.conversation.stage === "options" ? "옵션을 골라 주세요" : "메뉴를 골라 주세요", "음성으로도 번호를 말씀해 주세요.", `<div class="conversation-choices">${r.candidates.map((c,i)=>`<button class="conversation-choice" data-assistant-choice="${i+1}"><span class="choice-number">${i+1}</span><span><strong>${safe(c.name)}</strong><small>${safe(c.reason||'')}${Number.isFinite(c.price)?` · ${cash(c.price)}`:''}</small></span>${icon("chevron",20)}</button>`).join('')}</div>${r.conversation.stage!=="options"?`<button class="button outlined full-width" data-assistant-more="true">다른 ${r.conversation.stage === "stores" ? "가게" : "메뉴"} 보기</button>`:""}`, "conversation");
+}
 function respond(r, { voice = false, payment = false } = {}) {
   if (r.open) {
     if (r.open === "registration") return openRegistration();
@@ -134,7 +141,7 @@ function respond(r, { voice = false, payment = false } = {}) {
   render();
   if (voice) speak(r.voiceText || r.message);
   if(r.conversation && r.candidates){
-    modal(r.conversation.stage === "stores" ? "어느 가게로 할까요?" : r.conversation.stage === "options" ? "옵션을 골라 주세요" : "메뉴를 골라 주세요", "음성으로도 번호를 말씀해 주세요.", `<div class="conversation-choices">${r.candidates.map((c,i)=>`<button class="conversation-choice" data-assistant-choice="${i+1}"><span class="choice-number">${i+1}</span><span><strong>${safe(c.name)}</strong><small>${safe(c.reason||'')}${Number.isFinite(c.price)?` · ${cash(c.price)}`:''}</small></span>${icon("chevron",20)}</button>`).join('')}</div>${r.conversation.stage!=="options"?`<button class="button outlined full-width" data-assistant-more="true">다른 ${r.conversation.stage === "stores" ? "가게" : "메뉴"} 보기</button>`:""}`, "conversation");
+    showConversation(r);
     return r;
   }
   if (r.recommendation) {
@@ -1120,14 +1127,26 @@ window.Pleorder = {
       render();
     }
     if (e.type === "external-state") {
+      const latest = window.Native ? Native.loadState() : e.state;
+      if (latest === saved) return;
+      const previousDraft = repo.draft?.id;
       const previousHome = JSON.stringify(repo.home);
       const previousSearch = JSON.stringify(repo.destinationSearch);
-      repo = OrderRepository.restore(e.state);
+      saved = latest;
+      repo = OrderRepository.restore(latest);
       paused = repo.simulation?.paused ?? true;
       rate = repo.simulation?.rate || 10;
       lastOrder = repo.activeOrder()?.id;
       lastWall = Date.now();
       render();
+      if (modalKind === "checkout" && previousDraft && previousDraft !== repo.draft?.id) {
+        if (repo.draft) openCheckout();
+        else {
+          const placed = repo.orders.find(o => o.draftId === previousDraft);
+          if (placed) modal("", "", paymentSuccessView(placed, repo), "success");
+          else close();
+        }
+      }
       if (previousHome !== JSON.stringify(repo.home) && ["place-picker", "address"].includes(modalKind)) { close(); map.focusHome(); }
       else if (previousSearch !== JSON.stringify(repo.destinationSearch)) syncVoicePlaceFields();
     }
@@ -1219,10 +1238,16 @@ window.Pleorder = {
         return;
       }
       startClock(r);
-      save();
+      if (!save()) {
+        Native.replyAction(JSON.stringify(PleorderCore.gleoCallback(e.name,{status:"fail",message:"주문 상태가 바뀌었어요. 현재 주문을 다시 확인해 주세요."})));
+        return;
+      }
       render();
       if (r.locationChanged) { scope = "home"; close(); map.focusHome(); }
+      else if (r.conversation && r.candidates) showConversation(r);
       else if (r.draft) openCheckout();
+      else if (r.order && e.name === "CONFIRM_FOOD_ORDER" && e.params.confirmation === true && r.status === "success")
+        modal("", "", paymentSuccessView(r.order, repo), "success");
       else if (r.order) close();
       else syncVoicePlaceFields();
       const payload = PleorderCore.gleoCallback(e.name, r);

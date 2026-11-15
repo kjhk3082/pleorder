@@ -151,6 +151,22 @@
       if(params.action==='modify')return this.amendDraft(params);
       if(params.action==='cancel'&&this.draft&&!params.target){this.conversation=null;return this.cancel();}
       let o=this.chooseTrackedOrder(params.target);
+      if(!o && params.target && ['status','number'].includes(params.action)) {
+        const target=norm(params.target);
+        const recent=/^(latest|recent|last|방금|최근|마지막)/i.test(target);
+        const query=target.replace(/^(?:latest|recent|last|방금|최근|마지막)(?:에)?(?:주문한|시킨|담은|결제한)?/i,'').replace(/(?:내역|주문|배달상태|상태)$/,'');
+        if(recent && !query)o=this.orders[0];
+        else if(/^(?:current|현재|현재주문|진행중|방금주문)$/i.test(target) && this.activeOrders().length===1)o=this.activeOrder();
+        else if(query){
+          const matches=this.orders.filter(order=>norm(this.store(order.storeId)?.name).includes(query) ||
+            order.items.some(item=>norm(item.name).includes(query) ||
+              (this.menu(item.menuId)?.aliases || []).some(alias=>norm(alias)===query)));
+          const active=matches.filter(order=>!['completed','cancelled'].includes(order.stage));
+          if(recent)o=matches[0];
+          else if(active.length===1)o=active[0];
+          else if(matches.length===1)o=matches[0];
+        }
+      }
       if(params.target&&!o)return reply('해당 주문을 하나로 찾지 못했어요. 정확한 주문 번호를 알려 주세요. 주문을 변경하지 않았어요.');
       if(!o&&this.activeOrders().length>1)return reply(`진행 중인 주문이 ${this.activeOrders().length}개예요. ${this.activeOrders().map(x=>`${this.store(x.storeId).name}, ${x.id}`).join('. ')}. 어느 주문인지 알려 주세요.`,{orders:this.activeOrders().map(x=>({id:x.id,store:this.store(x.storeId).name,stage:x.stage}))});
       o=o||this.activeOrder()||this.orders[0];

@@ -18,3 +18,9 @@
 실패한 시험용 명령도 진단 재현을 위해 코드에 남아 있습니다. 도구가 존재한다는 사실이 검증 성공을 의미하지 않습니다. 실제로 영상에 포함한 장면은 `video-plan.json`, 성공·실패 범위는 `산출물/03_검증자료/검증결과.md`에 기록했습니다.
 
 문서 생성에는 `.cache/submission/official/contest-application-consent.docx`와 비공개 `.cache/submission/roster.json`이 필요합니다. 참가자의 동의나 서명을 자동 작성하지 않습니다. 테스트 시작 전 개인 배송지와 주문 상태를 별도 보관하고 공개용 시연 데이터만 녹화해야 합니다.
+
+## 11월 15일 Gleo 시연 편집
+
+`edit-gleo-demo.py`는 같은 시험의 화면 녹화, 에뮬레이터 스피커 WAV, 실제 주입한 발화 WAV와 시작 시점으로 영상을 편집합니다. `--chapter`는 전체 영상 7:08의 20초 장면을 만듭니다. 그 장면을 다시 합칠 때는 `render-video.py --reuse --refresh=18-gleo-release`를 실행합니다. Gleo 재생 영상의 결과와 녹화 범위는 [기기 검증](../../docs/testing/gleo-release-2026-11-15.md)에 있습니다.
+
+주행용 UI를 덧붙일 때는 `--driving-session`에 별도 D단 시험의 녹화 폴더를 지정한다. 출품 Gleo 실기 영상은 같은 주문의 세 장면 뒤에 D단 견적·승인 장면을 붙였다.
