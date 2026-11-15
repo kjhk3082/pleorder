@@ -1,10 +1,13 @@
 .cache/
 .local/
+*.dpapi
+__pycache__/
 node_modules/
 .gradle/
 **/build/
 local.properties
 *.apk
+!apk/플레오더_플레오더_release.apk
 *.aab
 *.keystore
 *.jks
