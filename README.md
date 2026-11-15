@@ -44,19 +44,6 @@ https://github.com/user-attachments/assets/0b3078eb-7f2f-4ef5-984a-fd1ae6f55ff4
 
 [전체 시연 1080p](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-reels/pleorder_demo.mp4) · [전체 자막](산출물/02_시연영상/플레오더_전체기능시연.srt) · [전체 차례](산출물/02_시연영상/장면별_설명.md)
 
-## 세로 숏폼
-
-**“아니, 치킨이 저보다 먼저 퇴근했어요.”** 막힌 강변북로에서 차한테 저녁을 시켜 봤습니다. 소리를 켜면 Gleo가 26,000원 견적을 읽고, 같은 주문이 언제 도착하는지도 답합니다.
-
-<details>
-<summary><strong>45초 세로 영상 재생</strong></summary>
-
-https://github.com/user-attachments/assets/944dcf64-bdd1-4356-acc8-1b8bc56406d0
-
-</details>
-
-[세로 영상 다운로드](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-reels/pleorder_shortform_vertical.mp4) · [한국어 자막](산출물/02_시연영상/플레오더_세로숏폼.srt)
-
 ## 배달과 픽업이 갈라지는 순간
 
 | 집이나 숙소로 배달 | 운전 경로에서 픽업 |
