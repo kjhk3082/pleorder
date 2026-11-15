@@ -1,0 +1,16 @@
+[
+  {
+    "text": "집으로 받거나, 가는 길에 찾거나.",
+    "startMs": 0,
+    "endMs": 2995,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "도착에 맞춘 한 끼, 플레오더.",
+    "startMs": 3576,
+    "endMs": 6269,
+    "timestampMs": null,
+    "confidence": null
+  }
+]

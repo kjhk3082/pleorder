@@ -1,0 +1,23 @@
+[
+  {
+    "text": "차가 출발하면 화면도 바뀝니다.",
+    "startMs": 0,
+    "endMs": 2647,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "시속 30km.",
+    "startMs": 3437,
+    "endMs": 5433,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "메뉴 목록이 접히고, 목적지와 큰 음성 버튼이 남습니다.",
+    "startMs": 6223,
+    "endMs": 11378,
+    "timestampMs": null,
+    "confidence": null
+  }
+]

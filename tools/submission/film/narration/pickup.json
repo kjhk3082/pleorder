@@ -1,0 +1,23 @@
+[
+  {
+    "text": "오늘은 가는 길에 치킨을 찾아가 볼까요?",
+    "startMs": 0,
+    "endMs": 3297,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "매장을 내비게이션 경유지로 보낼지 먼저 묻습니다.",
+    "startMs": 4087,
+    "endMs": 8777,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "음식을 받아 픽업을 마칠 때까지, 한 주문으로 이어집니다.",
+    "startMs": 9567,
+    "endMs": 14721,
+    "timestampMs": null,
+    "confidence": null
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "text": "퇴근길에 저녁을 시키면,",
+    "startMs": 0,
+    "endMs": 2229,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "음식이 나보다 먼저 도착할 때가 있죠.",
+    "startMs": 2659,
+    "endMs": 5550,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "플레오더는 차가 도착할 시간에 맞춰 한 끼를 준비합니다.",
+    "startMs": 6339,
+    "endMs": 10960,
+    "timestampMs": null,
+    "confidence": null
+  }
+]

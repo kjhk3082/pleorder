@@ -1,0 +1,30 @@
+[
+  {
+    "text": "이번엔, 오는 길에 차가 막혔습니다.",
+    "startMs": 0,
+    "endMs": 3495,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "집까지 60분에서 75분.",
+    "startMs": 4574,
+    "endMs": 7872,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "아직 매장에 보내지 않은 예약은 전송을 15분 늦춥니다.",
+    "startMs": 8661,
+    "endMs": 13549,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "다시 결제할 필요도 없죠.",
+    "startMs": 14222,
+    "endMs": 16579,
+    "timestampMs": null,
+    "confidence": null
+  }
+]

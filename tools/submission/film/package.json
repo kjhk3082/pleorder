@@ -1,0 +1,15 @@
+{
+  "name": "pleorder-contest-film",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio src/index.jsx --no-open"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.543",
+    "@remotion/cli": "4.0.543",
+    "@remotion/renderer": "4.0.543",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.543"
+  }
+}

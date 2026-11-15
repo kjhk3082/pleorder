@@ -1,0 +1,16 @@
+[
+  {
+    "text": "집 문 앞에 놓였다는 소식입니다.",
+    "startMs": 0,
+    "endMs": 2589,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "언제 도착했는지, 어디에 놓았는지 사진으로 확인합니다.",
+    "startMs": 3518,
+    "endMs": 8452,
+    "timestampMs": null,
+    "confidence": null
+  }
+]

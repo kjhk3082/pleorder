@@ -1,0 +1,23 @@
+[
+  {
+    "text": "집 근처로 배달시킬까요?",
+    "startMs": 0,
+    "endMs": 2020,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "아니면, 가는 길에 들러서 가져갈까요?",
+    "startMs": 2694,
+    "endMs": 5863,
+    "timestampMs": null,
+    "confidence": null
+  },
+  {
+    "text": "매장까지 몇 분, 얼마나 돌아가는지 보고 고릅니다.",
+    "startMs": 6792,
+    "endMs": 11378,
+    "timestampMs": null,
+    "confidence": null
+  }
+]

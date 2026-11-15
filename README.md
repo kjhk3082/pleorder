@@ -2,15 +2,25 @@
 
 차에서 고르는 한 끼. 집으로 배달받거나, 귀가 중 매장에 들러 픽업하는 **Pleos Connect용 주문 시뮬레이터**입니다.
 
-![플레오더 화면](docs/testing/pleorder-final-home.png)
+## 대표 시연 · 도착에 맞춘 한 끼
 
-## 공모전 제출 자료 · 2026-11-13
+2분 1초 동안 퇴근길 주문부터 수령까지 따라갑니다. **0:24**에서 실제 Pleos 음성 응답을 듣고, **0:59**에서 정체로 매장 전송이 15분 늦춰지는 장면을 볼 수 있습니다.
 
-아래 플레이어에서 전체 시연을 바로 재생할 수 있습니다. 재생 시 음소거를 해제하면 설명과 실제 SDK 음성 응답을 들을 수 있습니다. README용은 720p이며 원본 1080p 영상은 아래 링크에서 내려받습니다.
+https://github.com/user-attachments/assets/e328a0f6-d18b-4107-b16d-60b8a778237b
+
+[1080p 원본 내려받기](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-13/pleorder_film_1080p.mp4) · [한국어 자막](산출물/02_시연영상/플레오더_대표시연.srt) · [장면별 시간과 촬영 범위](산출물/02_시연영상/대표시연_설명.md)
+
+<details>
+<summary>기능별 전체 시연 · 8분 44초</summary>
 
 https://github.com/user-attachments/assets/992d6922-261e-42a5-86c5-9a1ea6232a64
 
-- [실제 기능 시연 영상 · 8분 44초](산출물/02_시연영상/플레오더_전체기능시연.mp4) · [장면별 설명](산출물/02_시연영상/장면별_설명.md)
+[전체 시연 원본](산출물/02_시연영상/플레오더_전체기능시연.mp4) · [장면별 설명](산출물/02_시연영상/장면별_설명.md)
+
+</details>
+
+## 공모전 제출 자료
+
 - [기획서 PDF](산출물/01_기획서/플레오더_기획서.pdf) · [편집용 DOCX](산출물/01_기획서/플레오더_기획서.docx)
 - [실행 release APK · GitHub Releases](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-13) · [설치와 설정](apk/README.md)
 - [검증 결과와 한계](산출물/03_검증자료/검증결과.md) · [공식 제출 요건](산출물/04_제출안내/공식요건_체크리스트.md)
@@ -80,6 +90,8 @@ Pleos Emulator에서 전체 탐색·설정은 **주차 상태**, 간결한 음�
 | `app/src/main/java/dev/pleorder/app` | 실제 Pleos 음성·위치·내비게이션 어댑터 및 Gleo 백그라운드 수신 |
 | `app/src/main/assets/schema.json` | Gleo 대화·주문·배송지 기능 여덟 개 등록 계약 |
 | `tests` | 주문·결제·이벤트의 회귀 검사 |
+
+![플레오더 앱 화면](docs/testing/pleorder-final-home.png)
 
 ## 공개 음성 SDK와 Gleo 연구의 경계
 
