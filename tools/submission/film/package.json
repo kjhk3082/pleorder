@@ -1,6 +1,7 @@
 {
   "name": "pleorder-contest-film",
   "private": true,
+  "license": "UNLICENSED",
   "scripts": {
     "studio": "remotion studio src/index.jsx --no-open"
   },
