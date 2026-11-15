@@ -2,7 +2,7 @@
 
 **플레오더 0.2.2 · versionCode 5**. 이 폴더에 공모전 공식 한글 파일명으로 서명된 release APK가 들어 있습니다. [APK 다운로드](https://github.com/kjhk3082/pleorder/raw/refs/heads/main/apk/%ED%94%8C%EB%A0%88%EC%98%A4%EB%8D%94_%ED%94%8C%EB%A0%88%EC%98%A4%EB%8D%94_release.apk) · [저장소 파일](플레오더_플레오더_release.apk) · [SHA-256](../산출물/03_검증자료/SHA256SUMS.txt)
 
-저장소 루트에서 아래 명령으로 설치합니다. 파일 크기는 102,151,867바이트(97.42 MiB)입니다. 릴리스에서는 같은 APK와 한글 파일명을 보존한 ZIP을 내려받을 수 있습니다. [공모전 릴리스](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-15-final-cut)
+저장소 루트에서 아래 명령으로 설치합니다. 파일 크기는 102,151,867바이트(97.42 MiB)입니다. 릴리스에서는 같은 APK와 한글 파일명을 보존한 ZIP을 내려받을 수 있습니다. [공모전 릴리스](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-15-submission)
 
 Android API 29 이상, Pleos Connect 서비스가 설치된 환경을 대상으로 합니다. 검증 환경은 Pleos `release_connect_v2.1.0`, API 34, x86_64, 물리 화면 2560 × 1440, density 160입니다. 일반 스마트폰에서는 Pleos 서비스 기능을 보장하지 않습니다.
 

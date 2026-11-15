@@ -109,7 +109,10 @@ for i,item in enumerate(sections,1):
     # Remove the original empty content control; preserve the template cell formatting.
     for child in list(cell._tc):
         if child.tag!=qn('w:tcPr'):cell._tc.remove(child)
-    for line in item['text'].split('\n'):
+    answer = item['text']
+    if item['title'] == '숏폼 링크':
+        answer = 'Instagram 릴스 또는 YouTube Shorts 게시물 주소  ______________________________'
+    for line in answer.split('\n'):
         p=cell.add_paragraph();font(p.add_run(line),10);p.paragraph_format.space_after=Pt(5);p.paragraph_format.line_spacing=1.12
     for tr in private.tables[i].rows:
         for h in list(tr._tr.xpath('./w:trPr/w:trHeight')):h.getparent().remove(h)

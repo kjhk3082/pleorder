@@ -10,7 +10,7 @@
 
 https://github.com/user-attachments/assets/70091f10-97c3-4e53-9243-e433218df620
 
-**1분 41초**　[1080p 원본](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-final-cut/pleorder_film_1080p.mp4) · [한국어 자막](산출물/02_시연영상/플레오더_대표시연.srt)
+**1분 41초**　[1080p 원본](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-submission/pleorder_film_1080p.mp4) · [한국어 자막](산출물/02_시연영상/플레오더_대표시연.srt)
 
 | 시간 | 장면 | 화면에서 확인할 수 있는 것 |
 | --- | --- | --- |
@@ -32,7 +32,7 @@ https://github.com/user-attachments/assets/70091f10-97c3-4e53-9243-e433218df620
 
 https://github.com/user-attachments/assets/7f6037aa-199f-4fe9-bf7e-5bd26e42edee
 
-**1분 2초 실기**　0:05 치킨 배달 요청 · 0:19 현대카드 M 26,000원 모의 승인 · 0:29 같은 주문의 조리 현황 · 0:46 D단·시속 30km에서 별도 주문 21,500원 승인. [원본 MP4](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-final-cut/pleorder_gleo.mp4) · [한국어 장면 자막](산출물/02_시연영상/플레오더_Gleo_실기시연.srt)
+**1분 2초 실기**　0:05 치킨 배달 요청 · 0:19 현대카드 M 26,000원 모의 승인 · 0:29 같은 주문의 조리 현황 · 0:46 D단·시속 30km에서 별도 주문 21,500원 승인. [원본 MP4](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-submission/pleorder_gleo.mp4) · [한국어 장면 자막](산출물/02_시연영상/플레오더_Gleo_실기시연.srt)
 
 [제출 APK에서 다시 확인한 주차·주행 주문](docs/testing/gleo-release-2026-11-15.md#제출-apk-재시험) · [Gleo 동작 8개](app/src/main/assets/schema.json) · [참가팀의 App Schema 사용 안내](https://appdevchallenge.auto-hmg.io/notice/c0a1a000-2026-4923-8000-000000000008)
 
@@ -42,7 +42,7 @@ https://github.com/user-attachments/assets/7f6037aa-199f-4fe9-bf7e-5bd26e42edee
 
 https://github.com/user-attachments/assets/0b3078eb-7f2f-4ef5-984a-fd1ae6f55ff4
 
-[전체 시연 1080p](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-final-cut/pleorder_demo.mp4) · [전체 자막](산출물/02_시연영상/플레오더_전체기능시연.srt) · [전체 차례](산출물/02_시연영상/장면별_설명.md)
+[전체 시연 1080p](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-submission/pleorder_demo.mp4) · [전체 자막](산출물/02_시연영상/플레오더_전체기능시연.srt) · [전체 차례](산출물/02_시연영상/장면별_설명.md)
 
 ## 세로 숏폼
 
@@ -55,7 +55,7 @@ https://github.com/user-attachments/assets/f21c4809-05b8-4610-86d6-1c316a5b1ac3
 
 </details>
 
-[세로 영상 다운로드](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-final-cut/pleorder_shortform_vertical.mp4) · [한국어 자막](산출물/02_시연영상/플레오더_세로숏폼.srt)
+[세로 영상 다운로드](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-submission/pleorder_shortform_vertical.mp4) · [한국어 자막](산출물/02_시연영상/플레오더_세로숏폼.srt)
 
 ## 배달과 픽업이 갈라지는 순간
 
@@ -75,7 +75,7 @@ https://github.com/user-attachments/assets/f21c4809-05b8-4610-86d6-1c316a5b1ac3
 
 ## 실행 방법
 
-**차량 에뮬레이터**　Pleos Connect `release_connect_v2.1.0` · Android 14/API 34 · x86_64 · 2560 × 1440 · density 160. 출품 APK는 0.2.2, versionCode 5다. [설치 파일과 체크섬](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-15-final-cut)
+**차량 에뮬레이터**　Pleos Connect `release_connect_v2.1.0` · Android 14/API 34 · x86_64 · 2560 × 1440 · density 160. 출품 APK는 0.2.2, versionCode 5다. [설치 파일과 체크섬](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-15-submission)
 
 1. 저장소의 [apk/플레오더_플레오더_release.apk](apk/플레오더_플레오더_release.apk)를 받고 에뮬레이터를 실행한다. 저장소를 클론하면 해당 경로에 설치 파일이 들어 있다.
 2. 아래 명령으로 설치한다. P단에서 필요한 마이크·위치·내비 권한을 허용한다.
