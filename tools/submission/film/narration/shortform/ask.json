@@ -1,0 +1,13 @@
+{
+  "voice": "Jisoo - Inviting, Clear and Measured",
+  "sourceHash": "2a994e135209b10890a1b22aa3600c697287b52ac232acc08fd2da01c9df5eef",
+  "cues": [
+    {
+      "text": "방금 시킨 치킨, 어디쯤 왔죠?",
+      "startMs": 0,
+      "endMs": 2322,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

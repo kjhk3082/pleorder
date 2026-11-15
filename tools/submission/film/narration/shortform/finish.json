@@ -1,0 +1,20 @@
+{
+  "voice": "Jisoo - Inviting, Clear and Measured",
+  "sourceHash": "1539f72e6fcee987fb0bd64f0ac9c604e2ae02980a7ff9a6a9cf620bfbff65d5",
+  "cues": [
+    {
+      "text": "오늘 저녁은, 나랑 도착 시간을 맞추자.",
+      "startMs": 0,
+      "endMs": 2659,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "플레오더.",
+      "startMs": 2740,
+      "endMs": 3669,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

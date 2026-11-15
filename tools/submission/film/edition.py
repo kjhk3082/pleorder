@@ -96,7 +96,7 @@ def captured_voice(source_file,start,seconds,name,keep_length=True):
     return audio(path,system=True)
 
 def prepare_scene(s,captures):
-    scene={k:v for k,v in s.items() if k in ("layout","title","titleSize","label","note","theme")}
+    scene={k:v for k,v in s.items() if k in ("layout","title","titleSize","label","note","theme","panel","order")}
     scene.setdefault("layout","product")
     cues=[];jobs=[];chunks=[]
     if "turns" in s:
@@ -117,7 +117,8 @@ def prepare_scene(s,captures):
             for c in lines:
                 cues.append({"role":role,"text":c["text"],"startMs":round((position/FPS+lead)*1000)+c["startMs"],
                              "endMs":min(round((position+n)/FPS*1000),round((position/FPS+lead)*1000)+c["endMs"])})
-            jobs.append((folder/"screen.mp4",max(0,t["screen"]-lead),n,t["crop"]))
+            if "screen" in t:
+                jobs.append((position,(folder/"screen.mp4",max(0,t["screen"]-lead),n,t["crop"])))
             position+=n
         dialogue=np.concatenate(chunks)
     else:
@@ -140,14 +141,12 @@ def prepare_scene(s,captures):
             cuts=np.rint(frames*weights/weights[-1]).astype(int)
             for idx,(start,weight,crop) in enumerate(jobspec):
                 source=captures/s["capture"]/"screen.mp4" if "capture" in s else CACHE/"recordings"/(s["record"]+".mp4")
-                jobs.append((source,start,int(cuts[idx+1]-cuts[idx]),crop))
+                jobs.append((int(cuts[idx]),(source,start,int(cuts[idx+1]-cuts[idx]),crop)))
         if scene["layout"]=="pickup":scene["reveal"]=int(frames*.33)
     scene["frames"]=len(dialogue)//STEP
     scene["cues"]=cues
     scene["env"]=[round(float(v),3) for v in np.sqrt(np.mean(dialogue.reshape(-1,STEP)**2,axis=1))] if scene["layout"]=="field" else []
-    scene["clips"]=[];position=0
-    for job in jobs:
-        scene["clips"].append({"at":position,"frames":job[2],"job":job});position+=job[2]
+    scene["clips"]=[{"at":at,"frames":job[2],"job":job} for at,job in jobs]
     return scene,dialogue
 
 def master(id,cut,speech):

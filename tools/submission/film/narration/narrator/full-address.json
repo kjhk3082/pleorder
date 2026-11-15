@@ -1,18 +1,18 @@
 {
   "voice": "Sujin",
-  "sourceHash": "d2671eacddc151d29250dbedbe6a58d43c22ecb96eb8625388ec906af9b4d278",
+  "sourceHash": "55bccb4cf1bd2b5f7cd640f89b7fcc0367408d54dcfaf2dbdef9ca74495ad52b",
   "cues": [
     {
-      "text": "여행 중이라면 호텔을, 퇴근길이라면 집을 찾아보세요.",
+      "text": "오늘 배달받을 장소를 검색해 보세요.",
       "startMs": 0,
-      "endMs": 3495,
+      "endMs": 2624,
       "timestampMs": null,
       "confidence": null
     },
     {
-      "text": "지도에서 위치를 확인하고 상세주소와 함께 저장합니다.",
-      "startMs": 3727,
-      "endMs": 7709,
+      "text": "지도에서 위치를 확인하고, 상세주소를 덧붙일 수 있어요.",
+      "startMs": 2694,
+      "endMs": 6223,
       "timestampMs": null,
       "confidence": null
     }

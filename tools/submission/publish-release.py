@@ -3,7 +3,7 @@
 Uses the existing Git credential helper in memory. Never prints or saves tokens.
 """
 import argparse,json,pathlib,subprocess,urllib.request,urllib.error,urllib.parse,os,hashlib,zipfile
-p=argparse.ArgumentParser();p.add_argument('--commit',required=True);p.add_argument('--draft',action='store_true');p.add_argument('--include-films',action='store_true');p.add_argument('--latest',action='store_true');p.add_argument('--tag',default='contest-2026-11-12');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--commit',required=True);p.add_argument('--draft',action='store_true');p.add_argument('--include-films',action='store_true');p.add_argument('--shortform',action='store_true');p.add_argument('--latest',action='store_true');p.add_argument('--notes-file',type=pathlib.Path);p.add_argument('--tag',default='contest-2026-11-12');a=p.parse_args()
 ROOT=pathlib.Path(__file__).resolve().parents[2];repo='kjhk3082/pleorder';tag=a.tag
 assert all(c.isalnum() or c in '-._' for c in tag),'Invalid tag'
 env={**os.environ,'GIT_TERMINAL_PROMPT':'0'}
@@ -22,7 +22,8 @@ except urllib.error.HTTPError as e:
     pending=request(base+'/releases?per_page=100')
     release=next((item for item in pending if item['tag_name']==tag and item['draft']),None)
     if release is None:
-        release=request(base+'/releases','POST',{'tag_name':tag,'target_commitish':a.commit,'name':'플레오더 공모전 제출본 · '+tag.removeprefix('contest-'),'draft':a.draft or a.latest,'prerelease':not a.latest,'body':(ROOT/'산출물/04_제출안내/릴리스_설명.md').read_text(encoding='utf-8')})
+        notes=a.notes_file.read_text(encoding='utf-8') if a.notes_file else '플레오더 공모전 제출본입니다. 설치용 APK와 시연 영상, 기획서 및 SHA-256을 아래에서 받을 수 있습니다.'
+        release=request(base+'/releases','POST',{'tag_name':tag,'target_commitish':a.commit,'name':'플레오더 공모전 제출본 · '+tag.removeprefix('contest-'),'draft':a.draft or a.latest,'prerelease':not a.latest,'body':notes})
 if release['draft'] and release['target_commitish']!=a.commit:
     raise SystemExit('Staged release points at a different commit.')
 apk=ROOT/'apk/플레오더_플레오더_release.apk'
@@ -34,6 +35,8 @@ if a.include_films:
     films=ROOT/'산출물/02_시연영상'
     files.extend([(films/'플레오더_대표시연.mp4','pleorder_film_1080p.mp4'),
                   (films/'플레오더_Gleo_실기시연.mp4','pleorder_gleo.mp4')])
+if a.shortform:
+    files.append((ROOT/'산출물/02_시연영상/플레오더_세로숏폼.mp4','pleorder_shortform_vertical.mp4'))
 for f,remote_name in files:
     digest='sha256:'+hashlib.sha256(f.read_bytes()).hexdigest()
     existing=next((x for x in release['assets'] if x['name']==remote_name or x.get('label')==f.name),None)

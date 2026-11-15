@@ -22,6 +22,16 @@ try{
   if(process.argv.includes("--cover")){
     const comp=await selectComposition({...shared,id:"Cover"});
     await renderStill({...shared,composition:comp,imageFormat:"jpeg",jpegQuality:96,output:path.join(repo,"docs/design/pleorder-cover.jpg")});
+  }else if(process.argv.includes("Short")){
+    const cut=JSON.parse(fs.readFileSync(path.join(film,"public/shortform.json"),"utf8"));
+    const comp=await selectComposition({...shared,id:"Short"});
+    const shortWork=path.join(repo,".cache/submission/film/shortform");
+    for(const s of cut.scenes){
+      await renderMedia({...shared,composition:comp,codec:"h264",crf:16,x264Preset:"fast",jpegQuality:94,colorSpace:"bt709",muted:true,
+        frameRange:[s.from,s.from+s.frames-1],concurrency:Number(process.env.RENDER_CONCURRENCY||4),offthreadVideoThreads:2,
+        outputLocation:path.join(shortWork,s.id+"-picture.mp4")});
+      console.log("SHORT_PICTURE",s.id,s.frames);
+    }
   }else{
     const cuts=JSON.parse(fs.readFileSync(path.join(film,"public/editions.json"),"utf8"));
     const chosen=process.argv.filter(x=>Object.hasOwn(names,x));

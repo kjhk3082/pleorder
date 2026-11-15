@@ -54,7 +54,7 @@ def game():
         ("status","GET_FOOD_ORDER_STATUS",["statuslatest","status2"])
     ]:
         if action=="status":
-            device("shell","am","start","--user","current","-a","android.settings.SETTINGS")
+            device("shell","input","keyevent","KEYCODE_HOME")
             time.sleep(1.2)
         for name in names:
             if action!="order" or name!=names[0]:
@@ -95,7 +95,7 @@ remote="/sdcard/Download/pleorder-film-"+str(time.time_ns())+".mp4"
 try:
     device("shell","am","start","--user","current","-W","-n","dev.pleorder.app/.DrivingActivity")
     time.sleep(3)
-    device("shell","am","start","--user","current","-W","-a","android.settings.SETTINGS")
+    device("shell","input","keyevent","KEYCODE_HOME")
     time.sleep(1.5)
     start=time.monotonic()
     logger=subprocess.Popen([*adb,"logcat","-T","1","PleorderGleo:I","*:S"],stdout=subprocess.PIPE)

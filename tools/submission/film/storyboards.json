@@ -7,25 +7,25 @@
   "scenes":{
     "intro":{"layout":"opening","label":"퇴근길의 저녁","title":"도착에 맞춘 한 끼","voice":"intro"},
     "outro":{"layout":"closing","label":"플레오더","title":"플레오더","voice":"outro"},
-    "explore":{"title":"집 주변에서, 가는 길에서.","label":"매장 찾기","note":"목적지 기준 추천","voice":"explore","record":"01-discover","shots":[[1,1,"listOnly"],[6.5,1,"routeList"]]},
-    "decline":{"title":"한도가 부족할 때.","label":"결제 거절과 재승인","note":"다른 카드로 다시 승인","voice":"decline","record":"04-payment","shots":[[9.8,1,"quote"],[20,1,"quote"],[29,1,"amount"]]},
+    "explore":{"title":"집 주변에서, 가는 길에서.","label":"매장 찾기","note":"목적지 기준 추천","voice":"explore","record":"01-discover","shots":[[1,1,"listOnly"],[5.05,1,"routeList"]]},
+    "decline":{"title":"한도가 부족할 때.","label":"결제 거절과 재승인","note":"다른 카드로 다시 승인","voice":"decline","record":"04-payment","shots":[[6,1,"amount"],[10.65,1,"quote"],[16.6,1,"amount"]]},
     "traffic":{"title":"집까지 75분","label":"도착 맞춤 예약","layout":"traffic","note":"매장 전송을 15분 늦게 · 시험 ETA","voice":"traffic","record":"14-traffic","shots":[[10.2,1,"tracking"],[15.2,1,"tracking"],[24.3,1,"tracking"],[44.3,1,"tracking"]]},
-    "door":{"title":"문 앞에 놓아드렸어요.","label":"배달 완료","note":"완료 시각과 예시 사진","voice":"door","record":"05-tracking","shots":[[10.2,1,"tracking"],[22.1,1,"proof"]]},
+    "door":{"title":"문 앞에 놓아드렸어요.","label":"배달 완료","note":"완료 시각과 예시 사진","voice":"door","record":"05-tracking","shots":[[10.2,1,"tracking"],[24,1,"proof"]]},
     "pickup":{"title":"매장을 경유할까요?","label":"가는 길에 픽업","layout":"pickup","note":"경유지 전송 확인 → 매장 수령","voice":"pickup","record":"13-pickup-complete","seconds":11,"shots":[[8.9,1.1,"quote"],[15.6,1.4,"route"],[27,0.9,"tracking"],[39,1,"tracking"]]},
     "drive":{"title":"움직이면, 음성으로.","label":"주행 화면","theme":"dark","note":"release 0.2.2 · 30 km/h 시험","voice":"drive","capture":"studio-drive","shots":[[13.8,1,"dash"],[37,1,"app"]]},
-    "gleo-intro":{"title":"치킨 한 마리,\n말로 주문.","label":"차량 설정에서 시작","layout":"field","note":"Pleos Connect · release 0.2.2","voice":"gleo-intro","capture":"park-status-take","shots":[[0.3,1,"wide"]]},
-    "order":{"title":"우리 집으로\n치킨 한 마리.","label":"음성으로 주문","layout":"field","note":"차량 설정 → 플레오더","turns":[
-      {"capture":"park-status-take","driver":"order","screen":4.455,"crop":"assistant"},
-      {"capture":"park-status-take","sound":5.72,"duration":9.85,"screen":11.84,"crop":"app","lines":[[0,5.17,"교촌치킨 잠실1호점 허니윙콤비, 하프윙 플러스 순살 한 개를"],[5.17,7.94,"우리 집으로 배달 주문으로 담아둘게요."],[8.08,9.85,"합계 26,000원이에요."]]}
+    "gleo-intro":{"title":"치킨 한 마리,\n말로 주문.","label":"차량 음성 버튼","layout":"field","panel":"invocation","seconds":5.3,"note":"Pleos Connect · release 0.2.2","voice":"gleo-intro"},
+    "order":{"title":"우리 집으로\n치킨 한 마리.","label":"음성으로 주문","layout":"field","panel":"request","note":"Gleo에서 플레오더로","turns":[
+      {"capture":"park-status-take","driver":"order"},
+      {"capture":"park-status-take","sound":5.72,"duration":9.85,"screen":15.0,"crop":"app","lines":[[0,5.17,"교촌치킨 잠실1호점 허니윙콤비, 하프윙 플러스 순살 한 개를"],[5.17,7.94,"우리 집으로 배달 주문으로 담아둘게요."],[8.08,9.85,"합계 26,000원이에요."]]}
     ]},
     "approve":{"title":"26,000원.\n목소리로 승인.","label":"모의 결제","layout":"field","note":"현대카드 M","turns":[
       {"capture":"park-status-take","driver":"explicit","screen":26.055,"crop":"quote"},
       {"capture":"park-status-take","sound":21.65,"duration":5.08,"screen":32.89,"crop":"amount","lines":[[0,2.57,"실제 주문이나 결제는 진행되지 않았고,"],[2.57,5.08,"모의로 결제를 승인해 처리했어요."]]}
     ]},
-    "status":{"title":"방금 주문한\n치킨은 어디쯤?","label":"다른 화면에서 현황 조회","layout":"field","titleSize":73,"note":"결제한 주문을 다시 조회","turns":[
-      {"capture":"park-status-take","driver":"statuslatest","screen":50.227,"crop":"assistant"},
-      {"capture":"park-status-take","sound":43.81,"duration":3.52,"screen":55.70,"crop":"app","lines":[[0,3.52,"모의 주문 PO-0003 상태를 알려드릴게요."]]},
-      {"capture":"park-status-take","sound":51.85,"duration":4.55,"screen":63.75,"crop":"assistant","lines":[[0,1.74,"매장에서 조리 중이고,"],[1.74,4.55,"배달 도착까지 약 27분 남았어요."]]}
+    "status":{"title":"방금 주문한\n치킨은 어디쯤?","label":"목소리로 현황 조회","layout":"field","panel":"status","titleSize":73,"note":"같은 주문의 차량 음성 응답","order":{"id":"PO-0003","store":"교촌치킨 잠실1호점","method":"현대카드 M","total":"26,000원","eta":"약 27분"},"turns":[
+      {"capture":"park-status-take","driver":"statuslatest"},
+      {"capture":"park-status-take","sound":43.81,"duration":3.52,"lines":[[0,3.52,"모의 주문 PO-0003 상태를 알려드릴게요."]]},
+      {"capture":"park-status-take","sound":51.85,"duration":4.55,"lines":[[0,1.74,"매장에서 조리 중이고,"],[1.74,4.55,"배달 도착까지 약 27분 남았어요."]]}
     ]},
     "d-intro":{"title":"주행 중에도\n말로 확인.","label":"D단 · 시속 30km 시험","layout":"field","note":"별도 주행 회차","voice":"gleo-drive","capture":"studio-drive","shots":[[18.5,1,"dash"]]},
     "d-approve":{"title":"D단에서도\n금액을 확인.","label":"주행 중 모의 승인","layout":"field","note":"별도 주행 회차 · 현대카드 M","turns":[
@@ -35,18 +35,18 @@
     ]},
     "full-start":{"layout":"opening","title":"플레오더","label":"전체 기능 시연","voice":"full-start"},
     "full-end":{"layout":"closing","title":"플레오더","label":"플레오더","voice":"full-end"},
-    "full-discover":{"title":"가는 길의 가게를 찾습니다.","label":"매장 탐색","note":"집 주변 · 내 주변 · 가는 길","voice":"full-discover","seconds":12.7,"record":"01-discover","shots":[[1,1,"wide"],[5,1,"listOnly"],[16,1,"routeList"],[23,1,"mapOnly"]]},
-    "full-catalog":{"title":"지도 속 실제 매장.","label":"매장 정보와 메뉴","note":"서울 공개 지도 데이터 · 공식 브랜드 자료","voice":"full-catalog","seconds":14.3,"record":"10-catalog","shots":[[2,1,"menu"],[8.5,1,"menu"],[18.5,1,"quote"],[28,1,"app"]]},
+    "full-discover":{"title":"가는 길의 가게를 찾습니다.","label":"매장 탐색","note":"집 주변 · 내 주변 · 가는 길","voice":"full-discover","seconds":12.7,"record":"01-discover","shots":[[0.5,1,"wide"],[4.9,1,"listOnly"],[13.1,1,"routeList"],[23,1,[0.22,0.26,0.56,0.49]]]},
+    "full-catalog":{"title":"지도 속 실제 매장.","label":"매장 정보와 메뉴","note":"서울 공개 지도 데이터 · 공식 브랜드 자료","voice":"full-catalog","seconds":14.3,"record":"10-catalog","shots":[[0.7,1,"app"],[18.1,1,"quote"],[22.5,1,"menu"],[26,1,"app"]]},
     "full-address":{"title":"오늘 받을 곳을 고르세요.","label":"주소 검색과 지도 선택","note":"후보 확인 후 상세주소 저장","voice":"full-address","seconds":14,"record":"02-places","shots":[[1,1,"wide"],[10,1,"picker"],[20.5,1,"picker"],[31,1,"wide"]]},
-    "full-store":{"title":"한 개 더, 총액도 바로.","label":"메뉴와 수량","note":"배송지 · 요청사항 · 배달팁","voice":"full-store","seconds":12.5,"record":"03-store","shots":[[2,1,"menu"],[9,1,"app"],[18,1,"quote"],[26,1,"quote"]]},
-    "full-payment":{"title":"거절되면, 다른 카드로.","label":"승인과 영수증","note":"승인한 주문 한 건만 생성","voice":"full-payment","seconds":15,"record":"04-payment","shots":[[3,1,"quote"],[10,1,"amount"],[21,1,"quote"],[30,1,"amount"]]},
-    "full-tracking":{"title":"조리부터 문 앞까지.","label":"배달 추적","note":"라이더 이동 · 완료 시각 · 예시 사진","voice":"full-tracking","seconds":14.6,"record":"05-tracking","shots":[[1,1,"tracking"],[9.9,1,"tracking"],[17,1,"tracking"],[22.6,1,"proof"]]},
+    "full-store":{"title":"한 개 더, 총액도 바로.","label":"메뉴와 수량","note":"배송지 · 요청사항 · 배달팁","voice":"full-store","seconds":12.5,"record":"03-store","shots":[[2.1,1,"quote"],[5.1,1,"quote"],[9.3,1,"quote"],[10.3,1,"app"]]},
+    "full-payment":{"title":"거절되면, 다른 카드로.","label":"승인과 영수증","note":"승인한 주문 한 건만 생성","voice":"full-payment","seconds":15,"record":"04-payment","shots":[[5.8,1,"amount"],[10.6,0.65,"quote"],[12.2,1,"quote"],[16.8,1.18,"amount"]]},
+    "full-tracking":{"title":"조리부터 문 앞까지.","label":"배달 추적","note":"라이더 이동 · 완료 시각 · 예시 사진","voice":"full-tracking","seconds":14.6,"record":"05-tracking","shots":[[0.3,1.1,"tracking"],[2.5,0.8,"tracking"],[7.7,1,"tracking"],[23.5,1.3,"proof"]]},
     "full-pickup":{"title":"돌아가는 시간까지 확인.","label":"매장 픽업","layout":"pickup","note":"내비게이션 경유지 전송 확인","voice":"full-pickup","seconds":16.2,"record":"13-pickup-complete","shots":[[3,1,"menu"],[9,1,"quote"],[15.7,1,"quote"],[26,1,"tracking"],[39,1,"tracking"]]},
     "full-traffic":{"title":"집까지 75분","label":"정체로 늦어진 귀가","layout":"traffic","note":"시험 ETA 60 → 75분 · 시계 가속","voice":"full-traffic","seconds":15,"record":"14-traffic","shots":[[9,1,"tracking"],[15.3,1,"tracking"],[24.3,1,"tracking"],[44.2,1,"tracking"]]},
-    "full-reserve":{"title":"도착할 때 맞춰서.","label":"예약과 전송","note":"예약 보류 · 재개","voice":"full-reserve","seconds":13,"record":"07-reservation","shots":[[2,1,"quote"],[10,1,"tracking"],[21,1,"tracking"],[30,1,"tracking"]]},
-    "full-sdk":{"title":"차량 스피커로 듣는 영수증.","label":"공개 Pleos 음성 SDK","theme":"dark","note":"debug 녹화 · SDK 응답 원음","voice":"full-sdk","sdk":true,"record":"09-speech","shots":[[15,1.35,"quote"],[37,1,"amount"]]},
-    "full-system":{"title":"차량 Gleo를\n불러 보세요.","label":"시스템 음성 비서","layout":"field","note":"release 0.2.2 · 실제 음성 입력","voice":"full-system","capture":"park-status-take","shots":[[0.2,1,"wide"]]},
-    "full-settings":{"title":"내 카드, 내 목소리 설정.","label":"앱 설정","note":"결제 수단 · 음성 대화 · DEMO 초기화","voice":"full-settings","seconds":13,"record":"17-settings","shots":[[2,1,"app"],[10,1,"app"],[23,1,"quote"],[32,1,"app"]]},
+    "full-reserve":{"title":"도착할 때 맞춰서.","label":"예약과 전송","note":"예약 보류 · 재개","voice":"full-reserve","seconds":13,"record":"07-reservation","shots":[[10,1,"tracking"],[16.1,1,"tracking"],[20.5,1,"tracking"],[24.6,1,"tracking"]]},
+    "full-sdk":{"title":"차량 스피커로 듣는 영수증.","label":"공개 Pleos 음성 SDK","theme":"dark","note":"debug 녹화 · SDK 응답 원음","voice":"full-sdk","sdk":true,"record":"09-speech","shots":[[18,1,"quote"],[34,1.05,"amount"]]},
+    "full-system":{"title":"차량 Gleo를\n불러 보세요.","label":"시스템 음성 비서","layout":"field","panel":"invocation","seconds":6.7,"note":"release 0.2.2 · 실제 음성 입력","voice":"full-system"},
+    "full-settings":{"title":"내 카드, 내 목소리 설정.","label":"플레오더 앱 설정","note":"결제 수단 · 음성 안내","voice":"full-settings","seconds":13,"record":"17-settings","shots":[[2,1,"app"],[6,1,"quote"],[14,1,"quote"],[23,1,"app"]]},
     "full-drive":{"title":"주행 중엔 더 간결하게.","label":"주행 제한 대응","theme":"dark","note":"P → D 정차 → D 주행 화면","voice":"full-drive","seconds":12,"record":"16-driving","shots":[[1,1,"wide"],[9,1,"dash"],[15,1,"wide"]]}
   }
 }

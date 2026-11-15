@@ -1,70 +1,116 @@
-"""Original stereo score. All instruments are synthesized here; no stock loops or samples."""
+"""Original instrumental score for the three Pleorder films."""
+from functools import lru_cache
 import math
 import numpy as np
 
 RATE = 24000
+BPM = 112
+BEAT = 60 / BPM
+# Fmaj9, Am7/E, Dm9 and Bbmaj9. Common upper notes connect the changes.
+VOICINGS = ((41, (57, 60, 64, 67)), (40, (55, 57, 60, 64)),
+            (38, (53, 57, 60, 64)), (34, (53, 57, 60, 62)))
+
+
+@lru_cache(maxsize=160)
+def tone(note, duration, instrument):
+    t = np.arange(round(duration * RATE)) / RATE
+    phase = 2 * np.pi * 440 * 2 ** ((note - 69) / 12) * t
+    if instrument == "bass":
+        signal = np.sin(phase) + .28 * np.sin(2 * phase) + .10 * np.sin(3 * phase)
+        shape = (1 - np.exp(-60*t)) * np.exp(-2.4*t)
+    elif instrument == "pluck":
+        signal = np.sin(phase + 1.18*np.exp(-15*t)*np.sin(2*phase)) + .18*np.sin(2.003*phase)
+        shape = (1 - np.exp(-125*t)) * np.exp(-6.2*t)
+    else:
+        signal = .58*np.sin(phase) + .26*np.sin(phase*1.003) + .16*np.sin(2*phase)
+        shape = (1 - np.exp(-8*t)) * np.exp(-.9*t)
+    release = np.minimum(1, (duration-t) / min(duration/3, .18))
+    return (signal * shape * release**2).astype(np.float32)
+
+
+def percussion(rng):
+    t = np.arange(round(.24*RATE)) / RATE
+    kick = np.sin(2*np.pi*(51*t + 2.75*(1-np.exp(-t*29)))) * np.exp(-18*t)
+    kick *= (1-np.exp(-220*t))*np.minimum(1,(.24-t)/.03)
+    t = np.arange(round(.105*RATE)) / RATE
+    brush = np.diff(rng.uniform(-1,1,len(t)),prepend=0)
+    tick = (np.sin(2*np.pi*810*t)+.48*np.sin(2*np.pi*1270*t)) * np.exp(-92*t)
+    rim = (tick+.28*brush*np.exp(-55*t))*(1-np.exp(-420*t))
+    shakers = []
+    for duration in (.043,.075,.091):
+        t = np.arange(round(duration*RATE)) / RATE
+        sand = np.diff(rng.uniform(-1,1,len(t)),prepend=0)
+        shakers.append(sand*np.sin(np.pi*t/duration)**1.4*np.exp(-19*t))
+    return kick, rim, shakers
+
+
+def speech_envelope(dialogue):
+    hop = RATE // 50
+    padding = (-len(dialogue)) % hop
+    frames = np.pad(dialogue, (0, padding)).reshape(-1, hop)
+    levels = np.sqrt(np.mean(frames**2, axis=1))
+    speech = np.clip((levels-.006)/.043, 0, 1)
+    anticipation = np.maximum(speech, np.pad(speech, (0,3))[3:])
+    strength = np.empty_like(anticipation)
+    level = 0.
+    for idx, target in enumerate(anticipation):
+        level += (.65 if target > level else .076) * (target-level)
+        strength[idx] = level
+    return np.interp(np.arange(len(dialogue))/hop, np.arange(len(strength)), strength)
+
 
 def score(seconds, dialogue, mood=0):
-    length = round(seconds * RATE)
-    out = np.zeros((length,2),np.float32)
-    beat = 60/106
-    chords = [(50,57,61,64,66),(47,54,57,61,64),(43,50,54,57,59),(45,52,55,59,62)]
-    rng = np.random.default_rng(405+mood)
-    def place(t, mono, gain, pan=0):
-        start=round(t*RATE)
-        n=min(len(mono),length-start)
-        if n<=0:return
-        out[start:start+n,0]+=mono[:n]*gain*math.sqrt((1-pan)/2)
-        out[start:start+n,1]+=mono[:n]*gain*math.sqrt((1+pan)/2)
-    def keys(t,note,duration,gain,pan,kind):
-        x=np.arange(round(duration*RATE))/RATE
-        f=440*2**((note-69)/12)
-        phi=2*np.pi*f*x
-        if kind=="bass":
-            env=(1-np.exp(-x*35))*np.exp(-2.9*x)*(1-np.minimum(1,x/duration)**5)
-            signal=np.sin(phi)+.26*np.sin(2*phi)+.09*np.sin(3*phi)
-        else:
-            env=(1-np.exp(-x*90))*np.exp(-2.3*x)*(1-np.minimum(1,x/duration)**3)
-            signal=np.sin(phi+.77*np.exp(-x*4)*np.sin(2*phi))+.15*np.sin(2.004*phi)
-        place(t,signal*env,gain,pan)
-        if kind=="bell":
-            place(t+beat*.75,signal*env,gain*.23,-pan)
-    measures=math.ceil(seconds/(4*beat))
-    for bar in range(measures):
-        c=chords[(bar+mood)%4]
-        t=bar*4*beat
-        for delay,vol in [(0,.073),(1.5,.047),(2.75,.058)]:
-            for j,note in enumerate(c[1:]):
-                keys(t+delay*beat+j*.010,note+12,1.4,vol*.58,(j-1.5)*.30,"keys")
-        for delay,pitch in [(0,c[0]-12),(1.75,c[0]-12),(2.6,c[1]-12)]:
-            keys(t+delay*beat,pitch,.70,.13,0,"bass")
-        if bar%2==0:
-            for i,(delay,n) in enumerate([(.5,c[3]+12),(1.25,c[2]+12),(3.25,c[4]+12)]):
-                keys(t+delay*beat,n,.96,.062,(-1)**i*.33,"bell")
-        for tick in range(8):
-            tm=t+tick*beat*.5
-            if tick%4==0:
-                x=np.arange(int(.22*RATE))/RATE
-                place(tm,np.sin(2*np.pi*(48*x+3.4*(1-np.exp(-x*23))))*np.exp(-21*x)*(1-np.exp(-x*160)),.212)
-            if tick in (2,6):
-                x=np.arange(int(.083*RATE))/RATE
-                noise=rng.standard_normal(len(x));hp=np.diff(noise,prepend=0)*.27
-                place(tm+.008,(hp+.32*np.sin(2*np.pi*1730*x))*np.exp(-x*71)*(1-np.exp(-x*550)),.075,.17)
-            if tick%2:
-                x=np.arange(int(.068*RATE))/RATE
-                noise=rng.standard_normal(len(x))
-                place(tm+.014,np.diff(noise,prepend=0)*np.exp(-78*x)*(1-np.exp(-550*x)),.024,-.32 if tick%4==1 else .36)
-    # Follow the actual three speech stems so the rhythm rises into pauses and recedes under words.
-    hop=round(RATE*.025)
-    rms=np.array([np.sqrt(np.mean(dialogue[i:i+hop]**2)) for i in range(0,length,hop)])
-    target=np.clip((rms-.006)/.040,0,1)
-    anticipation=np.maximum(target,np.r_[target[2:],np.zeros(min(2,len(target)))][:len(target)])
-    env=[];last=0.
-    for value in anticipation:
-        coeff=.58 if value>last else .079
-        last+=coeff*(value-last);env.append(last)
-    duck=np.interp(np.arange(length)/hop,np.arange(len(env)),env)
-    out*=((1-.60*duck)*.97)[:,None].astype(np.float32)
-    fade=np.minimum(1,np.arange(length)/(RATE*.12))*np.minimum(1,(length-1-np.arange(length))/(RATE*1.05))
-    out*=fade[:,None].astype(np.float32)
-    return out
+    length = round(seconds*RATE)
+    output = np.zeros((length, 2), np.float32)
+    rng = np.random.default_rng(1126 + mood)
+    kick, rim, shakers = percussion(rng)
+    voice_film = mood == 1
+
+    def place(start, signal, gain, pan=0):
+        offset = round(start*RATE)
+        n = min(len(signal), length-offset)
+        if n > 0:
+            output[offset:offset+n,0] += signal[:n]*gain*math.sqrt((1-pan)/2)
+            output[offset:offset+n,1] += signal[:n]*gain*math.sqrt((1+pan)/2)
+
+    for bar in range(math.ceil(seconds/(BEAT*4))):
+        start = bar*4*BEAT
+        root, chord = VOICINGS[bar % 4]
+        phrase = bar % 8
+        for i, note in enumerate(chord):
+            place(start+.011*i, tone(note, 3.7*BEAT, "pad"), .036, (i-1.5)*.38)
+
+        # The soft offbeat guitar-like stabs answer the bass, leaving the centre for voices.
+        stabs = ((.5,.11),(1.75,.07),(3.25,.09)) if bar % 2 else ((.5,.12),(2.25,.105))
+        for off, gain in stabs:
+            for i,note in enumerate(chord[1:]):
+                pluck = tone(note, .64, "pluck")
+                place(start+off*BEAT+.012*i, pluck, gain*.57, (i-1)*.44)
+                place(start+(off+.75)*BEAT+.012*i, pluck, gain*.095, (1-i)*.53)
+
+        bassline = ((0, root, .8), (1.5,root+12,.32), (2.5,root+7,.5))
+        if phrase in (3,7):
+            bassline += ((3.5,VOICINGS[(bar+1)%4][0]+7,.3),)
+        for off,note,hold in bassline:
+            place(start+off*BEAT, tone(note, hold*BEAT, "bass"), .19)
+
+        # Four bars breathe before the little three-note answer returns.
+        if not voice_film and phrase in (1,5):
+            for step, note, pan in ((.75,chord[3]+12,-.22),(1.5,chord[2]+12,.25),(3,chord[1]+12,.12)):
+                place(start+step*BEAT, tone(note,.59,"pluck"), .063, pan)
+        for off in ((0,2.5) if phrase % 2 else (0,2)):
+            place(start+off*BEAT, kick, .16 if voice_film else .215)
+        for off in (1,3):
+            place(start+off*BEAT+.011, rim, .045 if voice_film else .07, .14)
+        for tick in range(1,8,2):
+            if voice_film and tick in (3,7):
+                continue
+            off = tick*.5*BEAT + (.018 if tick in (3,7) else .009)
+            place(start+off, shakers[(tick+bar)%3], .038 if tick in (1,5) else .024, -.43 if tick<4 else .43)
+
+    t = np.arange(length) / RATE
+    fade = np.minimum(1,t/.32) * np.clip((seconds-t)/1.15,0,1)
+    # A quieter arrangement and deeper duck on the field recording keep the car speaker clear.
+    duck = 1 - (.76 if voice_film else .70)*speech_envelope(dialogue)
+    output *= (fade*duck*(.83 if voice_film else .96)).astype(np.float32)[:, None]
+    return output

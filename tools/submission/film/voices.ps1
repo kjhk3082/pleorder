@@ -1,4 +1,4 @@
-param([ValidateSet('driver','narrator','all')][string]$Role='all')
+param([ValidateSet('driver','narrator','shortform','all')][string]$Role='all')
 $ErrorActionPreference='Stop'
 $film=$PSScriptRoot
 $roles=Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $film 'voices.json') | ConvertFrom-Json

@@ -4,17 +4,17 @@
 
 **플레오더는 목적지와 도착 시각에 맞춰 식사를 주문하는 Pleos Connect 앱입니다.** 운전자가 Gleo에 메뉴를 말하면 견적을 내고, 금액과 카드를 확인한 뒤 승인하면 배달이나 픽업을 진행합니다. 매장 접수와 결제는 공모전용 시뮬레이션입니다.
 
-[**대표 시연**](#퇴근길-한-번으로-보는-플레오더)　·　[**차량 Gleo 실기**](#차량-gleo에서-주문-시작하기)　·　[**전체 기능 시연**](#기능별-전체-시연)　·　[**APK 다운로드**](https://github.com/kjhk3082/pleorder/raw/refs/heads/main/apk/%ED%94%8C%EB%A0%88%EC%98%A4%EB%8D%94_%ED%94%8C%EB%A0%88%EC%98%A4%EB%8D%94_release.apk)　·　[**기획서 PDF**](산출물/01_기획서/플레오더_기획서.pdf)　·　[**실행 방법**](#실행-방법)　·　[**기기 검증**](docs/testing/gleo-release-2026-11-15.md)
+[**대표 시연**](#퇴근길-한-번으로-보는-플레오더)　·　[**차량 Gleo 실기**](#차량-gleo에서-주문-시작하기)　·　[**전체 기능 시연**](#기능별-전체-시연)　·　[**세로 숏폼**](#세로-숏폼)　·　[**APK 다운로드**](https://github.com/kjhk3082/pleorder/raw/refs/heads/main/apk/%ED%94%8C%EB%A0%88%EC%98%A4%EB%8D%94_%ED%94%8C%EB%A0%88%EC%98%A4%EB%8D%94_release.apk)　·　[**기획서 PDF**](산출물/01_기획서/플레오더_기획서.pdf)　·　[**실행 방법**](#실행-방법)　·　[**기기 검증**](docs/testing/gleo-release-2026-11-15.md)
 
 ## 퇴근길 한 번으로 보는 플레오더
 
-https://github.com/user-attachments/assets/9580ea7f-c30d-4c0e-a6e1-10e1731240f1
+https://github.com/user-attachments/assets/70091f10-97c3-4e53-9243-e433218df620
 
-**1분 41초**　[1080p 원본](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-studio/pleorder_film_1080p.mp4) · [한국어 자막](산출물/02_시연영상/플레오더_대표시연.srt)
+**1분 41초**　[1080p 원본](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-final-cut/pleorder_film_1080p.mp4) · [한국어 자막](산출물/02_시연영상/플레오더_대표시연.srt)
 
 | 시간 | 장면 | 화면에서 확인할 수 있는 것 |
 | --- | --- | --- |
-| 0:16 | 차량 설정에서 주문 | Gleo에 치킨을 부탁하면 교촌치킨 잠실1호점 주문 확인창이 열린다. |
+| 0:16 | 목소리로 치킨 주문 | Gleo에 치킨을 부탁하면 교촌치킨 잠실1호점 주문 확인창이 열린다. |
 | 0:30 | 음성 승인과 조회 | 현대카드 M으로 26,000원을 모의 승인한다. 같은 주문은 조리 중이고 배달까지 약 27분 남았다. |
 | 0:52 | 카드 한도 부족 | 카드를 바꾸고 다시 승인한다. |
 | 0:59 | 퇴근길 정체 | 차량 ETA가 60분에서 75분으로 늘어나 매장 전송을 15분 늦춘다. |
@@ -22,17 +22,17 @@ https://github.com/user-attachments/assets/9580ea7f-c30d-4c0e-a6e1-10e1731240f1
 | 1:16 | 매장 픽업 | 매장을 경유지로 전송할지 확인하고 음식을 수령한다. |
 | 1:27 | 주행 화면 | D단·시속 30km에서 음성 중심 화면을 확인한다. |
 
-운전자와 내레이션은 서로 다른 ElevenLabs 음성입니다. 주문·승인·현황을 읽어 주는 대답은 release 0.2.2를 실행한 Pleos 에뮬레이터의 스피커 원음입니다. 정체 장면은 시험용 ETA를 사용했고, 내비는 픽업 매장 전송 확인창까지 촬영했습니다. [장면 안내](산출물/02_시연영상/대표시연_설명.md)
+운전자와 내레이션은 서로 다른 ElevenLabs 음성입니다. 차량 대답은 release 0.2.2를 실행한 Pleos 에뮬레이터의 스피커 녹음입니다. 발화와 주문 현황은 그래픽으로, 견적과 영수증은 실제 앱 녹화로 보여 줍니다. 정체 장면은 시험용 ETA를 사용했고, 픽업은 내비 경유지 전송 확인창까지 촬영했습니다. [장면 안내](산출물/02_시연영상/대표시연_설명.md)
 
 ## 차량 Gleo에서 주문 시작하기
 
 > “플레오더에서 치킨 한 마리를 우리 집으로 배달해 주세요.”
 
-차량 설정을 보고 있어도 음성 버튼으로 Gleo를 부를 수 있습니다. **0.2.2**에서 Gleo는 이 요청을 플레오더의 App Schema로 전달합니다. 주차 중에는 주문 확인창, 주행 제한이 활성화되면 간결한 음성 화면을 엽니다. 현황을 물으면 열어 둔 앱에서 답을 들을 수 있습니다.
+차량 음성 버튼으로 Gleo를 부르면 주문 요청을 플레오더에 전달합니다. **0.2.2**에서는 주차 중에 주문 확인창을 열고, 주행 제한이 활성화되면 간결한 음성 화면을 엽니다. 다른 앱을 보면서도 같은 주문의 현황을 물어볼 수 있습니다.
 
-https://github.com/user-attachments/assets/84e911e1-ccfa-491b-9db7-78fd84e9f510
+https://github.com/user-attachments/assets/7f6037aa-199f-4fe9-bf7e-5bd26e42edee
 
-**1분 2초 실기**　0:05 차량 설정에서 주문 · 0:19 현대카드 M 26,000원 모의 승인 · 0:29 같은 주문의 조리 현황 · 0:46 D단·시속 30km에서 별도 주문 21,500원 승인. [원본 MP4](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-studio/pleorder_gleo.mp4) · [한국어 장면 자막](산출물/02_시연영상/플레오더_Gleo_실기시연.srt)
+**1분 2초 실기**　0:05 치킨 배달 요청 · 0:19 현대카드 M 26,000원 모의 승인 · 0:29 같은 주문의 조리 현황 · 0:46 D단·시속 30km에서 별도 주문 21,500원 승인. [원본 MP4](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-final-cut/pleorder_gleo.mp4) · [한국어 장면 자막](산출물/02_시연영상/플레오더_Gleo_실기시연.srt)
 
 [제출 APK에서 다시 확인한 주차·주행 주문](docs/testing/gleo-release-2026-11-15.md#제출-apk-재시험) · [Gleo 동작 8개](app/src/main/assets/schema.json) · [참가팀의 App Schema 사용 안내](https://appdevchallenge.auto-hmg.io/notice/c0a1a000-2026-4923-8000-000000000008)
 
@@ -40,9 +40,22 @@ https://github.com/user-attachments/assets/84e911e1-ccfa-491b-9db7-78fd84e9f510
 
 **3분 35초**　0:32 배송지 검색 · 0:59 결제 거절과 재승인 · 1:29 픽업 · 1:45 정체에 따른 예약 조정 · 2:24 시스템 Gleo · 3:19 주행 화면.
 
-https://github.com/user-attachments/assets/c344ae2f-f92c-43c7-8423-1f267bb2bcdb
+https://github.com/user-attachments/assets/0b3078eb-7f2f-4ef5-984a-fd1ae6f55ff4
 
-[전체 시연 1080p](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-studio/pleorder_demo.mp4) · [전체 자막](산출물/02_시연영상/플레오더_전체기능시연.srt) · [전체 차례](산출물/02_시연영상/장면별_설명.md)
+[전체 시연 1080p](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-final-cut/pleorder_demo.mp4) · [전체 자막](산출물/02_시연영상/플레오더_전체기능시연.srt) · [전체 차례](산출물/02_시연영상/장면별_설명.md)
+
+## 세로 숏폼
+
+**치킨은 벌써 문 앞인데, 나는 아직 강변북로.** 길이 막히면 저녁은 언제 주문할까요?
+
+<details>
+<summary><strong>45초 세로 영상 재생</strong></summary>
+
+https://github.com/user-attachments/assets/f21c4809-05b8-4610-86d6-1c316a5b1ac3
+
+</details>
+
+[세로 영상 다운로드](https://github.com/kjhk3082/pleorder/releases/download/contest-2026-11-15-final-cut/pleorder_shortform_vertical.mp4) · [한국어 자막](산출물/02_시연영상/플레오더_세로숏폼.srt)
 
 ## 배달과 픽업이 갈라지는 순간
 
@@ -62,7 +75,7 @@ https://github.com/user-attachments/assets/c344ae2f-f92c-43c7-8423-1f267bb2bcdb
 
 ## 실행 방법
 
-**차량 에뮬레이터**　Pleos Connect `release_connect_v2.1.0` · Android 14/API 34 · x86_64 · 2560 × 1440 · density 160. 출품 APK는 0.2.2, versionCode 5다. [설치 파일과 체크섬](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-15-studio)
+**차량 에뮬레이터**　Pleos Connect `release_connect_v2.1.0` · Android 14/API 34 · x86_64 · 2560 × 1440 · density 160. 출품 APK는 0.2.2, versionCode 5다. [설치 파일과 체크섬](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-15-final-cut)
 
 1. 저장소의 [apk/플레오더_플레오더_release.apk](apk/플레오더_플레오더_release.apk)를 받고 에뮬레이터를 실행한다. 저장소를 클론하면 해당 경로에 설치 파일이 들어 있다.
 2. 아래 명령으로 설치한다. P단에서 필요한 마이크·위치·내비 권한을 허용한다.
@@ -86,7 +99,7 @@ npm run preview
 - JDK 21과 Android SDK 34로 `.\gradlew.bat :app:assembleRelease`를 실행한다. 출품 APK는 공모전 테스트용 개발 인증서로 서명했다. [빌드와 지도 인증 설정](apk/README.md)
 - 지도는 네이버 지도 또는 OSM을 표시한다. 차량 좌표는 FusedLocation, 내비 목적지·경유 요청은 NaviHelper로 처리한다. 개발용 Directions 5 프록시는 별도 설정이 필요하며 배포 APK는 대체 경로 제공자를 사용할 수 있다.
 - 주문 엔진은 주차 화면·주행 화면·백그라운드에서 공유한다. 승인 회귀, 여러 주문의 조회, 예약 보류와 재개를 테스트한다. [구조](docs/architecture.md) · [회귀 시나리오](docs/testing/scenario-matrix.md)
-- [기획서 DOCX](산출물/01_기획서/플레오더_기획서.docx) · [버전별 검증](산출물/03_검증자료/검증결과.md) · [제출 안내](산출물/04_제출안내/공식요건_체크리스트.md)
+- [기획서 DOCX](산출물/01_기획서/플레오더_기획서.docx) · [버전별 검증](산출물/03_검증자료/검증결과.md) · [공모전 공식 제출 안내](https://appdevchallenge.auto-hmg.io/guide/submission)
 
 </details>
 

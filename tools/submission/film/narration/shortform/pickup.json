@@ -1,0 +1,20 @@
+{
+  "voice": "Jisoo - Inviting, Clear and Measured",
+  "sourceHash": "2112593b8e9995238542ea6be4e9580a3924c435a15bc9d36936babf5988aff8",
+  "cues": [
+    {
+      "text": "직접 찾으러 갈 땐요?",
+      "startMs": 0,
+      "endMs": 1474,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "매장을 경유할지 묻고, 내비로 보내 줘요.",
+      "startMs": 1579,
+      "endMs": 4830,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

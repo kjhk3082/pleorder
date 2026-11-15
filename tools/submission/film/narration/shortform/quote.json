@@ -1,0 +1,20 @@
+{
+  "voice": "Jisoo - Inviting, Clear and Measured",
+  "sourceHash": "21115a33cb73060be588477b3934e51d3a7d9d8b72f4731485f9d21160d1d578",
+  "cues": [
+    {
+      "text": "견적은 이만 육천 원.",
+      "startMs": 0,
+      "endMs": 1800,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "카드와 금액을 듣고, 제가 승인해야 결제돼요.",
+      "startMs": 1858,
+      "endMs": 5573,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

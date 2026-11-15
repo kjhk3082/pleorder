@@ -1,0 +1,20 @@
+{
+  "voice": "Jisoo - Inviting, Clear and Measured",
+  "sourceHash": "5a63b77d2e4a2a3bc3e3b2db383955e6ad36a083132f18eecee21e161761906c",
+  "cues": [
+    {
+      "text": "이번엔 집까지 육십 분이 칠십오 분으로 늘었어요.",
+      "startMs": 0,
+      "endMs": 3657,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "아직 접수 전인 예약은 십오 분 늦게 매장에 보내요.",
+      "startMs": 3959,
+      "endMs": 8313,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

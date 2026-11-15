@@ -1,0 +1,20 @@
+{
+  "voice": "Jisoo - Inviting, Clear and Measured",
+  "sourceHash": "e2c28610faf5ccb5924d42cf042edd4d427a2cf9dee2355235c6317d590c628c",
+  "cues": [
+    {
+      "text": "치킨은 벌써 문 앞인데,",
+      "startMs": 0,
+      "endMs": 1660,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "저는 아직 강변북로예요.",
+      "startMs": 1730,
+      "endMs": 3715,
+      "timestampMs": null,
+      "confidence": null
+    }
+  ]
+}

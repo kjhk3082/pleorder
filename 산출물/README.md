@@ -7,10 +7,11 @@
 | 대표 시연 · 1분 41초 | [1080p MP4](02_시연영상/플레오더_대표시연.mp4) · [한국어 자막](02_시연영상/플레오더_대표시연.srt) · [장면 안내](02_시연영상/대표시연_설명.md) |
 | 차량 Gleo 실기 · 1분 2초 · release 0.2.2 | [MP4](02_시연영상/플레오더_Gleo_실기시연.mp4) · [한국어 자막](02_시연영상/플레오더_Gleo_실기시연.srt) · [기기 검증](../docs/testing/gleo-release-2026-11-15.md) |
 | 전체 기능 시연 · 3분 35초 | [MP4](02_시연영상/플레오더_전체기능시연.mp4) · [자막](02_시연영상/플레오더_전체기능시연.srt) · [장면별 설명](02_시연영상/장면별_설명.md) |
+| 세로 숏폼 · 45초 | [1080 × 1920 MP4](02_시연영상/플레오더_세로숏폼.mp4) · [자막](02_시연영상/플레오더_세로숏폼.srt) · [게시 문안](02_시연영상/숏폼_게시문안.md) |
 | 공개 기획서 · 6쪽 | [PDF](01_기획서/플레오더_기획서.pdf) · [DOCX](01_기획서/플레오더_기획서.docx) · [Markdown](01_기획서/플레오더_기획서.md) |
-| 실행 가능한 release APK | [apk/플레오더_플레오더_release.apk](../apk/플레오더_플레오더_release.apk) · [Release 페이지](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-15-studio) · [실행 안내](../apk/README.md) |
+| 실행 가능한 release APK | [apk/플레오더_플레오더_release.apk](../apk/플레오더_플레오더_release.apk) · [Release 페이지](https://github.com/kjhk3082/pleorder/releases/tag/contest-2026-11-15-final-cut) · [실행 안내](../apk/README.md) |
 | 검증 | [결과와 한계](03_검증자료/검증결과.md) · [SHA-256](03_검증자료/SHA256SUMS.txt) |
-| 접수 요건 | [공식 요건 체크리스트](04_제출안내/공식요건_체크리스트.md) |
+| 접수 요건 | [공모전 공식 제출 안내](https://appdevchallenge.auto-hmg.io/guide/submission) |
 
 공식 접수양식과 이메일 초안은 이 컴퓨터의 `비공개_접수용` 폴더에만 있습니다. 대표자와 팀원 이름이 들어 있어 GitHub에 올리지 않습니다. 연락처·역할·개별 동의·서명·날짜를 당사자가 작성한 뒤 제출해야 합니다. 이메일 접수는 아직 수행하지 않았습니다.
 

@@ -120,17 +120,60 @@ function Spotlight({scene}){
     <Caption scene={scene} dark={dark}/>
   </AbsoluteFill>;
 }
+function MicGlyph({size=64}){
+  return <svg width={size} height={size} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+    <rect x="17" y="4" width="14" height="25" rx="7"/><path d="M11 23a13 13 0 0 0 26 0M24 36v6m-7 0h14"/>
+  </svg>;
+}
+function ConversationPanel({scene,frame}){
+  const status=scene.panel==="status", request=scene.panel==="request", order=scene.order;
+  const cueFrame=(needle)=>Math.round(scene.cues.find(c=>c.text.includes(needle))?.startMs*.03);
+  const cooking=status && frame>=cueFrame("조리 중"), arrival=status && frame>=cueFrame("27분");
+  const open=ease(frame,0,19), signal=scene.env[frame]||0;
+  const panelStyle=pos(646,198,{width:1150,height:652,boxSizing:"border-box",borderRadius:43,overflow:"hidden",
+    background:request?"#f2ece3":"linear-gradient(140deg,#f5faf8,#e3eeeb)",color:ink,padding:"57px 65px",
+    boxShadow:"0 28px 68px #0004",transform:"translateY("+((1-open)*20)+"px)",letterSpacing:"-.036em"});
+  const label={color:"#35675f",fontSize:27,fontWeight:650};
+  if(request)return <div style={panelStyle}>
+    <Img src={staticFile("chicken.png")} style={pos(510,-8,{width:700,height:675,objectFit:"cover",maskImage:"linear-gradient(90deg,transparent,#000 19%)",transform:"scale("+(1+.035*ease(frame,0,95))+")"})}/>
+    <div style={{position:"relative"}}><span style={label}>운전자 발화</span>
+      <div style={{fontSize:89,fontWeight:760,lineHeight:1.08,letterSpacing:"-.066em",marginTop:106}}>치킨 한 마리</div>
+      <div style={{fontSize:47,fontWeight:550,color:"#40554e",marginTop:25}}>우리 집으로 배달</div>
+      <div style={{display:"flex",gap:14,alignItems:"center",marginTop:122,fontSize:29,color:"#376359"}}><MicGlyph size={39}/>차량 음성 입력</div>
+    </div>
+  </div>;
+  if(status)return <div style={panelStyle}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={label}>차량 응답 요약</span><span style={{fontSize:29,fontWeight:560,color:"#546962"}}>{order.id}</span></div>
+    <div style={{marginTop:53,fontSize:43,fontWeight:640}}>{order.store}</div>
+    <div style={{display:"flex",gap:30,alignItems:"baseline",marginTop:14}}>
+      <span style={{fontSize:86,lineHeight:1.2,fontWeight:760,letterSpacing:"-.068em",color:cooking?mint:ink}}>{cooking?"조리 중":"최근 주문"}</span>
+      {arrival&&<span style={{fontSize:50,fontWeight:650,color:mint,opacity:ease(frame,cueFrame("27분"),cueFrame("27분")+10)}}>도착까지 {order.eta}</span>}
+    </div>
+    <div style={{display:"flex",marginTop:64,gap:11}}>{["주문 접수","조리","배달","완료"].map((stage,i)=><div key={stage} style={{flex:1,color:i<1||(cooking&&i===1)?mint:"#5b716c",fontSize:25,fontWeight:i===1?680:540}}>
+      <div style={{height:7,borderRadius:5,background:i<1||(cooking&&i===1)?mint:"#c6d7d1",marginBottom:15}}/>{stage}</div>)}</div>
+    <div style={{marginTop:58,borderTop:"1.5px solid #afc3bc",paddingTop:23,display:"flex",justifyContent:"space-between",fontSize:31,fontWeight:560}}><span>{order.method} · 모의 결제</span><strong>{order.total}</strong></div>
+  </div>;
+  return <div style={panelStyle}>
+    <span style={label}>차량 음성 버튼</span>
+    <div style={{marginTop:74,display:"flex",gap:31,alignItems:"center"}}>
+      <div style={{width:139,height:139,borderRadius:42,background:"#d0e5de",color:mint,display:"grid",placeItems:"center",transform:"scale("+(1+Math.min(.11,signal*.48))+")"}}><MicGlyph size={78}/></div>
+      <div style={{fontSize:94,fontWeight:730,letterSpacing:"-.06em"}}>Gleo</div>
+      <svg width="102" height="43" viewBox="0 0 102 43"><path d="M4 22H92m-17-16 18 16-18 16" fill="none" stroke="#7fa59a" strokeWidth="4" strokeLinecap="round"/></svg>
+      <Brand size={112}/><strong style={{fontSize:67,letterSpacing:"-.066em"}}>플레오더</strong>
+    </div>
+    <div style={{fontSize:48,lineHeight:1.35,color:"#22453f",fontWeight:570,marginTop:74}}>차량에서 주문할 메뉴와<br/>받을 곳을 말하세요.</div>
+  </div>;
+}
 function Field({scene}){
   const f=useCurrentFrame(),active=scene.cues.find(x=>f*1000/30>=x.startMs&&f*1000/30<x.endMs);
-  const statusCue=scene.id==="status"?scene.cues.find(x=>x.text.includes("조리 중")):null;
-  const changed=statusCue && f>=Math.round(statusCue.startMs*.03);
+  const showPanel=scene.panel==="invocation"||scene.panel==="status"||(scene.panel==="request"&&f<scene.clips[0].at);
   return <AbsoluteFill style={{background:"radial-gradient(ellipse at 78% 33%,#24343b 0%,#171e27 43%,#10151c 86%)",color:"white"}}>
     <div style={pos(90,67,{display:"flex",alignItems:"center",gap:12,fontSize:29,fontWeight:640,color:"#d6e0e3"})}><Brand size={52} light/>플레오더 <span style={{fontWeight:430,color:"#9ba8ad"}}>· 차량 Gleo 실기</span></div>
     <div style={pos(90,292)}><Tag dark>{scene.label}</Tag></div>
-    <div style={pos(85,371,{width:515})}><Word key={changed?"result":"question"} frame={changed?f-Math.round(statusCue.startMs*.03):f} size={scene.titleSize||80} color={changed?ice:"#f7f8fa"}>{changed?"매장에서 조리 중.\n약 27분.":scene.title}</Word></div>
+    <div style={pos(85,371,{width:515})}><Word frame={f} size={scene.titleSize||80} color="#f7f8fa">{scene.title}</Word></div>
     <div style={pos(92,677)}><VoiceBars scene={scene} frame={f}/></div>
     <div style={pos(93,753,{fontSize:25,fontWeight:530,color:"#afc2c6",letterSpacing:"-.03em"})}>{active?.role==="driver"?"운전자 마이크":active?.role==="system"?"에뮬레이터 스피커":scene.note}</div>
-    <Screen scene={scene} frame={f} rect={[620,183,1215,697]} fit="contain"/>
+    {showPanel?<ConversationPanel scene={scene} frame={f}/>:<Screen scene={scene} frame={f} rect={[620,183,1215,697]} fit="contain"/>}
     <Caption scene={scene} dark/>
   </AbsoluteFill>;
 }

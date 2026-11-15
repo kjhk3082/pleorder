@@ -1,11 +1,11 @@
 {
   "voice": "Sujin",
-  "sourceHash": "1c831c66b7eb36df0f4eeae60cc9b8d62820becf3d39b072ee5e18bcb85364c1",
+  "sourceHash": "705c34540896863fe604a161e63853c953fe42457e2e90a97766072dc9a39243",
   "cues": [
     {
-      "text": "차량 설정을 보던 중, 운전자가 치킨을 주문합니다. 들어 보세요.",
+      "text": "차량 음성 버튼을 누르고, 집으로 치킨을 주문해 볼게요.",
       "startMs": 0,
-      "endMs": 4319,
+      "endMs": 3715,
       "timestampMs": null,
       "confidence": null
     }
