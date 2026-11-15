@@ -1,11 +1,18 @@
 {
-  "voice": "Jisoo - Inviting, Clear and Measured",
-  "sourceHash": "2a994e135209b10890a1b22aa3600c697287b52ac232acc08fd2da01c9df5eef",
+  "voice": "Taehyung - Natural, Friendly and Clear",
+  "sourceHash": "53ebe071a668c68d49df2a4ebe283b7676a4532b9a5dbadd3ac5776f9e9de2fe",
   "cues": [
     {
-      "text": "방금 시킨 치킨, 어디쯤 왔죠?",
+      "text": "제 치킨,",
       "startMs": 0,
-      "endMs": 2322,
+      "endMs": 880,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "지금 어디쯤 왔죠?",
+      "startMs": 960,
+      "endMs": 1840,
       "timestampMs": null,
       "confidence": null
     }

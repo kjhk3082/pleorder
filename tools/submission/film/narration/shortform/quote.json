@@ -1,18 +1,32 @@
 {
-  "voice": "Jisoo - Inviting, Clear and Measured",
-  "sourceHash": "21115a33cb73060be588477b3934e51d3a7d9d8b72f4731485f9d21160d1d578",
+  "voice": "Taehyung - Natural, Friendly and Clear",
+  "sourceHash": "7303b6433f9abb3adbc8fac78da329460ea79135362b8ad85f4b747d41221f78",
   "cues": [
     {
-      "text": "견적은 이만 육천 원.",
+      "text": "이만 육천 원?",
       "startMs": 0,
-      "endMs": 1800,
+      "endMs": 880,
       "timestampMs": null,
       "confidence": null
     },
     {
-      "text": "카드와 금액을 듣고, 제가 승인해야 결제돼요.",
-      "startMs": 1858,
-      "endMs": 5573,
+      "text": "제 카드 맞네요.",
+      "startMs": 1200,
+      "endMs": 2720,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "제가 승인하니까",
+      "startMs": 2827,
+      "endMs": 4000,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "그제야 결제돼요.",
+      "startMs": 4080,
+      "endMs": 5120,
       "timestampMs": null,
       "confidence": null
     }

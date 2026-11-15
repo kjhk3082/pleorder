@@ -26,7 +26,10 @@ try{
     const cut=JSON.parse(fs.readFileSync(path.join(film,"public/shortform.json"),"utf8"));
     const comp=await selectComposition({...shared,id:"Short"});
     const shortWork=path.join(repo,".cache/submission/film/shortform");
-    for(const s of cut.scenes){
+    const sceneArg=process.argv.find(arg=>arg.startsWith("--scenes="));
+    const requested=sceneArg?.slice("--scenes=".length).split(",");
+    if(requested?.some(id=>!cut.scenes.some(scene=>scene.id===id)))throw new Error("Unknown short scene");
+    for(const s of cut.scenes.filter(scene=>!requested||requested.includes(scene.id))){
       await renderMedia({...shared,composition:comp,codec:"h264",crf:16,x264Preset:"fast",jpegQuality:94,colorSpace:"bt709",muted:true,
         frameRange:[s.from,s.from+s.frames-1],concurrency:Number(process.env.RENDER_CONCURRENCY||4),offthreadVideoThreads:2,
         outputLocation:path.join(shortWork,s.id+"-picture.mp4")});

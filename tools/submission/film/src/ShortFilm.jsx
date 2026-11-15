@@ -2,102 +2,129 @@ import React from "react";
 import {AbsoluteFill, Img, OffthreadVideo, Sequence, staticFile, useCurrentFrame} from "remotion";
 import {Brand, Typeface} from "./StudioFilm";
 
-const dark="#102027", teal="#006e62", mint="#9de9d5", ivory="#f6f2e9";
-const at=(left,top,style={})=>({position:"absolute",left,top,...style});
-const ease=(f,n=17)=>1-(1-Math.max(0,Math.min(1,f/n)))**3;
+const mint = "#a0ffe1";
+const gold = "#ffe074";
+const full = {width:"100%", height:"100%", display:"block", objectFit:"cover"};
+const place = (left, top, rest = {}) => ({position:"absolute",left,top,...rest});
+const photo = (at, file, zoom = 1, anchor = "50% 50%") => ({at,type:"photo",file,zoom,anchor});
+const stock = (at, file, trim, zoom = 1) => ({at,type:"stock",file,trim,zoom});
+const screen = (at, file, zoom, fit = "contain", trim = 0) => ({at,type:"screen",file,zoom,fit,trim});
 
-function Photo({name,style,frame}){
-  return <Img src={staticFile(name)} style={{width:"100%",height:"100%",objectFit:"cover",transform:"scale("+(1.035+.045*ease(frame,90))+")",...style}}/>;
+// Cut positions are local to the line readings. The real display is photographed head-on
+// so a single camera transform can move the trim, the screen recording and its bezel together.
+function shots(scene) {
+  switch (scene.id) {
+    case "hook": return [
+      stock(0,"sauce",39,1.08), photo(14,"door",1.08,"60% 46%"),
+      photo(31,"traffic",1.12,"50% 63%"), photo(48,"bite",1.09,"42% 48%"),
+      photo(84,"door",1.22,"68% 55%"), stock(118,"seoul",44,1.04)];
+    case "idea": return [photo(0,"wheel",1.04,"32% 48%"), screen(34,scene.clip,1.06,"cover")];
+    case "order": return [photo(0,"wheel",1.24,"26% 44%"),stock(49,"sauce",88,1.11)];
+    case "quote": return [
+      screen(0,scene.estimate,1.10), screen(58,scene.estimate,1.28,"contain",18),
+      photo(97,"wheel",1.09,"42% 54%"), screen(140,scene.estimate,1.30),
+      screen(180,scene.clip,1.27,"cover",5)];
+    case "status": return [
+      photo(0,"traffic",1.06),stock(33,"seoul",120,1.05),
+      stock(63,"sauce",141,1.04), photo(115,"bite",1.17,"45% 43%"),
+      stock(162,"seoul",155,1.19)];
+    case "traffic": return [
+      stock(0,"seoul",12), screen(50,scene.beforeDelay,1.10,"cover"),
+      photo(93,"traffic",1.16,"40% 62%"), stock(147,"seoul",168,1.14),
+      screen(182,scene.clip,1.18,"cover",33), screen(233,scene.clip,1.43,"cover",87)];
+    case "pickup": return [stock(0,"seoul",119,1.16),screen(44,scene.clip,1.11),screen(94,scene.clip,1.38,"contain",20)];
+    case "finish": return [
+      photo(0,"door",1.10,"50% 40%"),photo(33,"bite",1.08,"50% 40%"),
+      stock(65,"sauce",176,1.04),photo(103,"bite",1.08,"46% 48%"),stock(131,"sauce",24,1.08)];
+    default: throw new Error("Unknown reel scene: "+scene.id);
+  }
 }
-function Head({children,frame,color=dark,size=105}){
-  return <div style={{color,fontSize:size,fontWeight:790,lineHeight:1.08,letterSpacing:"-.065em",whiteSpace:"pre-line",transform:"translateY("+18*(1-ease(frame))+"px)"}}>{children}</div>;
+
+function Lens({shot}) {
+  const f=useCurrentFrame();
+  const sway = Math.sin(f/19)*2.3;
+  const zoom = (shot.zoom || 1) * (1.016+Math.min(f,80)*.00052);
+  const camera={position:"absolute",inset:0,transformOrigin:shot.anchor || (shot.type==="screen"?"50% 45%":"50% 50%"),
+    transform:"translate("+sway+"px,"+Math.sin(f/23+.55)*1.9+"px) scale("+zoom+")"};
+  if(shot.type==="screen") {
+    return <div style={camera}>
+      <Img src={staticFile("reel/dash.jpg")} style={full}/>
+      <div style={place(59,668,{width:962,height:418,overflow:"hidden",borderRadius:10,background:"#eaf0f1"})}>
+        <OffthreadVideo muted startFrom={shot.trim} src={staticFile(shot.file)}
+          style={{...full,objectFit:shot.fit,objectPosition:"50% 48%"}}/>
+        <AbsoluteFill style={{background:"linear-gradient(125deg,#fbfcff0c,transparent 40%,#202d4009)",boxShadow:"inset 0 0 5px #07101874"}}/>
+      </div>
+    </div>;
+  }
+  return <div style={camera}>{shot.type==="stock"
+    ? <OffthreadVideo muted startFrom={shot.trim} src={staticFile("reel/"+shot.file+".mp4")} style={full}/>
+    : <Img src={staticFile("reel/"+shot.file+".jpg")} style={full}/>}</div>;
 }
-function Eyebrow({children,color=teal}){
-  return <div style={{fontSize:31,fontWeight:680,letterSpacing:"-.035em",color,marginBottom:22}}>{children}</div>;
-}
-function ActualScreen({scene,top=755,source=scene.clip}){
-  return <div style={at(54,top,{width:888,height:635,display:"grid",placeItems:"center",boxSizing:"border-box",padding:17,borderRadius:35,background:"#e3ebe6",border:"2px solid #c4d7cd",overflow:"hidden"})}>
-    <OffthreadVideo muted src={staticFile(source)} style={{width:"100%",height:"100%",objectFit:"contain",borderRadius:20}}/>
+
+const displayText = {
+  "합계 26,000원이에요.":"합계 26,000원이에요.",
+  "이만 육천 원?":"26,000원?",
+  "배달 도착까지 약 27분 남았어요.":"배달 도착까지\n약 27분 남았어요.",
+  "다음 날엔 도착할 때 맞춰 예약했어요.":"다음 날엔 도착할 때 맞춰\n예약했어요.",
+  "칠십오 분?":"75분?",
+  "십오 분 늦춰 주더라고요.":"15분 늦춰 주더라고요.",
+};
+const highlights = ["먼저 퇴근","강변북로","26,000원","27분","75분","15분","거의 동점","쏙","승인"];
+const outline = {WebkitTextStroke:"5px #18191c",paintOrder:"stroke fill",textShadow:"0 4px 4px #000a, 0 8px 23px #0006"};
+
+function Subtitles({scene,frame}) {
+  const now=frame*1000/30;
+  // Hold a caption across a short breath, replacing it on the next spoken syllable.
+  const cue=scene.cues.find((c,i)=>now>=c.startMs-34 && now<Math.min(c.endMs+115,scene.cues[i+1]?.startMs ?? Infinity));
+  if(!cue || (scene.id==="finish" && cue.text==="플레오더."))return null;
+  const value=displayText[cue.text] || cue.text;
+  const marked=highlights.find(word=>value.includes(word));
+  const idx=marked?value.indexOf(marked):-1;
+  const emphasis=cue.text==="칠십오 분?" || cue.text==="거의 동점이요." || cue.text==="이만 육천 원?";
+  const elapsed=Math.max(0,(now-cue.startMs)/1000*30);
+  const pop=emphasis?1+.075*Math.exp(-elapsed/4)*Math.sin(elapsed/2):1;
+  const role=cue.role==="system"?"Gleo 실기 음성":cue.role==="driver"?"운전자 음성":"";
+  return <div style={place(66,scene.id==="finish"?1225:1248,{width:900,textAlign:"center",whiteSpace:"pre-line",
+    transform:"scale("+pop+")",transformOrigin:"50% 50%",fontWeight:820,lineHeight:1.19,letterSpacing:"-.042em"})}>
+    {role&&<div style={{...outline,color:mint,fontSize:31,letterSpacing:"-.015em",marginBottom:11,fontWeight:720}}>{role}</div>}
+    <span style={{...outline,color:"white",fontSize:emphasis?106:68}}>
+      {idx<0?value:<>{value.slice(0,idx)}<span style={{color:cue.role==="system"?mint:gold}}>{marked}</span>{value.slice(idx+marked.length)}</>}
+    </span>
   </div>;
 }
-function ShortCaptions({scene,f}){
-  const cue=scene.cues.find(c=>c.startMs<=f/30*1000&&f/30*1000<c.endMs);
-  if(!cue)return null;
-  return <div style={at(74,1484,{width:818,display:"flex",justifyContent:"flex-start"})}>
-    <div style={{background:"#112028ef",color:"white",borderRadius:21,padding:"15px 24px",fontSize:47,fontWeight:590,letterSpacing:"-.045em",lineHeight:1.32,wordBreak:"keep-all"}}>
-      {cue.role==="system"&&<span style={{color:mint,fontSize:29,display:"block",marginBottom:4}}>차량 음성</span>}{cue.text}
-    </div>
-  </div>;
+
+function InkArrow({frame}) {
+  const drawn=Math.min(1,(frame+1)/11);
+  return <svg style={place(335,687,{width:239,height:131,transform:"rotate(-5deg)"})} viewBox="0 0 239 131" fill="none">
+    {["#222623","#fef2bd"].map((color,i)=><path key={color}
+      d="M222 12 C218 94 131 14 42 95 M45 70 L35 104 L72 98" stroke={color}
+      strokeWidth={i?5:10} strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray={drawn+" 1"}/>)}
+  </svg>;
 }
-function Road({frame}){
-  return <Photo name="drive-home.jpg" frame={frame} style={{position:"absolute",inset:0,objectPosition:"62% 50%"}}/>;
-}
-function Scene({scene}){
-  const f=useCurrentFrame(),id=scene.id;
-  const absolute=scene.from+f,stamp=scene.cues.find(c=>c.text.includes("칠십오")||c.text.includes("27분"));
-  const number=stamp?Math.round(stamp.startMs*.03):0;
-  const showTraffic=f>Math.round(scene.frames*.42);
-  return <AbsoluteFill style={{background:ivory,color:dark,overflow:"hidden"}}>
-    {id==="hook"&&<>
-      <Road frame={f}/><AbsoluteFill style={{background:"linear-gradient(0deg,#05171bd9,transparent 73%)"}}/>
-      <div style={at(0,0,{width:"100%",height:668,overflow:"hidden",borderBottom:"6px solid #f8efe1"})}>
-        <Photo name={f<32?"delivery-proof.png":"chicken.png"} frame={f<32?f:f-32} style={{objectPosition:"50% 57%"}}/>
-      </div>
-      <div style={at(74,402,{background:"#102027e8",borderRadius:20,padding:"12px 26px",color:"white",fontWeight:740,fontSize:69,letterSpacing:"-.052em"})}>치킨은 벌써 문 앞.</div>
-      <div style={at(71,844,{width:935})}><Head color="white" size={114} frame={f}>{"나는 아직\n강변북로."}</Head></div>
-    </>}
-    {id==="idea"&&<>
-      <Road frame={f}/><AbsoluteFill style={{background:"linear-gradient(180deg,#0d1b23da 9%,#152c3133 49%,#05161bba)"}}/>
-      <div style={at(72,239)}><Eyebrow color={mint}>퇴근길에 만든 앱</Eyebrow><Head frame={f} color="white" size={94}>{"오늘 저녁,\n차에서 주문해요."}</Head></div>
-      {f<Math.round(scene.frames*.45)?<div style={at(74,850,{display:"flex",alignItems:"center",gap:26,padding:"25px 42px 25px 27px",background:"#fffffff0",borderRadius:36})}><Brand size={116}/><b style={{fontSize:81,letterSpacing:"-.07em"}}>플레오더</b></div>:
-        <><ActualScreen scene={scene} top={680}/><div style={at(100,716,{fontSize:36,fontWeight:670,color:dark,background:"#fffffff1",borderRadius:17,padding:"9px 22px"})}>목적지 주변 매장</div></>}
-    </>}
-    {id==="order"&&<>
-      <Photo name="chicken.png" frame={f} style={{position:"absolute",top:547,height:900,objectPosition:"50% 53%"}}/>
-      <div style={at(73,234)}><Eyebrow>운전자 → Gleo</Eyebrow><Head size={106} frame={f}>{"치킨 한 마리,\n우리 집으로."}</Head></div>
-    </>}
-    {id==="quote"&&<>
-      <div style={at(73,227)}><Eyebrow>운전자가 승인할 때</Eyebrow><Head size={138} frame={f}>26,000원</Head>
-      <div style={{fontSize:48,marginTop:25,letterSpacing:"-.045em",fontWeight:560,color:teal}}>현대카드 M · 모의 결제</div></div>
-      <ActualScreen scene={scene} top={665} source={f<Math.round(scene.frames*.62)?scene.estimate:scene.clip}/>
-    </>}
-    {id==="status"&&<>
-      <AbsoluteFill style={{background:"#11282b"}}/>
-      <div style={at(75,244)}><Eyebrow color={mint}>같은 주문 · PO-0003</Eyebrow><Head size={100} frame={f} color="white">{"내 치킨,\n어디쯤 왔죠?"}</Head></div>
-      <div style={at(75,790,{width:850,padding:"54px 47px",boxSizing:"border-box",borderRadius:38,background:"#e3f0e7"})}>
-        <div style={{fontSize:38,color:teal,fontWeight:650}}>교촌치킨 잠실1호점</div>
-        <div style={{marginTop:25,fontSize:90,fontWeight:760,letterSpacing:"-.065em"}}>{f>=number?"도착까지 약 27분":f/30*1000>scene.cues.find(c=>c.role==="system").startMs?"매장에서 조리 중":"주문 현황 조회"}</div>
-        <div style={{display:"flex",gap:10,marginTop:39}}>{[0,1,2,3].map(i=><span key={i} style={{flex:1,height:8,borderRadius:8,background:i<1||(i===1&&f/30*1000>=scene.cues.find(c=>c.role==="system").startMs)?teal:"#bccfc5"}}/>)}</div>
-      </div>
-    </>}
-    {id==="traffic"&&<>
-      <div style={at(73,229)}><Eyebrow>정체가 생기면</Eyebrow><Head size={114} frame={f}>{showTraffic?"집까지 75분":"집까지 60분"}</Head>
-      <div style={{fontSize:51,marginTop:22,color:teal,fontWeight:630,letterSpacing:"-.04em"}}>{showTraffic?"예약 전송도 15분 늦게":"도착에 맞춰 둔 예약"}</div></div>
-      <ActualScreen scene={scene} top={660}/>
-    </>}
-    {id==="pickup"&&<>
-      <div style={at(73,241)}><Eyebrow>가는 길에 픽업</Eyebrow><Head size={100} frame={f}>{"매장을\n경유할까요?"}</Head></div>
-      <ActualScreen scene={scene} top={695}/>
-      <svg style={at(77,1340)} width="775" height="67" viewBox="0 0 775 67" fill="none">
-        <path d="M8 41h217c45 0 49-28 92-28h67c43 0 47 28 91 28h285" stroke="#bfd7ca" strokeWidth="8" strokeLinecap="round"/>
-        <path d="M8 41h217c45 0 49-28 92-28h67c43 0 47 28 91 28h285" stroke={teal} strokeWidth="8" strokeLinecap="round" pathLength="1" strokeDasharray={ease(f,75)+" 1"}/>
-        <circle cx="352" cy="13" r="10" fill={teal}/>
-      </svg>
-    </>}
-    {id==="finish"&&<>
-      <Photo name={f<Math.round(scene.frames*.60)?"chicken.png":"delivery-proof.png"} frame={f} style={{position:"absolute",top:640,height:920,objectFit:"cover"}}/>
-      <div style={at(74,248)}><Eyebrow>집으로 배달 · 가는 길에 픽업</Eyebrow><Head size={102} frame={f}>{"저녁이랑,\n같이 도착."}</Head></div>
-      <div style={at(78,1235,{background:"#fffdf3ed",borderRadius:27,display:"flex",alignItems:"center",gap:14,padding:"15px 28px 15px 17px"})}><Brand size={79}/><b style={{fontSize:60,letterSpacing:"-.065em"}}>플레오더</b></div>
-    </>}
-    <ShortCaptions scene={scene} f={f}/>
-    <div style={at(73,1763,{height:4,width:815,background:"#a2b3ab75",borderRadius:4})}>
-      <div style={{background:id==="idea"||id==="hook"||id==="status"?mint:teal,height:"100%",width:(100*absolute/scene.total)+"%"}}/>
-    </div>
+
+function Scene({scene}) {
+  const f=useCurrentFrame();
+  const cuts=shots(scene);
+  return <AbsoluteFill style={{background:"#162027",overflow:"hidden",color:"white"}}>
+    {cuts.map((shot,i)=><Sequence key={i} from={shot.at} durationInFrames={(cuts[i+1]?.at ?? scene.frames)-shot.at}><Lens shot={shot}/></Sequence>)}
+    <AbsoluteFill style={{background:"linear-gradient(180deg,#1317220a 0%,transparent 43%,#10121908 56%,#15151a36 70%,transparent 91%)"}}/>
+    {scene.id==="hook"&&f<81&&<div style={place(69,278,{...outline,color:"#fff2b4",fontSize:39,fontWeight:770,letterSpacing:"-.045em",
+      transform:"rotate(-3.4deg)"})}>치킨 vs 나</div>}
+    {scene.id==="idea"&&f<34&&<InkArrow frame={f}/>}
+    {scene.id==="quote"&&f>=182&&<div style={place(75,348,{...outline,color:mint,fontSize:38,fontWeight:760})}>앱 실기 · 모의 결제</div>}
+    {scene.id==="traffic"&&f<89&&<div style={place(76,341,{...outline,color:gold,fontSize:43,fontWeight:770,transform:"rotate(-3deg)"})}>다음 날 저녁</div>}
+    {scene.id==="traffic"&&((f>=50&&f<93)||f>=233)&&<div style={place(82,544,{...outline,color:"white",fontSize:43,fontWeight:740,letterSpacing:"-.035em"})}>
+      매장 전송　<span style={{color:f>=233?gold:"white"}}>{f>=233?"16:27 → 16:42":"16:27"}</span></div>}
+    <Subtitles scene={scene} frame={f}/>
+    {scene.id==="finish"&&f>=103&&<div style={place(0,1241,{width:1030,display:"flex",justifyContent:"center",alignItems:"center",gap:6,
+      filter:"drop-shadow(0 3px 8px #101915a0)",transform:"translateY("+Math.max(0,8-(f-103))+"px)"})}>
+      <Brand light size={93}/><b style={{fontSize:76,marginLeft:5,letterSpacing:"-.064em",fontWeight:800}}>플레오더</b>
+    </div>}
   </AbsoluteFill>;
 }
 
-export function ShortFilm({cut}){
+export function ShortFilm({cut}) {
   return <AbsoluteFill style={{fontFamily:'"Pleorder Film","Malgun Gothic",sans-serif'}}>
-    <Typeface/>{cut.scenes.map(s=><Sequence key={s.id} from={s.from} durationInFrames={s.frames}><Scene scene={{...s,total:cut.frames}}/></Sequence>)}
+    <Typeface/>{cut.scenes.map(scene=><Sequence key={scene.id} from={scene.from} durationInFrames={scene.frames}><Scene scene={scene}/></Sequence>)}
   </AbsoluteFill>;
 }

@@ -24,7 +24,8 @@ try {
             $phrases=@($part.Value)
             $spoken=@($phrases|ForEach-Object {$_.Replace('플레오더','플레 오더').Replace('Gleo','글레오')})
             $words=$spoken -join ' '
-            $body=[ordered]@{text=$words;model_id='eleven_multilingual_v2';language_code='ko';voice_settings=$voice.settings} | ConvertTo-Json -Compress -Depth 6
+            $model=if($voice.model){$voice.model}else{'eleven_multilingual_v2'}
+            $body=[ordered]@{text=$words;model_id=$model;language_code='ko';voice_settings=$voice.settings} | ConvertTo-Json -Compress -Depth 6
             $hashBytes=[Security.Cryptography.SHA256]::Create().ComputeHash($utf8.GetBytes($voice.id+$body))
             $hash=[BitConverter]::ToString($hashBytes).Replace('-','').ToLowerInvariant()
             $mp3=Join-Path $out ($part.Name+'.mp3')

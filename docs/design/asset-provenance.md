@@ -65,3 +65,7 @@ out center tags;
 ## 저장소 표지
 
 [README 표지](pleorder-cover.jpg)는 팀의 [대표 영상용 서울 퇴근길 이미지](../../tools/submission/film/art/drive-home.jpg)에서 만들었습니다. 흰색 P 심벌은 앱 원본의 외곽선과 민트색 점을 유지하고 어두운 사진에 맞춰 명도를 조정했습니다. 표지의 도로 사진은 생성 이미지이며 차량 에뮬레이터 녹화는 본문의 영상에 있습니다.
+
+## 세로 숏폼
+
+야간 교차로는 Timo Volz, 치킨에 소스를 붓는 장면은 Bon appétit이 촬영했습니다. 두 원본 클립에는 Pexels 라이선스가 적용됩니다. 현관·차량 실내 등 다섯 장의 사진은 영상용으로 생성했습니다. 화면 속 앱과 Gleo 응답은 Pleos 에뮬레이터에서 녹화했고, 내레이션은 ElevenLabs Taehyung으로 제작했습니다. [촬영자·원본·음성 출처](../../tools/submission/film/README.md#세로-숏폼) · [Pexels 라이선스](https://www.pexels.com/license/)

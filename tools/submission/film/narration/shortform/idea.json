@@ -1,18 +1,18 @@
 {
-  "voice": "Jisoo - Inviting, Clear and Measured",
-  "sourceHash": "d602a75a0bb63ab85c60d0c9d9092932c0b5608c31ac0d9cdb4e52015d3c640f",
+  "voice": "Taehyung - Natural, Friendly and Clear",
+  "sourceHash": "a032f30ec6702b7b264814981243f59d3793cd0224540c5f69c31791210ca63d",
   "cues": [
     {
-      "text": "그래서 만들었어요.",
+      "text": "그래서 오늘은",
       "startMs": 0,
-      "endMs": 1161,
+      "endMs": 880,
       "timestampMs": null,
       "confidence": null
     },
     {
-      "text": "차에서 말로 저녁을 주문하는 플레오더.",
-      "startMs": 1393,
-      "endMs": 4876,
+      "text": "차한테 시켜 봤거든요.",
+      "startMs": 960,
+      "endMs": 2160,
       "timestampMs": null,
       "confidence": null
     }

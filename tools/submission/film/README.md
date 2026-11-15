@@ -27,9 +27,13 @@ node render.mjs
 
 ## 세로 숏폼
 
-세로 시안은 1080 × 1920 화면에 맞춰 제작했습니다. 2026년 11월 15일 ElevenLabs Voice Library에 한국어·소셜미디어·일반 요율 필터를 적용했습니다. 연간 생성 글자 수 기준 Taehyung은 약 6억, Jisoo는 약 9,571만이었습니다. 두 보이스로 같은 첫 문장을 합성한 뒤 운전자 역과 구분되는 Jisoo를 내레이션에 썼습니다. 차량의 조리·도착 대답은 실제 Gleo 스피커 기록입니다. [ElevenLabs 보이스 검색 기준](https://elevenlabs.io/docs/api-reference/voices/voice-library/get-shared)
+“아니, 치킨이 저보다 먼저 퇴근했어요.” 45초 동안 집 앞의 치킨과 막힌 퇴근길을 번갈아 보여줍니다. 운전자가 음성으로 주문하면 차량이 26,000원 견적을 읽고, 나중에 같은 주문을 물으면 조리 상태와 남은 27분을 알려줍니다. 두 응답은 Pleos 에뮬레이터의 실제 스피커 녹음입니다. 다음 날의 예약과 매장 픽업은 별도 주문 장면입니다.
 
-공개 릴스에서 제품을 조작하는 손과 결과를 빠르게 교차하는 컷, 실제 경험을 한 문장으로 여는 방식을 참고했습니다. 플레오더 영상의 소재는 팀의 차량 화면, 제품 이미지와 음성 기록입니다. [제품 시연 참고 영상](https://www.instagram.com/reel/DdeAn-eJmSY/) · [1인칭 이야기 참고 영상](https://www.instagram.com/reel/DezaRr-uAA1/)
+2026년 11월 15일 ElevenLabs에서 한국어 대사를 Taehyung, Hana Lee, VIV, Stella로 각각 생성했습니다. 비교한 네 보이스 중 Taehyung은 최근 7일 생성 글자 수가 16,915,330자로 가장 높았습니다. 짧은 반문과 농담 사이에 숨을 남기는 이 목소리를 `eleven_v3`로 합성했습니다. 운전자 주문과 Gleo 응답은 실기 시연과 같은 테이크입니다. [Taehyung 보이스](https://elevenlabs.io/app/voice-library?voiceId=m3gJBS8OofDJfycyA2Ip) · [사용량 집계 기준](https://elevenlabs.io/docs/api-reference/voices/voice-library/get-shared)
+
+텀블러 릴스 첫 1.7초의 빠른 컷 전환과 안경 릴스의 착용자·시야 교차 편집을 참고했습니다. 치킨에 소스를 붓는 손, 현관 봉투, 차의 브레이크등을 첫 1.7초에 교차합니다. 결제와 경유지 확인 장면에는 플레오더 실기 화면을 넣었습니다. 팀이 만든 118 BPM 배경 음악은 자동차 스피커가 대답할 때 작아집니다. [텀블러 릴스](https://www.instagram.com/reel/DdeAn-eJmSY/) · [안경 릴스](https://www.instagram.com/reel/DezaRr-uAA1/)
+
+주행·음식 실사 영상의 출처는 Timo Volz의 서울 교차로와 Bon appétit의 프라이드치킨입니다. 재편집하려면 원본을 `.cache/submission/film/shortform/`에 각각 `seoul-night-26690701.mp4`, `chicken-sauce-31707113.mp4`로 저장합니다. 현관·운전대·차량 실내·치킨 식탁·차창 사진은 이 영상용으로 생성했으며 `reel-assets/`에 있습니다. [서울 야경](https://www.pexels.com/video/a-city-street-at-night-with-cars-and-lights-26690701/) · [치킨 클로즈업](https://www.pexels.com/video/close-up-of-sauce-being-poured-on-fried-chicken-31707113/) · [Pexels 이용 조건](https://www.pexels.com/license/)
 
 Remotion이 사진·자막·실기 화면의 장면별 영상을 그리면 MoneyPrinterTurbo의 `VideoProject`가 여덟 장면의 발화 길이를 측정하고, 세로 H.264 시퀀스를 조립해 음악과 믹싱합니다. 편집에 사용한 외부 도구 버전은 `ce289ffb61a118779c56d6b4a34181905dbed2b9`입니다. [MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo/tree/ce289ffb61a118779c56d6b4a34181905dbed2b9)
 

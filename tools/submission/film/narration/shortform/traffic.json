@@ -1,18 +1,39 @@
 {
-  "voice": "Jisoo - Inviting, Clear and Measured",
-  "sourceHash": "5a63b77d2e4a2a3bc3e3b2db383955e6ad36a083132f18eecee21e161761906c",
+  "voice": "Taehyung - Natural, Friendly and Clear",
+  "sourceHash": "33759ea75ee59352ff4fb716bc47aca3da306b0c4415716f7466383557960807",
   "cues": [
     {
-      "text": "이번엔 집까지 육십 분이 칠십오 분으로 늘었어요.",
+      "text": "다음 날엔 도착할 때 맞춰 예약했어요.",
       "startMs": 0,
-      "endMs": 3657,
+      "endMs": 2800,
       "timestampMs": null,
       "confidence": null
     },
     {
-      "text": "아직 접수 전인 예약은 십오 분 늦게 매장에 보내요.",
-      "startMs": 3959,
-      "endMs": 8313,
+      "text": "집까지 한 시간이라더니,",
+      "startMs": 2960,
+      "endMs": 4480,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "칠십오 분?",
+      "startMs": 4800,
+      "endMs": 5920,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "가게에 보내는 시간도",
+      "startMs": 6040,
+      "endMs": 7440,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "십오 분 늦춰 주더라고요.",
+      "startMs": 7680,
+      "endMs": 9280,
       "timestampMs": null,
       "confidence": null
     }

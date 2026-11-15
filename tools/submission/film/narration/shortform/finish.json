@@ -1,18 +1,25 @@
 {
-  "voice": "Jisoo - Inviting, Clear and Measured",
-  "sourceHash": "1539f72e6fcee987fb0bd64f0ac9c604e2ae02980a7ff9a6a9cf620bfbff65d5",
+  "voice": "Taehyung - Natural, Friendly and Clear",
+  "sourceHash": "6b192867c7b549b51b15fe99117ed11525697e63c74c33bb8066f504ce387fb0",
   "cues": [
     {
-      "text": "오늘 저녁은, 나랑 도착 시간을 맞추자.",
+      "text": "오늘은 누가 먼저 왔냐고요?",
       "startMs": 0,
-      "endMs": 2659,
+      "endMs": 2000,
+      "timestampMs": null,
+      "confidence": null
+    },
+    {
+      "text": "거의 동점이요.",
+      "startMs": 2107,
+      "endMs": 3360,
       "timestampMs": null,
       "confidence": null
     },
     {
       "text": "플레오더.",
-      "startMs": 2740,
-      "endMs": 3669,
+      "startMs": 3440,
+      "endMs": 4080,
       "timestampMs": null,
       "confidence": null
     }
